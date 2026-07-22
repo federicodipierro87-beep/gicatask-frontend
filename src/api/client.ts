@@ -132,6 +132,32 @@ export const attivitaApi = {
     apiClient.delete(`/attivita/${id}`),
 };
 
+// Backup API
+export const backupApi = {
+  getStatus: () =>
+    apiClient.get<{
+      configured: boolean;
+      lastBackup: { date: string; stato: string } | null;
+      totalBackups: number;
+    }>('/backup/status'),
+  getAll: () =>
+    apiClient.get<{
+      id: number;
+      filename: string;
+      tipo: string;
+      dimensione: number;
+      dimensioneFormatted: string;
+      stato: string;
+      createdAt: string;
+    }[]>('/backup'),
+  create: () =>
+    apiClient.post<{ id: number; filename: string }>('/backup'),
+  restore: (id: number) =>
+    apiClient.post<{ restored: boolean; stats: Record<string, number> }>(`/backup/${id}/restore`),
+  delete: (id: number) =>
+    apiClient.delete(`/backup/${id}`),
+};
+
 // Utenti API
 export const utentiApi = {
   getAll: (includeInactive = false) =>

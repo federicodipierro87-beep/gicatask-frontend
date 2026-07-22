@@ -11,6 +11,7 @@ import { ClienteDetailPage } from './pages/responsabile/ClienteDetailPage';
 import { UtentiPage } from './pages/responsabile/UtentiPage';
 import { ReportPage } from './pages/responsabile/ReportPage';
 import { AssegnaAttivitaPage } from './pages/responsabile/AssegnaAttivitaPage';
+import { BackupPage } from './pages/responsabile/BackupPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -122,6 +123,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <AssegnaAttivitaPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/backup"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <BackupPage />
           </ProtectedRoute>
         }
       />
