@@ -32,9 +32,12 @@ export function LoginPage() {
     const fetchUsers = async () => {
       try {
         const response = await authApi.getUsers();
-        setUsers(response.data);
+        // Ensure we always set an array
+        setUsers(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
+        console.error('Error fetching users:', err);
         setError('Impossibile caricare la lista degli utenti');
+        setUsers([]);
       } finally {
         setIsLoadingUsers(false);
       }
@@ -87,7 +90,7 @@ export function LoginPage() {
     }
   };
 
-  const selectedUser = users.find((u) => u.id === selectedUserId);
+  const selectedUser = Array.isArray(users) ? users.find((u) => u.id === selectedUserId) : undefined;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-primary-50 to-gray-100">
