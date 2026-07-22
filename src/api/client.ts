@@ -91,6 +91,47 @@ export const tipiAttivitaApi = {
     apiClient.post(`/tipi-attivita/${id}/activate`),
 };
 
+// Attività API
+export const attivitaApi = {
+  getAll: (filters?: { utenteId?: number; clienteId?: number; startDate?: string; endDate?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.utenteId) params.append('utenteId', filters.utenteId.toString());
+    if (filters?.clienteId) params.append('clienteId', filters.clienteId.toString());
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+    return apiClient.get(`/attivita${params.toString() ? '?' + params.toString() : ''}`);
+  },
+  getMine: (startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    return apiClient.get(`/attivita/me${params.toString() ? '?' + params.toString() : ''}`);
+  },
+  getById: (id: number) =>
+    apiClient.get(`/attivita/${id}`),
+  create: (data: {
+    utenteId?: number;
+    dataRiferimento: string;
+    oraInizio: string;
+    oraFine: string;
+    clienteId: number;
+    cantiereId: number;
+    tipoAttivitaId: number;
+    note?: string;
+  }) => apiClient.post('/attivita', data),
+  update: (id: number, data: {
+    dataRiferimento?: string;
+    oraInizio?: string;
+    oraFine?: string;
+    clienteId?: number;
+    cantiereId?: number;
+    tipoAttivitaId?: number;
+    note?: string;
+  }) => apiClient.put(`/attivita/${id}`, data),
+  delete: (id: number) =>
+    apiClient.delete(`/attivita/${id}`),
+};
+
 // Utenti API
 export const utentiApi = {
   getAll: (includeInactive = false) =>

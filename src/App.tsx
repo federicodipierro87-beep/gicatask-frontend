@@ -3,7 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/Login';
-import { DipendenteDashboard } from './pages/DipendenteDashboard';
+import { AttivitaListPage } from './pages/dipendente/AttivitaListPage';
+import { AttivitaFormPage } from './pages/dipendente/AttivitaFormPage';
 import { ResponsabileDashboard } from './pages/ResponsabileDashboard';
 import { ClientiPage } from './pages/responsabile/ClientiPage';
 import { ClienteDetailPage } from './pages/responsabile/ClienteDetailPage';
@@ -52,7 +53,23 @@ function AppRoutes() {
         path="/dipendente"
         element={
           <ProtectedRoute>
-            <DipendenteDashboard />
+            <AttivitaListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dipendente/nuova"
+        element={
+          <ProtectedRoute>
+            <AttivitaFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dipendente/modifica/:id"
+        element={
+          <ProtectedRoute>
+            <AttivitaFormPage />
           </ProtectedRoute>
         }
       />
