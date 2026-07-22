@@ -41,13 +41,15 @@ export function ResponsabileDashboard() {
             </p>
           </Link>
 
-          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+          <Link
+            to="/responsabile/assegna"
+            className="p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors"
+          >
             <h3 className="font-medium text-gray-900">Assegna Attività</h3>
             <p className="text-sm text-gray-500 mt-1">
               Inserisci attività per conto dei dipendenti
             </p>
-            <span className="inline-block mt-2 text-xs text-gray-400">Prossimamente</span>
-          </div>
+          </Link>
 
           <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
             <h3 className="font-medium text-gray-900">Backup & Ripristino</h3>
