@@ -9,6 +9,7 @@ import { ResponsabileDashboard } from './pages/ResponsabileDashboard';
 import { ClientiPage } from './pages/responsabile/ClientiPage';
 import { ClienteDetailPage } from './pages/responsabile/ClienteDetailPage';
 import { UtentiPage } from './pages/responsabile/UtentiPage';
+import { ReportPage } from './pages/responsabile/ReportPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,6 +105,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <UtentiPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/report"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <ReportPage />
           </ProtectedRoute>
         }
       />

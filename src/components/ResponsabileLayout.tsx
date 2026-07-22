@@ -9,6 +9,7 @@ const navItems = [
   { path: '/responsabile', label: 'Dashboard', exact: true },
   { path: '/responsabile/clienti', label: 'Clienti' },
   { path: '/responsabile/utenti', label: 'Utenti' },
+  { path: '/responsabile/report', label: 'Report' },
 ];
 
 export function ResponsabileLayout({ children }: Props) {
