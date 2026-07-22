@@ -5,6 +5,9 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/Login';
 import { DipendenteDashboard } from './pages/DipendenteDashboard';
 import { ResponsabileDashboard } from './pages/ResponsabileDashboard';
+import { ClientiPage } from './pages/responsabile/ClientiPage';
+import { ClienteDetailPage } from './pages/responsabile/ClienteDetailPage';
+import { UtentiPage } from './pages/responsabile/UtentiPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,22 +46,51 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<LoginPage />} />
+
+      {/* Dipendente routes */}
       <Route
-        path="/dipendente/*"
+        path="/dipendente"
         element={
           <ProtectedRoute>
             <DipendenteDashboard />
           </ProtectedRoute>
         }
       />
+
+      {/* Responsabile routes */}
       <Route
-        path="/responsabile/*"
+        path="/responsabile"
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <ResponsabileDashboard />
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/responsabile/clienti"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <ClientiPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/clienti/:id"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <ClienteDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/utenti"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <UtentiPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Catch all - redirect to root */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

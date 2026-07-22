@@ -42,3 +42,69 @@ export const authApi = {
       '/auth/me'
     ),
 };
+
+// Clienti API
+export const clientiApi = {
+  getAll: (includeInactive = false) =>
+    apiClient.get(`/clienti${includeInactive ? '?includeInactive=true' : ''}`),
+  getById: (id: number) =>
+    apiClient.get(`/clienti/${id}`),
+  create: (nome: string) =>
+    apiClient.post('/clienti', { nome }),
+  update: (id: number, nome: string) =>
+    apiClient.put(`/clienti/${id}`, { nome }),
+  delete: (id: number) =>
+    apiClient.delete(`/clienti/${id}`),
+  activate: (id: number) =>
+    apiClient.post(`/clienti/${id}/activate`),
+};
+
+// Cantieri API
+export const cantieriApi = {
+  getByCliente: (clienteId: number, includeInactive = false) =>
+    apiClient.get(`/cantieri/cliente/${clienteId}${includeInactive ? '?includeInactive=true' : ''}`),
+  getById: (id: number) =>
+    apiClient.get(`/cantieri/${id}`),
+  create: (clienteId: number, nome: string) =>
+    apiClient.post('/cantieri', { clienteId, nome }),
+  update: (id: number, nome: string) =>
+    apiClient.put(`/cantieri/${id}`, { nome }),
+  delete: (id: number) =>
+    apiClient.delete(`/cantieri/${id}`),
+  activate: (id: number) =>
+    apiClient.post(`/cantieri/${id}/activate`),
+};
+
+// Tipi Attività API
+export const tipiAttivitaApi = {
+  getByCantiere: (cantiereId: number, includeInactive = false) =>
+    apiClient.get(`/tipi-attivita/cantiere/${cantiereId}${includeInactive ? '?includeInactive=true' : ''}`),
+  getById: (id: number) =>
+    apiClient.get(`/tipi-attivita/${id}`),
+  create: (cantiereId: number, nome: string) =>
+    apiClient.post('/tipi-attivita', { cantiereId, nome }),
+  update: (id: number, nome: string) =>
+    apiClient.put(`/tipi-attivita/${id}`, { nome }),
+  delete: (id: number) =>
+    apiClient.delete(`/tipi-attivita/${id}`),
+  activate: (id: number) =>
+    apiClient.post(`/tipi-attivita/${id}/activate`),
+};
+
+// Utenti API
+export const utentiApi = {
+  getAll: (includeInactive = false) =>
+    apiClient.get(`/utenti${includeInactive ? '?includeInactive=true' : ''}`),
+  getById: (id: number) =>
+    apiClient.get(`/utenti/${id}`),
+  create: (data: { nome: string; cognome: string; ruolo: string; password?: string }) =>
+    apiClient.post('/utenti', data),
+  update: (id: number, data: { nome?: string; cognome?: string; ruolo?: string }) =>
+    apiClient.put(`/utenti/${id}`, data),
+  setPassword: (id: number, password: string | null) =>
+    apiClient.post(`/utenti/${id}/password`, { password }),
+  delete: (id: number) =>
+    apiClient.delete(`/utenti/${id}`),
+  activate: (id: number) =>
+    apiClient.post(`/utenti/${id}/activate`),
+};
