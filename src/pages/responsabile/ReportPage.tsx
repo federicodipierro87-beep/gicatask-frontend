@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
-import { attivitaApi, clientiApi, utentiApi } from '../../api/client';
+import { attivitaApi, clientiApi, cantieriApi, utentiApi } from '../../api/client';
 
 interface Attivita {
   id: number;
@@ -18,6 +18,12 @@ interface Attivita {
 interface Cliente {
   id: number;
   nome: string;
+}
+
+interface Cantiere {
+  id: number;
+  nome: string;
+  isGenerico: boolean;
 }
 
 interface Utente {
@@ -57,6 +63,7 @@ function getDefaultDateRange() {
 export function ReportPage() {
   const [attivita, setAttivita] = useState<Attivita[]>([]);
   const [clienti, setClienti] = useState<Cliente[]>([]);
+  const [cantieri, setCantieri] = useState<Cantiere[]>([]);
   const [utenti, setUtenti] = useState<Utente[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +73,7 @@ export function ReportPage() {
   const [startDate, setStartDate] = useState(defaultDates.startDate);
   const [endDate, setEndDate] = useState(defaultDates.endDate);
   const [clienteId, setClienteId] = useState<number | null>(null);
+  const [cantiereId, setCantiereId] = useState<number | null>(null);
   const [utenteId, setUtenteId] = useState<number | null>(null);
 
   // Export loading states
@@ -88,6 +96,25 @@ export function ReportPage() {
     loadFiltersData();
   }, []);
 
+  // Load cantieri when cliente changes
+  useEffect(() => {
+    if (clienteId) {
+      const loadCantieri = async () => {
+        try {
+          const res = await cantieriApi.getByCliente(clienteId);
+          setCantieri(Array.isArray(res.data) ? res.data : []);
+        } catch (err) {
+          console.error('Error loading cantieri:', err);
+          setCantieri([]);
+        }
+      };
+      loadCantieri();
+    } else {
+      setCantieri([]);
+      setCantiereId(null);
+    }
+  }, [clienteId]);
+
   const fetchAttivita = async () => {
     setIsLoading(true);
     setError(null);
@@ -95,6 +122,7 @@ export function ReportPage() {
       const filters: {
         utenteId?: number;
         clienteId?: number;
+        cantiereId?: number;
         startDate?: string;
         endDate?: string;
       } = {};
@@ -102,6 +130,7 @@ export function ReportPage() {
       if (startDate) filters.startDate = startDate;
       if (endDate) filters.endDate = endDate;
       if (clienteId) filters.clienteId = clienteId;
+      if (cantiereId) filters.cantiereId = cantiereId;
       if (utenteId) filters.utenteId = utenteId;
 
       const response = await attivitaApi.getAll(filters);
@@ -115,13 +144,14 @@ export function ReportPage() {
 
   useEffect(() => {
     fetchAttivita();
-  }, [startDate, endDate, clienteId, utenteId]);
+  }, [startDate, endDate, clienteId, cantiereId, utenteId]);
 
   const buildExportUrl = (format: 'pdf' | 'excel') => {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
     if (clienteId) params.append('clienteId', clienteId.toString());
+    if (cantiereId) params.append('cantiereId', cantiereId.toString());
     if (utenteId) params.append('utenteId', utenteId.toString());
 
     const baseUrl = import.meta.env.VITE_API_URL || '';
@@ -190,7 +220,7 @@ export function ReportPage() {
       {/* Filters */}
       <div className="card mb-6">
         <h3 className="font-medium text-gray-900 mb-4">Filtri</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <div>
             <label htmlFor="startDate" className="label">Dal</label>
             <input
@@ -217,10 +247,28 @@ export function ReportPage() {
               id="cliente"
               className="select"
               value={clienteId ?? ''}
-              onChange={(e) => setClienteId(e.target.value ? parseInt(e.target.value) : null)}
+              onChange={(e) => {
+                setClienteId(e.target.value ? parseInt(e.target.value) : null);
+                setCantiereId(null);
+              }}
             >
               <option value="">Tutti i clienti</option>
               {clienti.map((c) => (
+                <option key={c.id} value={c.id}>{c.nome}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="cantiere" className="label">Cantiere</label>
+            <select
+              id="cantiere"
+              className="select"
+              value={cantiereId ?? ''}
+              onChange={(e) => setCantiereId(e.target.value ? parseInt(e.target.value) : null)}
+              disabled={!clienteId}
+            >
+              <option value="">Tutti i cantieri</option>
+              {cantieri.map((c) => (
                 <option key={c.id} value={c.id}>{c.nome}</option>
               ))}
             </select>

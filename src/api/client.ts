@@ -113,10 +113,11 @@ export const tipiAttivitaApi = {
 
 // Attività API
 export const attivitaApi = {
-  getAll: (filters?: { utenteId?: number; clienteId?: number; startDate?: string; endDate?: string }) => {
+  getAll: (filters?: { utenteId?: number; clienteId?: number; cantiereId?: number; startDate?: string; endDate?: string }) => {
     const params = new URLSearchParams();
     if (filters?.utenteId) params.append('utenteId', filters.utenteId.toString());
     if (filters?.clienteId) params.append('clienteId', filters.clienteId.toString());
+    if (filters?.cantiereId) params.append('cantiereId', filters.cantiereId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
     return apiClient.get(`/attivita${params.toString() ? '?' + params.toString() : ''}`);
