@@ -6,14 +6,23 @@ import { attivitaApi, clientiApi, cantieriApi, utentiApi } from '../../api/clien
 interface Attivita {
   id: number;
   dataRiferimento: string;
-  oraInizio: string;
-  oraFine: string;
+  oraInizioMattino?: string;
+  oraFineMattino?: string;
+  oraInizioPomeriggio?: string;
+  oraFinePomeriggio?: string;
   durataMinuti: number;
   note?: string;
   cliente: { id: number; nome: string };
   cantiere: { id: number; nome: string };
   tipoAttivita: { id: number; nome: string };
   utente: { id: number; nome: string; cognome: string };
+}
+
+function formatTimeSlot(start?: string, end?: string): string {
+  if (start && end) {
+    return `${start}-${end}`;
+  }
+  return '-';
 }
 
 interface Cliente {
@@ -420,7 +429,8 @@ export function ReportPage() {
               <thead>
                 <tr className="border-b bg-gray-50">
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Data</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-600">Orario</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600">Mattino</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600">Pomeriggio</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Durata</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Dipendente</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cliente</th>
@@ -433,7 +443,8 @@ export function ReportPage() {
                 {attivita.map((att) => (
                   <tr key={att.id} className="border-b hover:bg-gray-50">
                     <td className="py-3 px-2">{formatDate(att.dataRiferimento)}</td>
-                    <td className="py-3 px-2">{att.oraInizio} - {att.oraFine}</td>
+                    <td className="py-3 px-2">{formatTimeSlot(att.oraInizioMattino, att.oraFineMattino)}</td>
+                    <td className="py-3 px-2">{formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio)}</td>
                     <td className="py-3 px-2">{formatDuration(att.durataMinuti)}</td>
                     <td className="py-3 px-2">{att.utente.nome} {att.utente.cognome}</td>
                     <td className="py-3 px-2 font-medium">{att.cliente.nome}</td>

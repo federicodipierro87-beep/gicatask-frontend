@@ -45,8 +45,10 @@ export function AssegnaAttivitaPage() {
   const [dataRiferimento, setDataRiferimento] = useState(
     new Date().toISOString().split('T')[0] || ''
   );
-  const [oraInizio, setOraInizio] = useState('08:00');
-  const [oraFine, setOraFine] = useState('17:00');
+  const [oraInizioMattino, setOraInizioMattino] = useState('');
+  const [oraFineMattino, setOraFineMattino] = useState('');
+  const [oraInizioPomeriggio, setOraInizioPomeriggio] = useState('');
+  const [oraFinePomeriggio, setOraFinePomeriggio] = useState('');
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [cantiereId, setCantiereId] = useState<number | null>(null);
   const [tipoAttivitaId, setTipoAttivitaId] = useState<number | null>(null);
@@ -127,8 +129,10 @@ export function AssegnaAttivitaPage() {
   const resetForm = () => {
     setUtenteId(null);
     setDataRiferimento(new Date().toISOString().split('T')[0] || '');
-    setOraInizio('08:00');
-    setOraFine('17:00');
+    setOraInizioMattino('');
+    setOraFineMattino('');
+    setOraInizioPomeriggio('');
+    setOraFinePomeriggio('');
     setClienteId(null);
     setCantiereId(null);
     setTipoAttivitaId(null);
@@ -143,8 +147,24 @@ export function AssegnaAttivitaPage() {
       return;
     }
 
-    if (oraFine <= oraInizio) {
-      setError('L\'ora di fine deve essere successiva all\'ora di inizio');
+    // Validate: at least one time slot
+    const hasMattino = oraInizioMattino && oraFineMattino;
+    const hasPomeriggio = oraInizioPomeriggio && oraFinePomeriggio;
+
+    if (!hasMattino && !hasPomeriggio) {
+      setError('Devi inserire almeno una fascia oraria (mattino o pomeriggio)');
+      return;
+    }
+
+    // Validate mattino times
+    if (hasMattino && oraFineMattino <= oraInizioMattino) {
+      setError('L\'ora di fine mattino deve essere successiva all\'ora di inizio');
+      return;
+    }
+
+    // Validate pomeriggio times
+    if (hasPomeriggio && oraFinePomeriggio <= oraInizioPomeriggio) {
+      setError('L\'ora di fine pomeriggio deve essere successiva all\'ora di inizio');
       return;
     }
 
@@ -156,8 +176,10 @@ export function AssegnaAttivitaPage() {
       await attivitaApi.create({
         utenteId,
         dataRiferimento,
-        oraInizio,
-        oraFine,
+        oraInizioMattino: oraInizioMattino || undefined,
+        oraFineMattino: oraFineMattino || undefined,
+        oraInizioPomeriggio: oraInizioPomeriggio || undefined,
+        oraFinePomeriggio: oraFinePomeriggio || undefined,
         clienteId,
         cantiereId,
         tipoAttivitaId,
@@ -224,40 +246,70 @@ export function AssegnaAttivitaPage() {
             </select>
           </div>
 
-          {/* Data e orari */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label htmlFor="data" className="label">Data</label>
-              <DateTimeInput
-                type="date"
-                id="data"
-                className="input"
-                value={dataRiferimento}
-                onChange={setDataRiferimento}
-                required
-              />
+          {/* Data */}
+          <div>
+            <label htmlFor="data" className="label">Data</label>
+            <DateTimeInput
+              type="date"
+              id="data"
+              className="input"
+              value={dataRiferimento}
+              onChange={setDataRiferimento}
+              required
+            />
+          </div>
+
+          {/* Fascia Mattino */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <label className="label mb-3">Mattino <span className="text-gray-400 font-normal">(opzionale)</span></label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="oraInizioMattino" className="label text-sm">Inizio</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraInizioMattino"
+                  className="input"
+                  value={oraInizioMattino}
+                  onChange={setOraInizioMattino}
+                />
+              </div>
+              <div>
+                <label htmlFor="oraFineMattino" className="label text-sm">Fine</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraFineMattino"
+                  className="input"
+                  value={oraFineMattino}
+                  onChange={setOraFineMattino}
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor="oraInizio" className="label">Ora inizio</label>
-              <DateTimeInput
-                type="time"
-                id="oraInizio"
-                className="input"
-                value={oraInizio}
-                onChange={setOraInizio}
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="oraFine" className="label">Ora fine</label>
-              <DateTimeInput
-                type="time"
-                id="oraFine"
-                className="input"
-                value={oraFine}
-                onChange={setOraFine}
-                required
-              />
+          </div>
+
+          {/* Fascia Pomeriggio */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <label className="label mb-3">Pomeriggio <span className="text-gray-400 font-normal">(opzionale)</span></label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="oraInizioPomeriggio" className="label text-sm">Inizio</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraInizioPomeriggio"
+                  className="input"
+                  value={oraInizioPomeriggio}
+                  onChange={setOraInizioPomeriggio}
+                />
+              </div>
+              <div>
+                <label htmlFor="oraFinePomeriggio" className="label text-sm">Fine</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraFinePomeriggio"
+                  className="input"
+                  value={oraFinePomeriggio}
+                  onChange={setOraFinePomeriggio}
+                />
+              </div>
             </div>
           </div>
 
@@ -348,7 +400,7 @@ export function AssegnaAttivitaPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSaving || !utenteId || !clienteId || !cantiereId || !tipoAttivitaId}
+              disabled={isSaving || !utenteId || !clienteId || !cantiereId || !tipoAttivitaId || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))}
             >
               {isSaving ? 'Salvataggio...' : 'Assegna attività'}
             </button>

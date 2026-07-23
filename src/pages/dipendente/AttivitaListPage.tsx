@@ -7,13 +7,22 @@ import { attivitaApi } from '../../api/client';
 interface Attivita {
   id: number;
   dataRiferimento: string;
-  oraInizio: string;
-  oraFine: string;
+  oraInizioMattino?: string;
+  oraFineMattino?: string;
+  oraInizioPomeriggio?: string;
+  oraFinePomeriggio?: string;
   durataMinuti: number;
   note?: string;
   cliente: { id: number; nome: string };
   cantiere: { id: number; nome: string };
   tipoAttivita: { id: number; nome: string };
+}
+
+function formatTimeSlot(start?: string, end?: string): string | null {
+  if (start && end) {
+    return `${start}-${end}`;
+  }
+  return null;
 }
 
 function formatDate(dateStr: string): string {
@@ -196,9 +205,16 @@ export function AttivitaListPage() {
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-gray-900">
-                            {att.oraInizio} - {att.oraFine}
-                          </span>
+                          {formatTimeSlot(att.oraInizioMattino, att.oraFineMattino) && (
+                            <span className="font-medium text-gray-900">
+                              M: {formatTimeSlot(att.oraInizioMattino, att.oraFineMattino)}
+                            </span>
+                          )}
+                          {formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio) && (
+                            <span className="font-medium text-gray-900">
+                              P: {formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio)}
+                            </span>
+                          )}
                           <span className="text-xs text-gray-500">
                             ({formatDuration(att.durataMinuti)})
                           </span>

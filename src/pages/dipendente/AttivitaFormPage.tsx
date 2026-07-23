@@ -38,8 +38,10 @@ export function AttivitaFormPage() {
   const [dataRiferimento, setDataRiferimento] = useState(
     new Date().toISOString().split('T')[0] || ''
   );
-  const [oraInizio, setOraInizio] = useState('08:00');
-  const [oraFine, setOraFine] = useState('17:00');
+  const [oraInizioMattino, setOraInizioMattino] = useState('');
+  const [oraFineMattino, setOraFineMattino] = useState('');
+  const [oraInizioPomeriggio, setOraInizioPomeriggio] = useState('');
+  const [oraFinePomeriggio, setOraFinePomeriggio] = useState('');
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [cantiereId, setCantiereId] = useState<number | null>(null);
   const [tipoAttivitaId, setTipoAttivitaId] = useState<number | null>(null);
@@ -58,8 +60,10 @@ export function AttivitaFormPage() {
           const att = attivitaRes.data;
 
           setDataRiferimento(att.dataRiferimento.split('T')[0]);
-          setOraInizio(att.oraInizio);
-          setOraFine(att.oraFine);
+          setOraInizioMattino(att.oraInizioMattino || '');
+          setOraFineMattino(att.oraFineMattino || '');
+          setOraInizioPomeriggio(att.oraInizioPomeriggio || '');
+          setOraFinePomeriggio(att.oraFinePomeriggio || '');
           setClienteId(att.clienteId);
           setCantiereId(att.cantiereId);
           setTipoAttivitaId(att.tipoAttivitaId);
@@ -145,9 +149,24 @@ export function AttivitaFormPage() {
       return;
     }
 
-    // Validate time
-    if (oraFine <= oraInizio) {
-      setError('L\'ora di fine deve essere successiva all\'ora di inizio');
+    // Validate: at least one time slot
+    const hasMattino = oraInizioMattino && oraFineMattino;
+    const hasPomeriggio = oraInizioPomeriggio && oraFinePomeriggio;
+
+    if (!hasMattino && !hasPomeriggio) {
+      setError('Devi inserire almeno una fascia oraria (mattino o pomeriggio)');
+      return;
+    }
+
+    // Validate mattino times
+    if (hasMattino && oraFineMattino <= oraInizioMattino) {
+      setError('L\'ora di fine mattino deve essere successiva all\'ora di inizio');
+      return;
+    }
+
+    // Validate pomeriggio times
+    if (hasPomeriggio && oraFinePomeriggio <= oraInizioPomeriggio) {
+      setError('L\'ora di fine pomeriggio deve essere successiva all\'ora di inizio');
       return;
     }
 
@@ -157,8 +176,10 @@ export function AttivitaFormPage() {
     try {
       const data = {
         dataRiferimento,
-        oraInizio,
-        oraFine,
+        oraInizioMattino: oraInizioMattino || undefined,
+        oraFineMattino: oraFineMattino || undefined,
+        oraInizioPomeriggio: oraInizioPomeriggio || undefined,
+        oraFinePomeriggio: oraFinePomeriggio || undefined,
         clienteId,
         cantiereId,
         tipoAttivitaId,
@@ -225,29 +246,57 @@ export function AttivitaFormPage() {
             />
           </div>
 
-          {/* Orari - inline su una riga */}
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label htmlFor="oraInizio" className="label text-base">Ora inizio</label>
-              <DateTimeInput
-                type="time"
-                id="oraInizio"
-                className="input text-base py-3 text-center"
-                value={oraInizio}
-                onChange={setOraInizio}
-                required
-              />
+          {/* Fascia Mattino */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <label className="label text-base mb-3">Mattino <span className="text-gray-400 font-normal">(opzionale)</span></label>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label htmlFor="oraInizioMattino" className="label text-sm">Inizio</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraInizioMattino"
+                  className="input text-base py-3 text-center"
+                  value={oraInizioMattino}
+                  onChange={setOraInizioMattino}
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="oraFineMattino" className="label text-sm">Fine</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraFineMattino"
+                  className="input text-base py-3 text-center"
+                  value={oraFineMattino}
+                  onChange={setOraFineMattino}
+                />
+              </div>
             </div>
-            <div className="flex-1">
-              <label htmlFor="oraFine" className="label text-base">Ora fine</label>
-              <DateTimeInput
-                type="time"
-                id="oraFine"
-                className="input text-base py-3 text-center"
-                value={oraFine}
-                onChange={setOraFine}
-                required
-              />
+          </div>
+
+          {/* Fascia Pomeriggio */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <label className="label text-base mb-3">Pomeriggio <span className="text-gray-400 font-normal">(opzionale)</span></label>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label htmlFor="oraInizioPomeriggio" className="label text-sm">Inizio</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraInizioPomeriggio"
+                  className="input text-base py-3 text-center"
+                  value={oraInizioPomeriggio}
+                  onChange={setOraInizioPomeriggio}
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="oraFinePomeriggio" className="label text-sm">Fine</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraFinePomeriggio"
+                  className="input text-base py-3 text-center"
+                  value={oraFinePomeriggio}
+                  onChange={setOraFinePomeriggio}
+                />
+              </div>
             </div>
           </div>
 
@@ -338,7 +387,7 @@ export function AttivitaFormPage() {
             <button
               type="submit"
               className="btn-primary text-base py-3 w-full sm:w-auto"
-              disabled={isSaving || !clienteId || !cantiereId || !tipoAttivitaId}
+              disabled={isSaving || !clienteId || !cantiereId || !tipoAttivitaId || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))}
             >
               {isSaving ? 'Salvataggio...' : isEditing ? 'Salva modifiche' : 'Registra attività'}
             </button>

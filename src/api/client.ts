@@ -133,8 +133,10 @@ export const attivitaApi = {
   create: (data: {
     utenteId?: number;
     dataRiferimento: string;
-    oraInizio: string;
-    oraFine: string;
+    oraInizioMattino?: string;
+    oraFineMattino?: string;
+    oraInizioPomeriggio?: string;
+    oraFinePomeriggio?: string;
     clienteId: number;
     cantiereId: number;
     tipoAttivitaId: number;
@@ -142,8 +144,10 @@ export const attivitaApi = {
   }) => apiClient.post('/attivita', data),
   update: (id: number, data: {
     dataRiferimento?: string;
-    oraInizio?: string;
-    oraFine?: string;
+    oraInizioMattino?: string;
+    oraFineMattino?: string;
+    oraInizioPomeriggio?: string;
+    oraFinePomeriggio?: string;
     clienteId?: number;
     cantiereId?: number;
     tipoAttivitaId?: number;
