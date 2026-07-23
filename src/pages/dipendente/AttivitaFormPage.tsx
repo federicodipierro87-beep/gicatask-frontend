@@ -217,9 +217,10 @@ export function AttivitaFormPage() {
             <input
               type="date"
               id="data"
-              className="input text-base py-3 text-center"
+              className="input text-base py-3 text-center cursor-pointer"
               value={dataRiferimento}
               onChange={(e) => setDataRiferimento(e.target.value)}
+              onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
               required
             />
           </div>
@@ -231,9 +232,10 @@ export function AttivitaFormPage() {
               <input
                 type="time"
                 id="oraInizio"
-                className="input text-base py-3 text-center"
+                className="input text-base py-3 text-center cursor-pointer"
                 value={oraInizio}
                 onChange={(e) => setOraInizio(e.target.value)}
+                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
                 required
               />
             </div>
@@ -242,9 +244,10 @@ export function AttivitaFormPage() {
               <input
                 type="time"
                 id="oraFine"
-                className="input text-base py-3 text-center"
+                className="input text-base py-3 text-center cursor-pointer"
                 value={oraFine}
                 onChange={(e) => setOraFine(e.target.value)}
+                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
                 required
               />
             </div>

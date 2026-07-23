@@ -230,9 +230,10 @@ export function AssegnaAttivitaPage() {
               <input
                 type="date"
                 id="data"
-                className="input"
+                className="input cursor-pointer"
                 value={dataRiferimento}
                 onChange={(e) => setDataRiferimento(e.target.value)}
+                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
                 required
               />
             </div>
@@ -241,9 +242,10 @@ export function AssegnaAttivitaPage() {
               <input
                 type="time"
                 id="oraInizio"
-                className="input"
+                className="input cursor-pointer"
                 value={oraInizio}
                 onChange={(e) => setOraInizio(e.target.value)}
+                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
                 required
               />
             </div>
@@ -252,9 +254,10 @@ export function AssegnaAttivitaPage() {
               <input
                 type="time"
                 id="oraFine"
-                className="input"
+                className="input cursor-pointer"
                 value={oraFine}
                 onChange={(e) => setOraFine(e.target.value)}
+                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
                 required
               />
             </div>

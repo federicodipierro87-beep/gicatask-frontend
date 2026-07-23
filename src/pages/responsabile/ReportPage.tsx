@@ -226,9 +226,10 @@ export function ReportPage() {
             <input
               type="date"
               id="startDate"
-              className="input"
+              className="input cursor-pointer"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
             />
           </div>
           <div>
@@ -236,9 +237,10 @@ export function ReportPage() {
             <input
               type="date"
               id="endDate"
-              className="input"
+              className="input cursor-pointer"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
+              onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
             />
           </div>
           <div>
