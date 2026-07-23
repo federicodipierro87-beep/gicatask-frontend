@@ -76,11 +76,19 @@
   }
 }
 
-/* Centra contenuto input date/time su tutti i browser */
+/* Normalizza input date/time su tutti i browser */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  min-height: 48px;
+  line-height: 1.5;
+}
+
 input[type="date"].text-center,
 input[type="time"].text-center {
   text-align: center;
-  -webkit-appearance: none;
 }
 
 input[type="date"].text-center::-webkit-date-and-time-value,
@@ -92,4 +100,30 @@ input[type="date"].text-center::-webkit-datetime-edit,
 input[type="time"].text-center::-webkit-datetime-edit {
   text-align: center;
   width: 100%;
+}
+
+/* Nascondi icona nativa su tutti i browser webkit */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  width: 0;
+  height: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* Fix per Chrome Android */
+input[type="date"]::-webkit-inner-spin-button,
+input[type="time"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button,
+input[type="time"]::-webkit-clear-button {
+  display: none;
+}
+
+/* Fix per Firefox */
+input[type="date"]::-moz-clear,
+input[type="time"]::-moz-clear {
+  display: none;
 }
