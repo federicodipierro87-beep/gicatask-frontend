@@ -71,9 +71,14 @@ export function AttivitaListPage() {
   const fetchAttivita = async () => {
     try {
       const response = await attivitaApi.getMine();
-      setAttivita(response.data);
-    } catch (err) {
-      setError('Errore nel caricamento delle attività');
+      setAttivita(Array.isArray(response.data) ? response.data : []);
+    } catch (err: any) {
+      console.error('Errore caricamento attività:', err);
+      if (err.response?.status === 401) {
+        setError('Sessione scaduta. Effettua nuovamente il login.');
+      } else {
+        setError(err.response?.data?.error || 'Errore nel caricamento delle attività');
+      }
     } finally {
       setIsLoading(false);
     }
