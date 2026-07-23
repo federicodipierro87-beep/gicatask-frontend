@@ -193,13 +193,13 @@ export function AttivitaFormPage() {
       <div className="mb-4">
         <button
           onClick={() => navigate('/dipendente')}
-          className="text-sm text-gray-600 hover:text-primary-600 flex items-center gap-1"
+          className="text-base text-gray-600 hover:text-primary-600 flex items-center gap-1 py-2"
         >
           ← Torna alle attività
         </button>
       </div>
 
-      <div className="card max-w-2xl">
+      <div className="card">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
           {isEditing ? 'Modifica Attività' : 'Nuova Attività'}
         </h2>
@@ -210,37 +210,39 @@ export function AttivitaFormPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Data e orari */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Data */}
+          <div>
+            <label htmlFor="data" className="label text-base">Data</label>
+            <input
+              type="date"
+              id="data"
+              className="input text-base py-3"
+              value={dataRiferimento}
+              onChange={(e) => setDataRiferimento(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Orari su due colonne */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="data" className="label">Data</label>
-              <input
-                type="date"
-                id="data"
-                className="input"
-                value={dataRiferimento}
-                onChange={(e) => setDataRiferimento(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="oraInizio" className="label">Ora inizio</label>
+              <label htmlFor="oraInizio" className="label text-base">Ora inizio</label>
               <input
                 type="time"
                 id="oraInizio"
-                className="input"
+                className="input text-base py-3"
                 value={oraInizio}
                 onChange={(e) => setOraInizio(e.target.value)}
                 required
               />
             </div>
             <div>
-              <label htmlFor="oraFine" className="label">Ora fine</label>
+              <label htmlFor="oraFine" className="label text-base">Ora fine</label>
               <input
                 type="time"
                 id="oraFine"
-                className="input"
+                className="input text-base py-3"
                 value={oraFine}
                 onChange={(e) => setOraFine(e.target.value)}
                 required
@@ -250,10 +252,10 @@ export function AttivitaFormPage() {
 
           {/* Cliente */}
           <div>
-            <label htmlFor="cliente" className="label">Cliente</label>
+            <label htmlFor="cliente" className="label text-base">Cliente</label>
             <select
               id="cliente"
-              className="select"
+              className="select text-base py-3"
               value={clienteId ?? ''}
               onChange={(e) => setClienteId(e.target.value ? parseInt(e.target.value) : null)}
               required
@@ -267,10 +269,10 @@ export function AttivitaFormPage() {
 
           {/* Cantiere */}
           <div>
-            <label htmlFor="cantiere" className="label">Cantiere</label>
+            <label htmlFor="cantiere" className="label text-base">Cantiere</label>
             <select
               id="cantiere"
-              className="select"
+              className="select text-base py-3"
               value={cantiereId ?? ''}
               onChange={(e) => setCantiereId(e.target.value ? parseInt(e.target.value) : null)}
               disabled={!clienteId}
@@ -289,10 +291,10 @@ export function AttivitaFormPage() {
 
           {/* Tipo Attività */}
           <div>
-            <label htmlFor="tipoAttivita" className="label">Tipo Attività</label>
+            <label htmlFor="tipoAttivita" className="label text-base">Tipo Attività</label>
             <select
               id="tipoAttivita"
-              className="select"
+              className="select text-base py-3"
               value={tipoAttivitaId ?? ''}
               onChange={(e) => setTipoAttivitaId(e.target.value ? parseInt(e.target.value) : null)}
               disabled={!cantiereId}
@@ -309,12 +311,12 @@ export function AttivitaFormPage() {
 
           {/* Note */}
           <div>
-            <label htmlFor="note" className="label">
+            <label htmlFor="note" className="label text-base">
               Note <span className="text-gray-400 font-normal">(opzionale)</span>
             </label>
             <textarea
               id="note"
-              className="input"
+              className="input text-base py-3"
               rows={3}
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -323,18 +325,18 @@ export function AttivitaFormPage() {
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t">
             <button
               type="button"
               onClick={() => navigate('/dipendente')}
-              className="btn-secondary"
+              className="btn-secondary text-base py-3 w-full sm:w-auto"
               disabled={isSaving}
             >
               Annulla
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="btn-primary text-base py-3 w-full sm:w-auto"
               disabled={isSaving || !clienteId || !cantiereId || !tipoAttivitaId}
             >
               {isSaving ? 'Salvataggio...' : isEditing ? 'Salva modifiche' : 'Registra attività'}
