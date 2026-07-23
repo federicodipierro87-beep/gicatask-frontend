@@ -17,6 +17,7 @@ interface BackupStatus {
   configured: boolean;
   lastBackup: { date: string; stato: string } | null;
   totalBackups: number;
+  config?: { accountId: string; bucket: string };
 }
 
 function formatDate(dateStr: string): string {
@@ -38,6 +39,7 @@ export function BackupPage() {
 
   // Action states
   const [isCreating, setIsCreating] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [restoreId, setRestoreId] = useState<number | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -61,6 +63,25 @@ export function BackupPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await backupApi.testConnection();
+      if (res.data.success) {
+        setSuccess(res.data.message);
+      } else {
+        setError(res.data.message);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Errore durante il test');
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   const handleCreateBackup = async () => {
     setIsCreating(true);
@@ -207,25 +228,46 @@ export function BackupPage() {
 
         {status?.configured && (
           <div className="mt-4 pt-4 border-t">
-            <button
-              onClick={handleCreateBackup}
-              disabled={isCreating}
-              className="btn-primary flex items-center gap-2"
-            >
-              {isCreating ? (
-                <>
-                  <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-                  Creazione in corso...
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
-                  Crea backup manuale
-                </>
-              )}
-            </button>
+            {status.config && (
+              <p className="text-xs text-gray-500 mb-3">
+                Account: {status.config.accountId} | Bucket: {status.config.bucket}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={handleTestConnection}
+                disabled={isTesting}
+                className="btn-secondary flex items-center gap-2"
+              >
+                {isTesting ? (
+                  <>
+                    <span className="animate-spin h-4 w-4 border-2 border-gray-600 border-t-transparent rounded-full"></span>
+                    Test...
+                  </>
+                ) : (
+                  'Testa connessione R2'
+                )}
+              </button>
+              <button
+                onClick={handleCreateBackup}
+                disabled={isCreating}
+                className="btn-primary flex items-center gap-2"
+              >
+                {isCreating ? (
+                  <>
+                    <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    Creazione in corso...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Crea backup manuale
+                  </>
+                )}
+              </button>
+            </div>
             <p className="text-xs text-gray-500 mt-2">
               I backup automatici vengono eseguiti ogni giorno alle 2:00
             </p>

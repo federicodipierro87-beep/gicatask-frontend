@@ -139,7 +139,10 @@ export const backupApi = {
       configured: boolean;
       lastBackup: { date: string; stato: string } | null;
       totalBackups: number;
+      config?: { accountId: string; bucket: string };
     }>('/backup/status'),
+  testConnection: () =>
+    apiClient.get<{ success: boolean; message: string }>('/backup/test'),
   getAll: () =>
     apiClient.get<{
       id: number;
