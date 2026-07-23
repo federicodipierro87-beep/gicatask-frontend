@@ -44,6 +44,7 @@ export function BackupPage() {
   const [isRestoring, setIsRestoring] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [restoreResult, setRestoreResult] = useState<{ stats: Record<string, number> } | null>(null);
 
   const fetchData = async () => {
     try {
@@ -108,11 +109,8 @@ export function BackupPage() {
 
     try {
       const res = await backupApi.restore(restoreId);
-      const stats = Object.entries(res.data.stats)
-        .map(([key, val]) => `${key}: ${val}`)
-        .join(', ');
-      setSuccess(`Ripristino completato! ${stats}`);
       setRestoreId(null);
+      setRestoreResult({ stats: res.data.stats });
       fetchData();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Errore durante il ripristino');
@@ -410,6 +408,43 @@ export function BackupPage() {
             disabled={isDeleting}
           >
             {isDeleting ? 'Eliminazione...' : 'Elimina'}
+          </button>
+        </div>
+      </Modal>
+
+      {/* Restore Success Modal */}
+      <Modal
+        isOpen={restoreResult !== null}
+        onClose={() => setRestoreResult(null)}
+        title="Ripristino completato"
+      >
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+            <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <p className="text-lg font-medium text-gray-900 mb-4">
+            Il database è stato ripristinato con successo!
+          </p>
+          {restoreResult && (
+            <div className="bg-gray-50 rounded-lg p-4 text-left mb-6">
+              <p className="text-sm font-medium text-gray-700 mb-2">Dati ripristinati:</p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {Object.entries(restoreResult.stats).map(([key, val]) => (
+                  <li key={key} className="flex justify-between">
+                    <span className="capitalize">{key}:</span>
+                    <span className="font-medium">{val} record</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <button
+            onClick={() => setRestoreResult(null)}
+            className="btn-primary w-full"
+          >
+            Chiudi
           </button>
         </div>
       </Modal>
