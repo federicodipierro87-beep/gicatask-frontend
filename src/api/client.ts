@@ -2,6 +2,14 @@ import axios, { AxiosError } from 'axios';
 import type { ApiError } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
+const TOKEN_KEY = 'gicatask_token';
+
+// Token management
+export const tokenStorage = {
+  get: () => localStorage.getItem(TOKEN_KEY),
+  set: (token: string) => localStorage.setItem(TOKEN_KEY, token),
+  remove: () => localStorage.removeItem(TOKEN_KEY),
+};
 
 export const apiClient = axios.create({
   baseURL: `${API_URL}/api`,
@@ -10,6 +18,18 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Request interceptor to add Authorization header
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = tokenStorage.get();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
@@ -29,7 +49,7 @@ export const authApi = {
     apiClient.get<{ hasPassword: boolean }>(`/auth/check-password/${userId}`),
 
   login: (utenteId: number, password?: string) =>
-    apiClient.post<{ user: { id: number; nome: string; cognome: string; ruolo: string } }>(
+    apiClient.post<{ token: string; user: { id: number; nome: string; cognome: string; ruolo: string } }>(
       '/auth/login',
       { utenteId, password }
     ),

@@ -6,7 +6,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import { authApi } from '../api/client';
+import { authApi, tokenStorage } from '../api/client';
 import type { User, Ruolo } from '../types';
 
 interface AuthContextType {
@@ -27,6 +27,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check if user is authenticated on mount
   useEffect(() => {
     const checkAuth = async () => {
+      // Skip if no token stored
+      const token = tokenStorage.get();
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const response = await authApi.getMe();
         setUser({
@@ -36,6 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ruolo: response.data.user.ruolo as Ruolo,
         });
       } catch {
+        // Token invalid, remove it
+        tokenStorage.remove();
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -47,6 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (utenteId: number, password?: string) => {
     const response = await authApi.login(utenteId, password);
+    // Save token to localStorage
+    tokenStorage.set(response.data.token);
     setUser({
       id: response.data.user.id,
       nome: response.data.user.nome,
@@ -56,7 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await authApi.logout();
+    try {
+      await authApi.logout();
+    } catch {
+      // Ignore logout errors
+    }
+    // Always remove token and clear user
+    tokenStorage.remove();
     setUser(null);
   }, []);
 
