@@ -228,7 +228,7 @@ export function ReportPage() {
               type="date"
               id="startDate"
               className="input"
-              value={startDate}
+              value={startDate ?? ''}
               onChange={setStartDate}
             />
           </div>
@@ -238,7 +238,7 @@ export function ReportPage() {
               type="date"
               id="endDate"
               className="input"
-              value={endDate}
+              value={endDate ?? ''}
               onChange={setEndDate}
             />
           </div>
