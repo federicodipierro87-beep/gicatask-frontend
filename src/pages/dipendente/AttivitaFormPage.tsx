@@ -211,44 +211,42 @@ export function AttivitaFormPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Data e Orari - Box centrato */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 overflow-hidden">
-            {/* Data */}
-            <div className="mb-3">
-              <label htmlFor="data" className="label text-base text-center block">Data</label>
+          {/* Data */}
+          <div>
+            <label htmlFor="data" className="label text-base">Data</label>
+            <input
+              type="date"
+              id="data"
+              className="input text-base py-3"
+              value={dataRiferimento}
+              onChange={(e) => setDataRiferimento(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Orari - inline su una riga */}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label htmlFor="oraInizio" className="label text-base">Inizio</label>
               <input
-                type="date"
-                id="data"
-                className="input text-base py-3 text-center w-full"
-                value={dataRiferimento}
-                onChange={(e) => setDataRiferimento(e.target.value)}
+                type="time"
+                id="oraInizio"
+                className="input text-base py-3"
+                value={oraInizio}
+                onChange={(e) => setOraInizio(e.target.value)}
                 required
               />
             </div>
-            {/* Orari */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="min-w-0">
-                <label htmlFor="oraInizio" className="label text-base text-center block">Ora inizio</label>
-                <input
-                  type="time"
-                  id="oraInizio"
-                  className="input text-base py-3 text-center w-full"
-                  value={oraInizio}
-                  onChange={(e) => setOraInizio(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="min-w-0">
-                <label htmlFor="oraFine" className="label text-base text-center block">Ora fine</label>
-                <input
-                  type="time"
-                  id="oraFine"
-                  className="input text-base py-3 text-center w-full"
-                  value={oraFine}
-                  onChange={(e) => setOraFine(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="flex-1">
+              <label htmlFor="oraFine" className="label text-base">Fine</label>
+              <input
+                type="time"
+                id="oraFine"
+                className="input text-base py-3"
+                value={oraFine}
+                onChange={(e) => setOraFine(e.target.value)}
+                required
+              />
             </div>
           </div>
 
