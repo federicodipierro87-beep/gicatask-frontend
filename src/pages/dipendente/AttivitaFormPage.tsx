@@ -217,7 +217,7 @@ export function AttivitaFormPage() {
             <input
               type="date"
               id="data"
-              className="input text-base py-3"
+              className="input text-base py-3 text-center"
               value={dataRiferimento}
               onChange={(e) => setDataRiferimento(e.target.value)}
               required
@@ -227,22 +227,22 @@ export function AttivitaFormPage() {
           {/* Orari - inline su una riga */}
           <div className="flex gap-3">
             <div className="flex-1">
-              <label htmlFor="oraInizio" className="label text-base">Inizio</label>
+              <label htmlFor="oraInizio" className="label text-base">Ora inizio</label>
               <input
                 type="time"
                 id="oraInizio"
-                className="input text-base py-3"
+                className="input text-base py-3 text-center"
                 value={oraInizio}
                 onChange={(e) => setOraInizio(e.target.value)}
                 required
               />
             </div>
             <div className="flex-1">
-              <label htmlFor="oraFine" className="label text-base">Fine</label>
+              <label htmlFor="oraFine" className="label text-base">Ora fine</label>
               <input
                 type="time"
                 id="oraFine"
-                className="input text-base py-3"
+                className="input text-base py-3 text-center"
                 value={oraFine}
                 onChange={(e) => setOraFine(e.target.value)}
                 required

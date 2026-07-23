@@ -75,3 +75,21 @@
     padding-top: env(safe-area-inset-top);
   }
 }
+
+/* Centra contenuto input date/time su tutti i browser */
+input[type="date"].text-center,
+input[type="time"].text-center {
+  text-align: center;
+  -webkit-appearance: none;
+}
+
+input[type="date"].text-center::-webkit-date-and-time-value,
+input[type="time"].text-center::-webkit-date-and-time-value {
+  text-align: center;
+}
+
+input[type="date"].text-center::-webkit-datetime-edit,
+input[type="time"].text-center::-webkit-datetime-edit {
+  text-align: center;
+  width: 100%;
+}
