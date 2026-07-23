@@ -72,16 +72,24 @@ export function AttivitaListPage() {
     try {
       const response = await attivitaApi.getMine();
       setAttivita(Array.isArray(response.data) ? response.data : []);
+      setError(null);
     } catch (err: any) {
       console.error('Errore caricamento attività:', err);
-      const status = err.response?.status || 'network';
-      const message = err.response?.data?.error || err.message || 'Errore sconosciuto';
 
-      if (status === 401) {
-        setError('Sessione scaduta. Effettua nuovamente il login.');
+      let errorDetails = '';
+
+      if (err.response) {
+        // Errore dal server
+        errorDetails = `Status: ${err.response.status} | ${err.response.data?.error || err.response.statusText || 'Errore server'}`;
+      } else if (err.request) {
+        // Nessuna risposta dal server
+        errorDetails = 'Nessuna risposta dal server. Controlla la connessione.';
       } else {
-        setError(`Errore (${status}): ${message}`);
+        // Errore nella richiesta
+        errorDetails = `Errore: ${err.message}`;
       }
+
+      setError(errorDetails);
     } finally {
       setIsLoading(false);
     }
@@ -134,8 +142,15 @@ export function AttivitaListPage() {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-          {error}
+        <div className="mb-4 p-4 bg-red-50 border-2 border-red-400 rounded-lg">
+          <p className="text-red-800 font-bold text-lg mb-2">Errore</p>
+          <p className="text-red-700 text-base break-all">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 bg-red-600 text-white px-4 py-2 rounded"
+          >
+            Riprova
+          </button>
         </div>
       )}
 
