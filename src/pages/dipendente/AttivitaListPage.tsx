@@ -74,10 +74,13 @@ export function AttivitaListPage() {
       setAttivita(Array.isArray(response.data) ? response.data : []);
     } catch (err: any) {
       console.error('Errore caricamento attività:', err);
-      if (err.response?.status === 401) {
+      const status = err.response?.status || 'network';
+      const message = err.response?.data?.error || err.message || 'Errore sconosciuto';
+
+      if (status === 401) {
         setError('Sessione scaduta. Effettua nuovamente il login.');
       } else {
-        setError(err.response?.data?.error || 'Errore nel caricamento delle attività');
+        setError(`Errore (${status}): ${message}`);
       }
     } finally {
       setIsLoading(false);
