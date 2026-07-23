@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { attivitaApi, clientiApi, cantieriApi, utentiApi } from '../../api/client';
 
 interface Attivita {
@@ -223,24 +224,22 @@ export function ReportPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <div>
             <label htmlFor="startDate" className="label">Dal</label>
-            <input
+            <DateTimeInput
               type="date"
               id="startDate"
-              className="input cursor-pointer"
+              className="input"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+              onChange={setStartDate}
             />
           </div>
           <div>
             <label htmlFor="endDate" className="label">Al</label>
-            <input
+            <DateTimeInput
               type="date"
               id="endDate"
-              className="input cursor-pointer"
+              className="input"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+              onChange={setEndDate}
             />
           </div>
           <div>

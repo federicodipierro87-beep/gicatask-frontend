@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { clientiApi, cantieriApi, tipiAttivitaApi, attivitaApi, utentiApi } from '../../api/client';
 
 interface Cliente {
@@ -227,37 +228,34 @@ export function AssegnaAttivitaPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label htmlFor="data" className="label">Data</label>
-              <input
+              <DateTimeInput
                 type="date"
                 id="data"
-                className="input cursor-pointer"
+                className="input"
                 value={dataRiferimento}
-                onChange={(e) => setDataRiferimento(e.target.value)}
-                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                onChange={setDataRiferimento}
                 required
               />
             </div>
             <div>
               <label htmlFor="oraInizio" className="label">Ora inizio</label>
-              <input
+              <DateTimeInput
                 type="time"
                 id="oraInizio"
-                className="input cursor-pointer"
+                className="input"
                 value={oraInizio}
-                onChange={(e) => setOraInizio(e.target.value)}
-                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                onChange={setOraInizio}
                 required
               />
             </div>
             <div>
               <label htmlFor="oraFine" className="label">Ora fine</label>
-              <input
+              <DateTimeInput
                 type="time"
                 id="oraFine"
-                className="input cursor-pointer"
+                className="input"
                 value={oraFine}
-                onChange={(e) => setOraFine(e.target.value)}
-                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                onChange={setOraFine}
                 required
               />
             </div>

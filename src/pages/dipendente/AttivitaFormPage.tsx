@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
+import { DateTimeInput } from '../../components/DateTimeInput';
 import { clientiApi, cantieriApi, tipiAttivitaApi, attivitaApi } from '../../api/client';
 
 interface Cliente {
@@ -214,13 +215,12 @@ export function AttivitaFormPage() {
           {/* Data */}
           <div>
             <label htmlFor="data" className="label text-base">Data</label>
-            <input
+            <DateTimeInput
               type="date"
               id="data"
-              className="input text-base py-3 text-center cursor-pointer"
+              className="input text-base py-3 text-center"
               value={dataRiferimento}
-              onChange={(e) => setDataRiferimento(e.target.value)}
-              onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+              onChange={setDataRiferimento}
               required
             />
           </div>
@@ -229,25 +229,23 @@ export function AttivitaFormPage() {
           <div className="flex gap-3">
             <div className="flex-1">
               <label htmlFor="oraInizio" className="label text-base">Ora inizio</label>
-              <input
+              <DateTimeInput
                 type="time"
                 id="oraInizio"
-                className="input text-base py-3 text-center cursor-pointer"
+                className="input text-base py-3 text-center"
                 value={oraInizio}
-                onChange={(e) => setOraInizio(e.target.value)}
-                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                onChange={setOraInizio}
                 required
               />
             </div>
             <div className="flex-1">
               <label htmlFor="oraFine" className="label text-base">Ora fine</label>
-              <input
+              <DateTimeInput
                 type="time"
                 id="oraFine"
-                className="input text-base py-3 text-center cursor-pointer"
+                className="input text-base py-3 text-center"
                 value={oraFine}
-                onChange={(e) => setOraFine(e.target.value)}
-                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                onChange={setOraFine}
                 required
               />
             </div>
