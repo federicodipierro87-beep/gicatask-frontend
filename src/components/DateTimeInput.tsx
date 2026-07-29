@@ -23,6 +23,12 @@ export function DateTimeInput({
 
   const handleClick = () => {
     if (inputRef.current && !disabled) {
+      // For time inputs, if empty, set default to current hour with :00 minutes
+      if (type === 'time' && !value) {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        onChange(`${hours}:00`);
+      }
       inputRef.current.showPicker?.();
     }
   };
@@ -37,13 +43,16 @@ export function DateTimeInput({
     </svg>
   );
 
+  // Add text-center for date inputs
+  const centerClass = type === 'date' ? 'text-center' : '';
+
   return (
     <div className="relative">
       <input
         ref={inputRef}
         type={type}
         id={id}
-        className={`${className} pr-10 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-0`}
+        className={`${className} ${centerClass} pr-10 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-0`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onClick={handleClick}
