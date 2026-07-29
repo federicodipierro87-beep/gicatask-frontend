@@ -39,6 +39,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const inactivityTimerRef = useRef<number | null>(null);
   const warningTimerRef = useRef<number | null>(null);
   const isLoggingOutRef = useRef(false);
+  const showInactivityWarningRef = useRef(false);
+
+  // Sync ref with state to avoid re-renders in useEffect
+  useEffect(() => {
+    showInactivityWarningRef.current = showInactivityWarning;
+  }, [showInactivityWarning]);
 
   // Get inactivity timeout based on user role
   const getInactivityTimeout = useCallback(() => {
@@ -85,6 +91,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetInactivityTimer = useCallback(() => {
     if (!user || isLoggingOutRef.current) return;
 
+    // Don't reset if warning is already shown
+    if (showInactivityWarningRef.current) return;
+
     clearTimers();
 
     const timeout = getInactivityTimeout();
@@ -121,7 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ];
 
     const handleActivity = () => {
-      if (!showInactivityWarning) {
+      // Use ref to avoid re-running effect when warning state changes
+      if (!showInactivityWarningRef.current) {
         resetInactivityTimer();
       }
     };
@@ -141,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       clearTimers();
     };
-  }, [user, showInactivityWarning, resetInactivityTimer, clearTimers]);
+  }, [user, resetInactivityTimer, clearTimers]);
 
   // Check if user is authenticated on mount
   useEffect(() => {
@@ -189,8 +199,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Handle page visibility change (for mobile browser minimize)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && user) {
-        // Page became visible, reset timer
+      // Only reset timer if page becomes visible and warning is not shown
+      if (document.visibilityState === 'visible' && user && !showInactivityWarningRef.current) {
         resetInactivityTimer();
       }
     };
