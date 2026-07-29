@@ -8,6 +8,7 @@ interface DateTimeInputProps {
   className?: string;
   required?: boolean;
   disabled?: boolean;
+  defaultTime?: string; // Default time to set when clicking on empty time input (e.g., "06:00")
 }
 
 export function DateTimeInput({
@@ -18,16 +19,15 @@ export function DateTimeInput({
   className = '',
   required = false,
   disabled = false,
+  defaultTime,
 }: DateTimeInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleClick = () => {
     if (inputRef.current && !disabled) {
-      // For time inputs, if empty, set default to current hour with :00 minutes
-      if (type === 'time' && !value) {
-        const now = new Date();
-        const hours = now.getHours().toString().padStart(2, '0');
-        onChange(`${hours}:00`);
+      // For time inputs, if empty, set default time
+      if (type === 'time' && !value && defaultTime) {
+        onChange(defaultTime);
       }
       inputRef.current.showPicker?.();
     }

@@ -228,6 +228,7 @@ export function AttivitaFormPage() {
                   className="input"
                   value={oraInizioMattino}
                   onChange={setOraInizioMattino}
+                  defaultTime="06:00"
                 />
               </div>
               <div>
@@ -238,6 +239,7 @@ export function AttivitaFormPage() {
                   className="input"
                   value={oraFineMattino}
                   onChange={setOraFineMattino}
+                  defaultTime="06:00"
                 />
               </div>
             </div>
@@ -255,6 +257,7 @@ export function AttivitaFormPage() {
                   className="input"
                   value={oraInizioPomeriggio}
                   onChange={setOraInizioPomeriggio}
+                  defaultTime="13:00"
                 />
               </div>
               <div>
@@ -265,6 +268,7 @@ export function AttivitaFormPage() {
                   className="input"
                   value={oraFinePomeriggio}
                   onChange={setOraFinePomeriggio}
+                  defaultTime="13:00"
                 />
               </div>
             </div>
