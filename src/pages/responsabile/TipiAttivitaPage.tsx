@@ -20,6 +20,11 @@ export function TipiAttivitaPage() {
   const [newTipoNome, setNewTipoNome] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
+  // Edit modal
+  const [editingTipo, setEditingTipo] = useState<TipoAttivita | null>(null);
+  const [editNome, setEditNome] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -70,6 +75,27 @@ export function TipiAttivitaPage() {
       fetchData();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Errore durante la riattivazione');
+    }
+  };
+
+  const handleEdit = (tipo: TipoAttivita) => {
+    setEditingTipo(tipo);
+    setEditNome(tipo.nome);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingTipo || !editNome.trim()) return;
+
+    setIsUpdating(true);
+    try {
+      await tipiAttivitaApi.update(editingTipo.id, editNome.trim());
+      setEditingTipo(null);
+      setEditNome('');
+      fetchData();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Errore durante la modifica');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -138,7 +164,15 @@ export function TipiAttivitaPage() {
                         <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded">Inattivo</span>
                       )}
                     </td>
-                    <td className="py-3 px-2 text-right">
+                    <td className="py-3 px-2 text-right space-x-3">
+                      {tipo.attivo && (
+                        <button
+                          onClick={() => handleEdit(tipo)}
+                          className="text-primary-600 hover:text-primary-700 text-sm"
+                        >
+                          Modifica
+                        </button>
+                      )}
                       {tipo.attivo ? (
                         <button
                           onClick={() => handleDelete(tipo.id)}
@@ -200,6 +234,49 @@ export function TipiAttivitaPage() {
               className="btn-primary"
             >
               {isCreating ? 'Creazione...' : 'Crea'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={editingTipo !== null}
+        onClose={() => {
+          setEditingTipo(null);
+          setEditNome('');
+        }}
+        title="Modifica Tipo Attivita"
+      >
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="editNome" className="label">Nome Tipo Attivita</label>
+            <input
+              type="text"
+              id="editNome"
+              className="input"
+              value={editNome}
+              onChange={(e) => setEditNome(e.target.value)}
+              placeholder="Es. Carico/Scarico"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              onClick={() => {
+                setEditingTipo(null);
+                setEditNome('');
+              }}
+              className="btn-secondary"
+              disabled={isUpdating}
+            >
+              Annulla
+            </button>
+            <button
+              onClick={handleUpdate}
+              disabled={isUpdating || !editNome.trim()}
+              className="btn-primary"
+            >
+              {isUpdating ? 'Salvataggio...' : 'Salva'}
             </button>
           </div>
         </div>
