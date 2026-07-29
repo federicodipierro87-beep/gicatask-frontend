@@ -29,6 +29,11 @@ export function CantieriPage() {
   const [newCantiereClienteId, setNewCantiereClienteId] = useState<number | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
+  // Edit modal
+  const [editingCantiere, setEditingCantiere] = useState<Cantiere | null>(null);
+  const [editNome, setEditNome] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -97,6 +102,27 @@ export function CantieriPage() {
       fetchData();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Errore durante la riattivazione');
+    }
+  };
+
+  const handleEdit = (cantiere: Cantiere) => {
+    setEditingCantiere(cantiere);
+    setEditNome(cantiere.nome);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingCantiere || !editNome.trim()) return;
+
+    setIsUpdating(true);
+    try {
+      await cantieriApi.update(editingCantiere.id, editNome.trim());
+      setEditingCantiere(null);
+      setEditNome('');
+      fetchData();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Errore durante la modifica');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -175,7 +201,15 @@ export function CantieriPage() {
                         <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded">Inattivo</span>
                       )}
                     </td>
-                    <td className="py-3 px-2 text-right">
+                    <td className="py-3 px-2 text-right space-x-3">
+                      {!cantiere.isGenerico && cantiere.attivo && (
+                        <button
+                          onClick={() => handleEdit(cantiere)}
+                          className="text-primary-600 hover:text-primary-700 text-sm"
+                        >
+                          Modifica
+                        </button>
+                      )}
                       {!cantiere.isGenerico && (
                         <>
                           {cantiere.attivo ? (
@@ -257,6 +291,54 @@ export function CantieriPage() {
               className="btn-primary"
             >
               {isCreating ? 'Creazione...' : 'Crea'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={editingCantiere !== null}
+        onClose={() => {
+          setEditingCantiere(null);
+          setEditNome('');
+        }}
+        title="Modifica Cantiere"
+      >
+        <div className="space-y-4">
+          {editingCantiere && (
+            <p className="text-sm text-gray-600">
+              Cliente: <strong>{editingCantiere.cliente.nome}</strong>
+            </p>
+          )}
+          <div>
+            <label htmlFor="editNome" className="label">Nome Cantiere</label>
+            <input
+              type="text"
+              id="editNome"
+              className="input"
+              value={editNome}
+              onChange={(e) => setEditNome(e.target.value)}
+              placeholder="Es. Magazzino Nord"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              onClick={() => {
+                setEditingCantiere(null);
+                setEditNome('');
+              }}
+              className="btn-secondary"
+              disabled={isUpdating}
+            >
+              Annulla
+            </button>
+            <button
+              onClick={handleUpdate}
+              disabled={isUpdating || !editNome.trim()}
+              className="btn-primary"
+            >
+              {isUpdating ? 'Salvataggio...' : 'Salva'}
             </button>
           </div>
         </div>
