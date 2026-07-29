@@ -186,20 +186,16 @@ export function AttivitaFormPage() {
 
   return (
     <DipendenteLayout>
-      <div className="mb-4">
-        <button
-          onClick={() => navigate('/dipendente')}
-          className="text-base text-gray-600 hover:text-primary-600 flex items-center gap-1 py-2"
-        >
-          ← Torna alle attività
-        </button>
-      </div>
-
-      <div className="card">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-900">
           {isEditing ? 'Modifica Attività' : 'Nuova Attività'}
         </h2>
+        <p className="text-sm text-gray-600 mt-1">
+          {isEditing ? 'Modifica i dettagli dell\'attività' : 'Registra una nuova attività lavorativa'}
+        </p>
+      </div>
 
+      <div className="card max-w-2xl">
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             {error}
@@ -353,7 +349,7 @@ export function AttivitaFormPage() {
               className="btn-secondary"
               disabled={isSaving}
             >
-              Annulla
+              Torna alle attività
             </button>
             <button
               type="submit"
