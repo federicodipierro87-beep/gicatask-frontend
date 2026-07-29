@@ -25,8 +25,9 @@ export function DateTimeInput({
 
   const handleClick = () => {
     if (inputRef.current && !disabled) {
-      // For time inputs, if empty, set default time
+      // For time inputs, if empty, set default time and update input directly
       if (type === 'time' && !value && defaultTime) {
+        inputRef.current.value = defaultTime;
         onChange(defaultTime);
       }
       inputRef.current.showPicker?.();
