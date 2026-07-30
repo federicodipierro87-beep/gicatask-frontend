@@ -89,6 +89,8 @@ export const clientiApi = {
 
 // Cantieri API
 export const cantieriApi = {
+  getAll: (includeInactive = false) =>
+    apiClient.get(`/cantieri${includeInactive ? '?includeInactive=true' : ''}`),
   getByCliente: (clienteId: number, includeInactive = false) =>
     apiClient.get(`/cantieri/cliente/${clienteId}${includeInactive ? '?includeInactive=true' : ''}`),
   getById: (id: number) =>

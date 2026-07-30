@@ -37,25 +37,12 @@ export function CantieriPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [clientiRes] = await Promise.all([
+      const [clientiRes, cantieriRes] = await Promise.all([
         clientiApi.getAll(),
+        cantieriApi.getAll(showInactive),
       ]);
       setClienti(Array.isArray(clientiRes.data) ? clientiRes.data : []);
-
-      // Fetch cantieri for all clients
-      const allCantieri: Cantiere[] = [];
-      const clientiData = Array.isArray(clientiRes.data) ? clientiRes.data : [];
-
-      for (const cliente of clientiData) {
-        const cantieriRes = await cantieriApi.getByCliente(cliente.id, showInactive);
-        const cantieriData = Array.isArray(cantieriRes.data) ? cantieriRes.data : [];
-        allCantieri.push(...cantieriData.map((c: any) => ({
-          ...c,
-          cliente: { id: cliente.id, nome: cliente.nome }
-        })));
-      }
-
-      setCantieri(allCantieri);
+      setCantieri(Array.isArray(cantieriRes.data) ? cantieriRes.data : []);
       setError(null);
     } catch (err) {
       setError('Errore nel caricamento dei dati');
