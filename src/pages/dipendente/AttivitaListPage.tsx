@@ -15,7 +15,7 @@ interface Attivita {
   note?: string;
   cliente: { id: number; nome: string };
   cantiere: { id: number; nome: string };
-  tipoAttivita: { id: number; nome: string };
+  tipoAttivita: { id: number; nome: string } | null;
 }
 
 function formatTimeSlot(start?: string, end?: string): string | null {
@@ -275,8 +275,12 @@ export function AttivitaListPage() {
                           <span className="font-medium">{att.cliente.nome}</span>
                           {' → '}
                           <span>{att.cantiere.nome}</span>
-                          {' → '}
-                          <span className="text-primary-600">{att.tipoAttivita.nome}</span>
+                          {att.tipoAttivita && (
+                            <>
+                              {' → '}
+                              <span className="text-primary-600">{att.tipoAttivita.nome}</span>
+                            </>
+                          )}
                         </div>
                         {att.note && (
                           <p className="text-sm text-gray-500 mt-1 italic truncate">
@@ -379,10 +383,12 @@ export function AttivitaListPage() {
                 <p className="font-medium text-gray-900">{selectedAttivita.cantiere.nome}</p>
               </div>
 
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Tipo Attività</p>
-                <p className="font-medium text-primary-600">{selectedAttivita.tipoAttivita.nome}</p>
-              </div>
+              {selectedAttivita.tipoAttivita && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Tipo Attività</p>
+                  <p className="font-medium text-primary-600">{selectedAttivita.tipoAttivita.nome}</p>
+                </div>
+              )}
 
               {selectedAttivita.note && (
                 <div className="bg-gray-50 p-3 rounded-lg">

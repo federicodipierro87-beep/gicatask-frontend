@@ -15,7 +15,7 @@ interface Attivita {
   note?: string;
   cliente: { id: number; nome: string };
   cantiere: { id: number; nome: string };
-  tipoAttivita: { id: number; nome: string };
+  tipoAttivita: { id: number; nome: string } | null;
   utente: { id: number; nome: string; cognome: string };
 }
 
@@ -499,7 +499,7 @@ export function ReportPage() {
                     <td className="py-3 px-2">{att.utente.nome} {att.utente.cognome}</td>
                     <td className="py-3 px-2 font-medium">{att.cliente.nome}</td>
                     <td className="py-3 px-2">{att.cantiere.nome}</td>
-                    <td className="py-3 px-2 text-primary-600">{att.tipoAttivita.nome}</td>
+                    <td className="py-3 px-2 text-primary-600">{att.tipoAttivita?.nome ?? ''}</td>
                     <td className="py-3 px-2">{formatTimeSlot(att.oraInizioMattino, att.oraFineMattino)}</td>
                     <td className="py-3 px-2">{formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio)}</td>
                     <td className="py-3 px-2">{formatDuration(att.durataMinuti)}</td>
@@ -556,10 +556,12 @@ export function ReportPage() {
                 <p className="font-medium text-gray-900">{selectedAttivita.cantiere.nome}</p>
               </div>
 
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Tipo Attività</p>
-                <p className="font-medium text-primary-600">{selectedAttivita.tipoAttivita.nome}</p>
-              </div>
+              {selectedAttivita.tipoAttivita && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Tipo Attività</p>
+                  <p className="font-medium text-primary-600">{selectedAttivita.tipoAttivita.nome}</p>
+                </div>
+              )}
 
               {selectedAttivita.note && (
                 <div className="bg-gray-50 p-3 rounded-lg">

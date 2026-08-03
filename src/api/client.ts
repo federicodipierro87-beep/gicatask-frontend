@@ -149,7 +149,7 @@ export const attivitaApi = {
     oraFinePomeriggio?: string;
     clienteId: number;
     cantiereId: number;
-    tipoAttivitaId: number;
+    tipoAttivitaId?: number | null;
     note?: string;
   }) => apiClient.post('/attivita', data),
   update: (id: number, data: {
@@ -160,7 +160,7 @@ export const attivitaApi = {
     oraFinePomeriggio?: string;
     clienteId?: number;
     cantiereId?: number;
-    tipoAttivitaId?: number;
+    tipoAttivitaId?: number | null;
     note?: string;
   }) => apiClient.put(`/attivita/${id}`, data),
   delete: (id: number) =>

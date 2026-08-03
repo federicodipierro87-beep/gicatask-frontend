@@ -118,7 +118,7 @@ export function AttivitaFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!clienteId || !cantiereId || !tipoAttivitaId) {
+    if (!clienteId || !cantiereId) {
       setError('Compila tutti i campi obbligatori');
       return;
     }
@@ -156,7 +156,7 @@ export function AttivitaFormPage() {
         oraFinePomeriggio: oraFinePomeriggio || undefined,
         clienteId,
         cantiereId,
-        tipoAttivitaId,
+        tipoAttivitaId: tipoAttivitaId ?? null,
         note: note.trim() || undefined,
       };
 
@@ -315,13 +315,14 @@ export function AttivitaFormPage() {
 
           {/* Tipo Attività */}
           <div>
-            <label htmlFor="tipoAttivita" className="label">Tipo Attività</label>
+            <label htmlFor="tipoAttivita" className="label">
+              Tipo Attività <span className="text-gray-400 font-normal">(opzionale)</span>
+            </label>
             <select
               id="tipoAttivita"
               className="select"
               value={tipoAttivitaId ?? ''}
               onChange={(e) => setTipoAttivitaId(e.target.value ? parseInt(e.target.value) : null)}
-              required
             >
               <option value="">Seleziona tipo attività...</option>
               {tipiAttivita.map((t) => (
@@ -358,7 +359,7 @@ export function AttivitaFormPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSaving || !clienteId || !cantiereId || !tipoAttivitaId || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))}
+              disabled={isSaving || !clienteId || !cantiereId || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))}
             >
               {isSaving ? 'Salvataggio...' : isEditing ? 'Salva modifiche' : 'Registra attività'}
             </button>

@@ -57,7 +57,7 @@ export interface Attivita {
   durataMinuti: number;
   clienteId: number;
   cantiereId: number;
-  tipoAttivitaId: number;
+  tipoAttivitaId?: number | null;
   note?: string;
   createdById: number;
   createdAt: string;
