@@ -43,7 +43,7 @@ function RootRedirect() {
 
   return (
     <Navigate
-      to={user?.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente'}
+      to={user?.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente/nuova'}
       replace
     />
   );

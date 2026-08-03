@@ -25,7 +25,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
   if (requiredRole && user?.ruolo !== requiredRole) {
     // Redirect to appropriate dashboard based on role
-    const redirectPath = user?.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente';
+    const redirectPath = user?.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente/nuova';
     return <Navigate to={redirectPath} replace />;
   }
 

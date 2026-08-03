@@ -22,7 +22,7 @@ export function LoginPage() {
   useEffect(() => {
     if (isAuthenticated && user) {
       const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
-      const defaultPath = user.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente';
+      const defaultPath = user.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente/nuova';
       navigate(from ?? defaultPath, { replace: true });
     }
   }, [isAuthenticated, user, navigate, location.state]);
