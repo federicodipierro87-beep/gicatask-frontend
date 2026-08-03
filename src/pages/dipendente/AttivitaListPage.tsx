@@ -13,9 +13,10 @@ interface Attivita {
   oraFinePomeriggio?: string;
   durataMinuti: number;
   note?: string;
-  cliente: { id: number; nome: string };
-  cantiere: { id: number; nome: string };
+  cliente: { id: number; nome: string } | null;
+  cantiere: { id: number; nome: string } | null;
   tipoAttivita: { id: number; nome: string } | null;
+  assenza: { id: number; nome: string } | null;
 }
 
 function formatTimeSlot(start?: string, end?: string): string | null {
@@ -272,13 +273,23 @@ export function AttivitaListPage() {
                           </span>
                         </div>
                         <div className="text-sm text-gray-600 mt-1 truncate">
-                          <span className="font-medium">{att.cliente.nome}</span>
-                          {' → '}
-                          <span>{att.cantiere.nome}</span>
-                          {att.tipoAttivita && (
+                          {att.assenza ? (
+                            <span className="font-medium text-primary-600">{att.assenza.nome}</span>
+                          ) : (
                             <>
-                              {' → '}
-                              <span className="text-primary-600">{att.tipoAttivita.nome}</span>
+                              {att.cliente && <span className="font-medium">{att.cliente.nome}</span>}
+                              {att.cantiere && (
+                                <>
+                                  {att.cliente && ' → '}
+                                  <span>{att.cantiere.nome}</span>
+                                </>
+                              )}
+                              {att.tipoAttivita && (
+                                <>
+                                  {(att.cliente || att.cantiere) && ' → '}
+                                  <span className="text-primary-600">{att.tipoAttivita.nome}</span>
+                                </>
+                              )}
                             </>
                           )}
                         </div>
@@ -375,18 +386,25 @@ export function AttivitaListPage() {
 
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Cliente</p>
-                <p className="font-medium text-gray-900">{selectedAttivita.cliente.nome}</p>
+                <p className="font-medium text-gray-900">{selectedAttivita.cliente?.nome ?? ''}</p>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Cantiere</p>
-                <p className="font-medium text-gray-900">{selectedAttivita.cantiere.nome}</p>
+                <p className="font-medium text-gray-900">{selectedAttivita.cantiere?.nome ?? ''}</p>
               </div>
 
               {selectedAttivita.tipoAttivita && (
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Tipo Attività</p>
                   <p className="font-medium text-primary-600">{selectedAttivita.tipoAttivita.nome}</p>
+                </div>
+              )}
+
+              {selectedAttivita.assenza && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Assenza</p>
+                  <p className="font-medium text-primary-600">{selectedAttivita.assenza.nome}</p>
                 </div>
               )}
 

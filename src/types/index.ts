@@ -48,6 +48,12 @@ export interface TipoAttivita {
   attivo: boolean;
 }
 
+export interface TipoAssenza {
+  id: number;
+  nome: string;
+  attivo: boolean;
+}
+
 export interface Attivita {
   id: number;
   utenteId: number;
@@ -55,9 +61,10 @@ export interface Attivita {
   oraInizio: string;
   oraFine: string;
   durataMinuti: number;
-  clienteId: number;
-  cantiereId: number;
+  clienteId?: number | null;
+  cantiereId?: number | null;
   tipoAttivitaId?: number | null;
+  assenzaId?: number | null;
   note?: string;
   createdById: number;
   createdAt: string;

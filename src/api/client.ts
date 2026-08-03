@@ -121,6 +121,22 @@ export const tipiAttivitaApi = {
     apiClient.post(`/tipi-attivita/${id}/activate`),
 };
 
+// Tipi Assenza API
+export const tipiAssenzaApi = {
+  getAll: (includeInactive = false) =>
+    apiClient.get(`/tipi-assenza${includeInactive ? '?includeInactive=true' : ''}`),
+  getById: (id: number) =>
+    apiClient.get(`/tipi-assenza/${id}`),
+  create: (nome: string) =>
+    apiClient.post('/tipi-assenza', { nome }),
+  update: (id: number, nome: string) =>
+    apiClient.put(`/tipi-assenza/${id}`, { nome }),
+  delete: (id: number) =>
+    apiClient.delete(`/tipi-assenza/${id}`),
+  activate: (id: number) =>
+    apiClient.post(`/tipi-assenza/${id}/activate`),
+};
+
 // Attività API
 export const attivitaApi = {
   getAll: (filters?: { utenteId?: number; clienteId?: number; cantiereId?: number; startDate?: string; endDate?: string }) => {
@@ -147,9 +163,10 @@ export const attivitaApi = {
     oraFineMattino?: string;
     oraInizioPomeriggio?: string;
     oraFinePomeriggio?: string;
-    clienteId: number;
-    cantiereId: number;
+    clienteId?: number | null;
+    cantiereId?: number | null;
     tipoAttivitaId?: number | null;
+    assenzaId?: number | null;
     note?: string;
   }) => apiClient.post('/attivita', data),
   update: (id: number, data: {
@@ -158,9 +175,10 @@ export const attivitaApi = {
     oraFineMattino?: string;
     oraInizioPomeriggio?: string;
     oraFinePomeriggio?: string;
-    clienteId?: number;
-    cantiereId?: number;
+    clienteId?: number | null;
+    cantiereId?: number | null;
     tipoAttivitaId?: number | null;
+    assenzaId?: number | null;
     note?: string;
   }) => apiClient.put(`/attivita/${id}`, data),
   delete: (id: number) =>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { DateTimeInput } from '../../components/DateTimeInput';
-import { clientiApi, cantieriApi, tipiAttivitaApi, attivitaApi } from '../../api/client';
+import { clientiApi, cantieriApi, tipiAttivitaApi, tipiAssenzaApi, attivitaApi } from '../../api/client';
 
 interface Cliente {
   id: number;
@@ -20,6 +20,11 @@ interface TipoAttivita {
   nome: string;
 }
 
+interface TipoAssenza {
+  id: number;
+  nome: string;
+}
+
 export function AttivitaFormPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -33,6 +38,7 @@ export function AttivitaFormPage() {
   const [clienti, setClienti] = useState<Cliente[]>([]);
   const [cantieri, setCantieri] = useState<Cantiere[]>([]);
   const [tipiAttivita, setTipiAttivita] = useState<TipoAttivita[]>([]);
+  const [tipiAssenza, setTipiAssenza] = useState<TipoAssenza[]>([]);
 
   // Form data
   const [dataRiferimento, setDataRiferimento] = useState(
@@ -45,18 +51,24 @@ export function AttivitaFormPage() {
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [cantiereId, setCantiereId] = useState<number | null>(null);
   const [tipoAttivitaId, setTipoAttivitaId] = useState<number | null>(null);
+  const [assenzaId, setAssenzaId] = useState<number | null>(null);
   const [note, setNote] = useState('');
+
+  // With an absence selected, cliente, cantiere and time slots are optional
+  const isAssenza = assenzaId !== null;
 
   // Load clienti and tipi attività on mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [clientiRes, tipiRes] = await Promise.all([
+        const [clientiRes, tipiRes, assenzeRes] = await Promise.all([
           clientiApi.getAll(),
           tipiAttivitaApi.getAll(),
+          tipiAssenzaApi.getAll(),
         ]);
         setClienti(clientiRes.data);
         setTipiAttivita(tipiRes.data);
+        setTipiAssenza(assenzeRes.data);
 
         // If editing, load the activity
         if (id) {
@@ -71,11 +83,14 @@ export function AttivitaFormPage() {
           setClienteId(att.clienteId);
           setCantiereId(att.cantiereId);
           setTipoAttivitaId(att.tipoAttivitaId);
+          setAssenzaId(att.assenzaId ?? null);
           setNote(att.note || '');
 
-          // Load cantieri for the selected cliente
-          const cantieriRes = await cantieriApi.getByCliente(att.clienteId);
-          setCantieri(cantieriRes.data);
+          // Load cantieri for the selected cliente (absences may have none)
+          if (att.clienteId) {
+            const cantieriRes = await cantieriApi.getByCliente(att.clienteId);
+            setCantieri(cantieriRes.data);
+          }
         }
       } catch (err) {
         setError('Errore nel caricamento dei dati');
@@ -118,18 +133,20 @@ export function AttivitaFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!clienteId || !cantiereId) {
-      setError('Compila tutti i campi obbligatori');
-      return;
-    }
-
-    // Validate: at least one time slot
     const hasMattino = oraInizioMattino && oraFineMattino;
     const hasPomeriggio = oraInizioPomeriggio && oraFinePomeriggio;
 
-    if (!hasMattino && !hasPomeriggio) {
-      setError('Devi inserire almeno una fascia oraria (mattino o pomeriggio)');
-      return;
+    if (!isAssenza) {
+      if (!clienteId || !cantiereId) {
+        setError('Compila tutti i campi obbligatori');
+        return;
+      }
+
+      // Validate: at least one time slot
+      if (!hasMattino && !hasPomeriggio) {
+        setError('Devi inserire almeno una fascia oraria (mattino o pomeriggio)');
+        return;
+      }
     }
 
     // Validate mattino times
@@ -154,9 +171,10 @@ export function AttivitaFormPage() {
         oraFineMattino: oraFineMattino || undefined,
         oraInizioPomeriggio: oraInizioPomeriggio || undefined,
         oraFinePomeriggio: oraFinePomeriggio || undefined,
-        clienteId,
-        cantiereId,
+        clienteId: clienteId ?? null,
+        cantiereId: cantiereId ?? null,
         tipoAttivitaId: tipoAttivitaId ?? null,
+        assenzaId: assenzaId ?? null,
         note: note.trim() || undefined,
       };
 
@@ -282,7 +300,7 @@ export function AttivitaFormPage() {
               className="select"
               value={clienteId ?? ''}
               onChange={(e) => setClienteId(e.target.value ? parseInt(e.target.value) : null)}
-              required
+              required={!isAssenza}
             >
               <option value="">Seleziona cliente...</option>
               {clienti.map((c) => (
@@ -300,7 +318,7 @@ export function AttivitaFormPage() {
               value={cantiereId ?? ''}
               onChange={(e) => setCantiereId(e.target.value ? parseInt(e.target.value) : null)}
               disabled={!clienteId}
-              required
+              required={!isAssenza}
             >
               <option value="">
                 {clienteId ? 'Seleziona cantiere...' : 'Prima seleziona un cliente'}
@@ -331,6 +349,29 @@ export function AttivitaFormPage() {
             </select>
           </div>
 
+          {/* Assenza */}
+          <div>
+            <label htmlFor="assenza" className="label">
+              Assenza <span className="text-gray-400 font-normal">(opzionale)</span>
+            </label>
+            <select
+              id="assenza"
+              className="select"
+              value={assenzaId ?? ''}
+              onChange={(e) => setAssenzaId(e.target.value ? parseInt(e.target.value) : null)}
+            >
+              <option value="">Nessuna assenza</option>
+              {tipiAssenza.map((a) => (
+                <option key={a.id} value={a.id}>{a.nome}</option>
+              ))}
+            </select>
+            {isAssenza && (
+              <p className="text-sm text-gray-500 mt-1">
+                Con un'assenza selezionata, cliente, cantiere e fasce orarie sono facoltativi.
+              </p>
+            )}
+          </div>
+
           {/* Note */}
           <div>
             <label htmlFor="note" className="label">
@@ -359,7 +400,7 @@ export function AttivitaFormPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSaving || !clienteId || !cantiereId || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))}
+              disabled={isSaving || (!isAssenza && (!clienteId || !cantiereId || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))))}
             >
               {isSaving ? 'Salvataggio...' : isEditing ? 'Salva modifiche' : 'Registra attività'}
             </button>

@@ -18,6 +18,7 @@ const settingsNavItems = [
   { path: '/responsabile/clienti', label: 'Clienti' },
   { path: '/responsabile/cantieri', label: 'Cantieri' },
   { path: '/responsabile/tipi-attivita', label: 'Tipi Attività' },
+  { path: '/responsabile/tipi-assenza', label: 'Assenze' },
   { path: '/responsabile/utenti', label: 'Utenti' },
   { path: '/responsabile/import', label: 'Import' },
   { path: '/responsabile/backup', label: 'Backup' },

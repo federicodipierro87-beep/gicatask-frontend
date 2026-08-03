@@ -16,6 +16,7 @@ import { BackupPage } from './pages/responsabile/BackupPage';
 import { ImportPage } from './pages/responsabile/ImportPage';
 import { CantieriPage } from './pages/responsabile/CantieriPage';
 import { TipiAttivitaPage } from './pages/responsabile/TipiAttivitaPage';
+import { TipiAssenzaPage } from './pages/responsabile/TipiAssenzaPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -159,6 +160,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <TipiAttivitaPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/tipi-assenza"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <TipiAssenzaPage />
           </ProtectedRoute>
         }
       />

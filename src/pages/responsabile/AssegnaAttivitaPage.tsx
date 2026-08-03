@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { DateTimeInput } from '../../components/DateTimeInput';
 import { Modal } from '../../components/Modal';
-import { clientiApi, cantieriApi, tipiAttivitaApi, attivitaApi, utentiApi } from '../../api/client';
+import { clientiApi, cantieriApi, tipiAttivitaApi, tipiAssenzaApi, attivitaApi, utentiApi } from '../../api/client';
 
 interface Cliente {
   id: number;
@@ -17,6 +17,11 @@ interface Cantiere {
 }
 
 interface TipoAttivita {
+  id: number;
+  nome: string;
+}
+
+interface TipoAssenza {
   id: number;
   nome: string;
 }
@@ -42,6 +47,7 @@ export function AssegnaAttivitaPage() {
   const [clienti, setClienti] = useState<Cliente[]>([]);
   const [cantieri, setCantieri] = useState<Cantiere[]>([]);
   const [tipiAttivita, setTipiAttivita] = useState<TipoAttivita[]>([]);
+  const [tipiAssenza, setTipiAssenza] = useState<TipoAssenza[]>([]);
 
   // Form data
   const [utenteId, setUtenteId] = useState<number | null>(null);
@@ -55,12 +61,17 @@ export function AssegnaAttivitaPage() {
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [cantiereId, setCantiereId] = useState<number | null>(null);
   const [tipoAttivitaId, setTipoAttivitaId] = useState<number | null>(null);
+  const [assenzaId, setAssenzaId] = useState<number | null>(null);
   const [note, setNote] = useState('');
+
+  // With an absence selected, cliente, cantiere and time slots are optional
+  const isAssenza = assenzaId !== null;
 
   // Modal states for creating new items
   const [showNewClienteModal, setShowNewClienteModal] = useState(false);
   const [showNewCantiereModal, setShowNewCantiereModal] = useState(false);
   const [showNewTipoModal, setShowNewTipoModal] = useState(false);
+  const [showNewAssenzaModal, setShowNewAssenzaModal] = useState(false);
   const [newItemNome, setNewItemNome] = useState('');
   const [isCreatingItem, setIsCreatingItem] = useState(false);
 
@@ -68,14 +79,16 @@ export function AssegnaAttivitaPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [utentiRes, clientiRes, tipiRes] = await Promise.all([
+        const [utentiRes, clientiRes, tipiRes, assenzeRes] = await Promise.all([
           utentiApi.getAll(),
           clientiApi.getAll(),
           tipiAttivitaApi.getAll(),
+          tipiAssenzaApi.getAll(),
         ]);
         setUtenti(Array.isArray(utentiRes.data) ? utentiRes.data : []);
         setClienti(Array.isArray(clientiRes.data) ? clientiRes.data : []);
         setTipiAttivita(Array.isArray(tipiRes.data) ? tipiRes.data : []);
+        setTipiAssenza(Array.isArray(assenzeRes.data) ? assenzeRes.data : []);
       } catch (err) {
         setError('Errore nel caricamento dei dati');
       } finally {
@@ -133,6 +146,14 @@ export function AssegnaAttivitaPage() {
       setShowNewTipoModal(true);
     } else {
       setTipoAttivitaId(value ? parseInt(value) : null);
+    }
+  };
+
+  const handleAssenzaChange = (value: string) => {
+    if (value === NEW_ITEM_VALUE) {
+      setShowNewAssenzaModal(true);
+    } else {
+      setAssenzaId(value ? parseInt(value) : null);
     }
   };
 
@@ -208,6 +229,30 @@ export function AssegnaAttivitaPage() {
     }
   };
 
+  const handleCreateAssenza = async () => {
+    if (!newItemNome.trim()) return;
+
+    setIsCreatingItem(true);
+    try {
+      const response = await tipiAssenzaApi.create(newItemNome.trim());
+      const newAssenza = response.data;
+
+      // Reload assenze list
+      const assenzeRes = await tipiAssenzaApi.getAll();
+      setTipiAssenza(Array.isArray(assenzeRes.data) ? assenzeRes.data : []);
+
+      // Select the new assenza
+      setAssenzaId(newAssenza.id);
+
+      setShowNewAssenzaModal(false);
+      setNewItemNome('');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Errore durante la creazione dell\'assenza');
+    } finally {
+      setIsCreatingItem(false);
+    }
+  };
+
   const resetForm = () => {
     setUtenteId(null);
     setDataRiferimento(new Date().toISOString().split('T')[0] || '');
@@ -218,24 +263,32 @@ export function AssegnaAttivitaPage() {
     setClienteId(null);
     setCantiereId(null);
     setTipoAttivitaId(null);
+    setAssenzaId(null);
     setNote('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!utenteId || !clienteId || !cantiereId) {
+    if (!utenteId) {
       setError('Compila tutti i campi obbligatori');
       return;
     }
 
-    // Validate: at least one time slot
     const hasMattino = oraInizioMattino && oraFineMattino;
     const hasPomeriggio = oraInizioPomeriggio && oraFinePomeriggio;
 
-    if (!hasMattino && !hasPomeriggio) {
-      setError('Devi inserire almeno una fascia oraria (mattino o pomeriggio)');
-      return;
+    if (!isAssenza) {
+      if (!clienteId || !cantiereId) {
+        setError('Compila tutti i campi obbligatori');
+        return;
+      }
+
+      // Validate: at least one time slot
+      if (!hasMattino && !hasPomeriggio) {
+        setError('Devi inserire almeno una fascia oraria (mattino o pomeriggio)');
+        return;
+      }
     }
 
     // Validate mattino times
@@ -262,9 +315,10 @@ export function AssegnaAttivitaPage() {
         oraFineMattino: oraFineMattino || undefined,
         oraInizioPomeriggio: oraInizioPomeriggio || undefined,
         oraFinePomeriggio: oraFinePomeriggio || undefined,
-        clienteId,
-        cantiereId,
+        clienteId: clienteId ?? null,
+        cantiereId: cantiereId ?? null,
         tipoAttivitaId: tipoAttivitaId ?? null,
+        assenzaId: assenzaId ?? null,
         note: note.trim() || undefined,
       });
 
@@ -407,7 +461,7 @@ export function AssegnaAttivitaPage() {
               className="select"
               value={clienteId ?? ''}
               onChange={(e) => handleClienteChange(e.target.value)}
-              required
+              required={!isAssenza}
             >
               <option value="">Seleziona cliente...</option>
               {clienti.map((c) => (
@@ -428,7 +482,7 @@ export function AssegnaAttivitaPage() {
               value={cantiereId ?? ''}
               onChange={(e) => handleCantiereChange(e.target.value)}
               disabled={!clienteId}
-              required
+              required={!isAssenza}
             >
               <option value="">
                 {clienteId ? 'Seleziona cantiere...' : 'Prima seleziona un cliente'}
@@ -467,6 +521,32 @@ export function AssegnaAttivitaPage() {
             </select>
           </div>
 
+          {/* Assenza */}
+          <div>
+            <label htmlFor="assenza" className="label">
+              Assenza <span className="text-gray-400 font-normal">(opzionale)</span>
+            </label>
+            <select
+              id="assenza"
+              className="select"
+              value={assenzaId ?? ''}
+              onChange={(e) => handleAssenzaChange(e.target.value)}
+            >
+              <option value="">Nessuna assenza</option>
+              {tipiAssenza.map((a) => (
+                <option key={a.id} value={a.id}>{a.nome}</option>
+              ))}
+              <option value={NEW_ITEM_VALUE} className="text-primary-600 font-medium">
+                + Aggiungi nuova assenza...
+              </option>
+            </select>
+            {isAssenza && (
+              <p className="text-sm text-gray-500 mt-1">
+                Con un'assenza selezionata, cliente, cantiere e fasce orarie sono facoltativi.
+              </p>
+            )}
+          </div>
+
           {/* Note */}
           <div>
             <label htmlFor="note" className="label">
@@ -495,7 +575,7 @@ export function AssegnaAttivitaPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSaving || !utenteId || !clienteId || !cantiereId || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))}
+              disabled={isSaving || !utenteId || (!isAssenza && (!clienteId || !cantiereId || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))))}
             >
               {isSaving ? 'Salvataggio...' : 'Assegna attivita'}
             </button>
@@ -633,6 +713,50 @@ export function AssegnaAttivitaPage() {
               className="btn-primary"
             >
               {isCreatingItem ? 'Creazione...' : 'Crea Tipo'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal Nuova Assenza */}
+      <Modal
+        isOpen={showNewAssenzaModal}
+        onClose={() => {
+          setShowNewAssenzaModal(false);
+          setNewItemNome('');
+        }}
+        title="Nuova Assenza"
+      >
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="newAssenzaNome" className="label">Nome Assenza</label>
+            <input
+              type="text"
+              id="newAssenzaNome"
+              className="input"
+              value={newItemNome}
+              onChange={(e) => setNewItemNome(e.target.value)}
+              placeholder="Es. Vacanza"
+              autoFocus
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              onClick={() => {
+                setShowNewAssenzaModal(false);
+                setNewItemNome('');
+              }}
+              className="btn-secondary"
+              disabled={isCreatingItem}
+            >
+              Annulla
+            </button>
+            <button
+              onClick={handleCreateAssenza}
+              disabled={isCreatingItem || !newItemNome.trim()}
+              className="btn-primary"
+            >
+              {isCreatingItem ? 'Creazione...' : 'Crea Assenza'}
             </button>
           </div>
         </div>

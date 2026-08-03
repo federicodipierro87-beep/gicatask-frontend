@@ -13,9 +13,10 @@ interface Attivita {
   oraFinePomeriggio?: string;
   durataMinuti: number;
   note?: string;
-  cliente: { id: number; nome: string };
-  cantiere: { id: number; nome: string };
+  cliente: { id: number; nome: string } | null;
+  cantiere: { id: number; nome: string } | null;
   tipoAttivita: { id: number; nome: string } | null;
+  assenza: { id: number; nome: string } | null;
   utente: { id: number; nome: string; cognome: string };
 }
 
@@ -236,7 +237,7 @@ export function ReportPage() {
 
   // Group by client for summary
   const byClient = attivita.reduce((acc, att) => {
-    const key = att.cliente.nome;
+    const key = att.cliente?.nome ?? 'Assenze';
     if (!acc[key]) acc[key] = { count: 0, minutes: 0 };
     acc[key].count++;
     acc[key].minutes += att.durataMinuti;
@@ -386,7 +387,7 @@ export function ReportPage() {
         <div className="card bg-blue-50 border-blue-200">
           <h4 className="text-sm font-medium text-blue-900">Clienti Attivi</h4>
           <p className="text-2xl font-bold text-blue-700 mt-1">
-            {Object.keys(byClient).length}
+            {Object.keys(byClient).filter((k) => k !== 'Assenze').length}
           </p>
         </div>
       </div>
@@ -468,6 +469,7 @@ export function ReportPage() {
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cliente</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cantiere</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Tipo</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600">Assenza</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Mattino</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Pomeriggio</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Durata</th>
@@ -497,9 +499,10 @@ export function ReportPage() {
                     </td>
                     <td className="py-3 px-2">{formatDate(att.dataRiferimento)}</td>
                     <td className="py-3 px-2">{att.utente.nome} {att.utente.cognome}</td>
-                    <td className="py-3 px-2 font-medium">{att.cliente.nome}</td>
-                    <td className="py-3 px-2">{att.cantiere.nome}</td>
+                    <td className="py-3 px-2 font-medium">{att.cliente?.nome ?? ''}</td>
+                    <td className="py-3 px-2">{att.cantiere?.nome ?? ''}</td>
                     <td className="py-3 px-2 text-primary-600">{att.tipoAttivita?.nome ?? ''}</td>
+                    <td className="py-3 px-2 text-primary-600">{att.assenza?.nome ?? ''}</td>
                     <td className="py-3 px-2">{formatTimeSlot(att.oraInizioMattino, att.oraFineMattino)}</td>
                     <td className="py-3 px-2">{formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio)}</td>
                     <td className="py-3 px-2">{formatDuration(att.durataMinuti)}</td>
@@ -548,18 +551,25 @@ export function ReportPage() {
 
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Cliente</p>
-                <p className="font-medium text-gray-900">{selectedAttivita.cliente.nome}</p>
+                <p className="font-medium text-gray-900">{selectedAttivita.cliente?.nome ?? ''}</p>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Cantiere</p>
-                <p className="font-medium text-gray-900">{selectedAttivita.cantiere.nome}</p>
+                <p className="font-medium text-gray-900">{selectedAttivita.cantiere?.nome ?? ''}</p>
               </div>
 
               {selectedAttivita.tipoAttivita && (
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Tipo Attività</p>
                   <p className="font-medium text-primary-600">{selectedAttivita.tipoAttivita.nome}</p>
+                </div>
+              )}
+
+              {selectedAttivita.assenza && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Assenza</p>
+                  <p className="font-medium text-primary-600">{selectedAttivita.assenza.nome}</p>
                 </div>
               )}
 
