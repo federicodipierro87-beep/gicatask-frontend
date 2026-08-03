@@ -6,8 +6,8 @@ interface Props {
 }
 
 const navItems = [
-  { path: '/dipendente', label: 'Le Mie Attività', exact: true },
   { path: '/dipendente/nuova', label: 'Nuova Attività' },
+  { path: '/dipendente', label: 'Le Mie Attività', exact: true },
 ];
 
 export function DipendenteLayout({ children }: Props) {
