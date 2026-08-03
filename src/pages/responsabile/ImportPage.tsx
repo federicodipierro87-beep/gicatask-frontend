@@ -91,7 +91,7 @@ export function ImportPage() {
           </p>
           <ul className="list-disc list-inside ml-4 space-y-1">
             <li><strong>Cliente</strong> (obbligatorio): Nome del cliente</li>
-            <li><strong>Cantiere</strong> (opzionale): Nome del cantiere (default: "Generico")</li>
+            <li><strong>Cantiere</strong> (opzionale): Nome del cantiere; se vuoto il cliente viene creato senza cantieri</li>
             <li><strong>Tipo Attività</strong> (opzionale): Nome del tipo attività</li>
           </ul>
           <p>

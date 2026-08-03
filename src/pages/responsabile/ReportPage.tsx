@@ -35,7 +35,6 @@ interface Cliente {
 interface Cantiere {
   id: number;
   nome: string;
-  isGenerico: boolean;
 }
 
 interface Utente {

@@ -13,7 +13,6 @@ interface Cliente {
 interface Cantiere {
   id: number;
   nome: string;
-  isGenerico: boolean;
   attivo: boolean;
 }
 
@@ -183,9 +182,6 @@ export function ClienteDetailPage() {
                 <div className="flex items-center gap-2">
                   <h4 className="font-medium text-gray-900">
                     {cantiere.nome}
-                    {cantiere.isGenerico && (
-                      <span className="ml-2 text-xs text-gray-500">(generico)</span>
-                    )}
                   </h4>
                   {!cantiere.attivo && (
                     <span className="px-2 py-0.5 text-xs bg-gray-200 text-gray-600 rounded">
@@ -194,26 +190,22 @@ export function ClienteDetailPage() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  {!cantiere.isGenerico && (
-                    <>
-                      <button
-                        onClick={() => openCantiereModal(cantiere)}
-                        className="text-sm text-gray-600 hover:text-primary-600"
-                      >
-                        Modifica
-                      </button>
-                      <button
-                        onClick={() => handleToggleCantiere(cantiere)}
-                        className={`text-sm ${
-                          cantiere.attivo
-                            ? 'text-red-600 hover:text-red-700'
-                            : 'text-green-600 hover:text-green-700'
-                        }`}
-                      >
-                        {cantiere.attivo ? 'Disattiva' : 'Riattiva'}
-                      </button>
-                    </>
-                  )}
+                  <button
+                    onClick={() => openCantiereModal(cantiere)}
+                    className="text-sm text-gray-600 hover:text-primary-600"
+                  >
+                    Modifica
+                  </button>
+                  <button
+                    onClick={() => handleToggleCantiere(cantiere)}
+                    className={`text-sm ${
+                      cantiere.attivo
+                        ? 'text-red-600 hover:text-red-700'
+                        : 'text-green-600 hover:text-green-700'
+                    }`}
+                  >
+                    {cantiere.attivo ? 'Disattiva' : 'Riattiva'}
+                  </button>
                 </div>
               </div>
             ))}

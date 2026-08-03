@@ -37,7 +37,6 @@ export interface Cantiere {
   id: number;
   clienteId: number;
   nome: string;
-  isGenerico: boolean;
   attivo: boolean;
 }
 

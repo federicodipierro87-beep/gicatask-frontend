@@ -11,7 +11,6 @@ interface Cliente {
 interface Cantiere {
   id: number;
   nome: string;
-  isGenerico: boolean;
   attivo: boolean;
   cliente: { id: number; nome: string };
 }
@@ -164,7 +163,6 @@ export function CantieriPage() {
                 <tr className="border-b bg-gray-50">
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cliente</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cantiere</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-600">Tipo</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Stato</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Azioni</th>
                 </tr>
@@ -175,13 +173,6 @@ export function CantieriPage() {
                     <td className="py-3 px-2 font-medium">{cantiere.cliente.nome}</td>
                     <td className="py-3 px-2">{cantiere.nome}</td>
                     <td className="py-3 px-2">
-                      {cantiere.isGenerico ? (
-                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Generico</span>
-                      ) : (
-                        <span className="text-xs bg-primary-100 text-primary-600 px-2 py-1 rounded">Specifico</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-2">
                       {cantiere.attivo ? (
                         <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">Attivo</span>
                       ) : (
@@ -189,7 +180,7 @@ export function CantieriPage() {
                       )}
                     </td>
                     <td className="py-3 px-2 text-right space-x-3">
-                      {!cantiere.isGenerico && cantiere.attivo && (
+                      {cantiere.attivo && (
                         <button
                           onClick={() => handleEdit(cantiere)}
                           className="text-primary-600 hover:text-primary-700 text-sm"
@@ -197,24 +188,20 @@ export function CantieriPage() {
                           Modifica
                         </button>
                       )}
-                      {!cantiere.isGenerico && (
-                        <>
-                          {cantiere.attivo ? (
-                            <button
-                              onClick={() => handleDelete(cantiere.id)}
-                              className="text-red-600 hover:text-red-700 text-sm"
-                            >
-                              Elimina
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleActivate(cantiere.id)}
-                              className="text-green-600 hover:text-green-700 text-sm"
-                            >
-                              Riattiva
-                            </button>
-                          )}
-                        </>
+                      {cantiere.attivo ? (
+                        <button
+                          onClick={() => handleDelete(cantiere.id)}
+                          className="text-red-600 hover:text-red-700 text-sm"
+                        >
+                          Elimina
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleActivate(cantiere.id)}
+                          className="text-green-600 hover:text-green-700 text-sm"
+                        >
+                          Riattiva
+                        </button>
                       )}
                     </td>
                   </tr>

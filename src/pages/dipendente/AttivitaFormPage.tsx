@@ -12,7 +12,6 @@ interface Cliente {
 interface Cantiere {
   id: number;
   nome: string;
-  isGenerico: boolean;
 }
 
 interface TipoAttivita {
@@ -111,6 +110,7 @@ export function AttivitaFormPage() {
     }
 
     const loadCantieri = async () => {
+      setCantieri([]);
       try {
         const response = await cantieriApi.getByCliente(clienteId);
         setCantieri(response.data);
@@ -137,8 +137,13 @@ export function AttivitaFormPage() {
     const hasPomeriggio = oraInizioPomeriggio && oraFinePomeriggio;
 
     if (!isAssenza) {
-      if (!clienteId || !cantiereId) {
+      if (!clienteId) {
         setError('Compila tutti i campi obbligatori');
+        return;
+      }
+
+      if (cantieri.length > 0 && !cantiereId) {
+        setError('Seleziona un cantiere');
         return;
       }
 
@@ -310,26 +315,25 @@ export function AttivitaFormPage() {
           </div>
 
           {/* Cantiere */}
-          <div>
-            <label htmlFor="cantiere" className="label">Cantiere</label>
-            <select
-              id="cantiere"
-              className="select"
-              value={cantiereId ?? ''}
-              onChange={(e) => setCantiereId(e.target.value ? parseInt(e.target.value) : null)}
-              disabled={!clienteId}
-              required={!isAssenza}
-            >
-              <option value="">
-                {clienteId ? 'Seleziona cantiere...' : 'Prima seleziona un cliente'}
-              </option>
-              {cantieri.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}{c.isGenerico ? ' (generico)' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
+          {cantieri.length > 0 && (
+            <div>
+              <label htmlFor="cantiere" className="label">Cantiere</label>
+              <select
+                id="cantiere"
+                className="select"
+                value={cantiereId ?? ''}
+                onChange={(e) => setCantiereId(e.target.value ? parseInt(e.target.value) : null)}
+                required={!isAssenza}
+              >
+                <option value="">Seleziona cantiere...</option>
+                {cantieri.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Tipo Attività */}
           <div>
@@ -400,7 +404,7 @@ export function AttivitaFormPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSaving || (!isAssenza && (!clienteId || !cantiereId || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))))}
+              disabled={isSaving || (!isAssenza && (!clienteId || (cantieri.length > 0 && !cantiereId) || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))))}
             >
               {isSaving ? 'Salvataggio...' : isEditing ? 'Salva modifiche' : 'Registra attività'}
             </button>
