@@ -157,13 +157,13 @@ export function AttivitaFormPage() {
     }
 
     // Validate mattino times
-    if (hasMattino && oraFineMattino === oraInizioMattino) {
+    if (!isAssenza && hasMattino && oraFineMattino === oraInizioMattino) {
       setError('L\'ora di fine mattino deve essere diversa dall\'ora di inizio');
       return;
     }
 
     // Validate pomeriggio times
-    if (hasPomeriggio && oraFinePomeriggio === oraInizioPomeriggio) {
+    if (!isAssenza && hasPomeriggio && oraFinePomeriggio === oraInizioPomeriggio) {
       setError('L\'ora di fine pomeriggio deve essere diversa dall\'ora di inizio');
       return;
     }
@@ -242,72 +242,76 @@ export function AttivitaFormPage() {
           </div>
 
           {/* Fascia Mattino */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <label className="label mb-3">Mattino <span className="text-gray-400 font-normal">(opzionale)</span></label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="oraInizioMattino" className="label text-sm">Inizio</label>
-                <DateTimeInput
-                  type="time"
-                  id="oraInizioMattino"
-                  className="input"
-                  value={oraInizioMattino}
-                  onChange={setOraInizioMattino}
-                  defaultTime="06:00"
-                />
+          {!isAssenza && (
+            <div className="border border-gray-200 rounded-lg p-4">
+              <label className="label mb-3">Mattino <span className="text-gray-400 font-normal">(opzionale)</span></label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="oraInizioMattino" className="label text-sm">Inizio</label>
+                  <DateTimeInput
+                    type="time"
+                    id="oraInizioMattino"
+                    className="input"
+                    value={oraInizioMattino}
+                    onChange={setOraInizioMattino}
+                    defaultTime="06:00"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="oraFineMattino" className="label text-sm">Fine</label>
+                  <DateTimeInput
+                    type="time"
+                    id="oraFineMattino"
+                    className="input"
+                    value={oraFineMattino}
+                    onChange={setOraFineMattino}
+                    defaultTime="06:00"
+                  />
+                </div>
               </div>
-              <div>
-                <label htmlFor="oraFineMattino" className="label text-sm">Fine</label>
-                <DateTimeInput
-                  type="time"
-                  id="oraFineMattino"
-                  className="input"
-                  value={oraFineMattino}
-                  onChange={setOraFineMattino}
-                  defaultTime="06:00"
-                />
-              </div>
+              {isOvernight(oraInizioMattino, oraFineMattino) && (
+                <p className="text-sm text-gray-500 mt-3">
+                  Il turno termina il giorno successivo. Le ore restano conteggiate su questa data.
+                </p>
+              )}
             </div>
-            {isOvernight(oraInizioMattino, oraFineMattino) && (
-              <p className="text-sm text-gray-500 mt-3">
-                Il turno termina il giorno successivo. Le ore restano conteggiate su questa data.
-              </p>
-            )}
-          </div>
+          )}
 
           {/* Fascia Pomeriggio */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <label className="label mb-3">Pomeriggio <span className="text-gray-400 font-normal">(opzionale)</span></label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="oraInizioPomeriggio" className="label text-sm">Inizio</label>
-                <DateTimeInput
-                  type="time"
-                  id="oraInizioPomeriggio"
-                  className="input"
-                  value={oraInizioPomeriggio}
-                  onChange={setOraInizioPomeriggio}
-                  defaultTime="13:00"
-                />
+          {!isAssenza && (
+            <div className="border border-gray-200 rounded-lg p-4">
+              <label className="label mb-3">Pomeriggio <span className="text-gray-400 font-normal">(opzionale)</span></label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="oraInizioPomeriggio" className="label text-sm">Inizio</label>
+                  <DateTimeInput
+                    type="time"
+                    id="oraInizioPomeriggio"
+                    className="input"
+                    value={oraInizioPomeriggio}
+                    onChange={setOraInizioPomeriggio}
+                    defaultTime="13:00"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="oraFinePomeriggio" className="label text-sm">Fine</label>
+                  <DateTimeInput
+                    type="time"
+                    id="oraFinePomeriggio"
+                    className="input"
+                    value={oraFinePomeriggio}
+                    onChange={setOraFinePomeriggio}
+                    defaultTime="13:00"
+                  />
+                </div>
               </div>
-              <div>
-                <label htmlFor="oraFinePomeriggio" className="label text-sm">Fine</label>
-                <DateTimeInput
-                  type="time"
-                  id="oraFinePomeriggio"
-                  className="input"
-                  value={oraFinePomeriggio}
-                  onChange={setOraFinePomeriggio}
-                  defaultTime="13:00"
-                />
-              </div>
+              {isOvernight(oraInizioPomeriggio, oraFinePomeriggio) && (
+                <p className="text-sm text-gray-500 mt-3">
+                  Il turno termina il giorno successivo. Le ore restano conteggiate su questa data.
+                </p>
+              )}
             </div>
-            {isOvernight(oraInizioPomeriggio, oraFinePomeriggio) && (
-              <p className="text-sm text-gray-500 mt-3">
-                Il turno termina il giorno successivo. Le ore restano conteggiate su questa data.
-              </p>
-            )}
-          </div>
+          )}
 
           {/* Cliente */}
           <div>
@@ -383,7 +387,8 @@ export function AttivitaFormPage() {
             </select>
             {isAssenza && (
               <p className="text-sm text-gray-500 mt-1">
-                Con un'assenza selezionata, cliente, cantiere e fasce orarie sono facoltativi.
+                Con un'assenza selezionata cliente e cantiere sono facoltativi e la giornata viene
+                conteggiata come 8h 12m.
               </p>
             )}
           </div>
