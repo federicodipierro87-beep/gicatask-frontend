@@ -24,6 +24,8 @@ interface TipoAssenza {
   nome: string;
 }
 
+const isOvernight = (start: string, end: string) => Boolean(start && end && end < start);
+
 export function AttivitaFormPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -155,14 +157,14 @@ export function AttivitaFormPage() {
     }
 
     // Validate mattino times
-    if (hasMattino && oraFineMattino <= oraInizioMattino) {
-      setError('L\'ora di fine mattino deve essere successiva all\'ora di inizio');
+    if (hasMattino && oraFineMattino === oraInizioMattino) {
+      setError('L\'ora di fine mattino deve essere diversa dall\'ora di inizio');
       return;
     }
 
     // Validate pomeriggio times
-    if (hasPomeriggio && oraFinePomeriggio <= oraInizioPomeriggio) {
-      setError('L\'ora di fine pomeriggio deve essere successiva all\'ora di inizio');
+    if (hasPomeriggio && oraFinePomeriggio === oraInizioPomeriggio) {
+      setError('L\'ora di fine pomeriggio deve essere diversa dall\'ora di inizio');
       return;
     }
 
@@ -266,6 +268,11 @@ export function AttivitaFormPage() {
                 />
               </div>
             </div>
+            {isOvernight(oraInizioMattino, oraFineMattino) && (
+              <p className="text-sm text-gray-500 mt-3">
+                Il turno termina il giorno successivo. Le ore restano conteggiate su questa data.
+              </p>
+            )}
           </div>
 
           {/* Fascia Pomeriggio */}
@@ -295,6 +302,11 @@ export function AttivitaFormPage() {
                 />
               </div>
             </div>
+            {isOvernight(oraInizioPomeriggio, oraFinePomeriggio) && (
+              <p className="text-sm text-gray-500 mt-3">
+                Il turno termina il giorno successivo. Le ore restano conteggiate su questa data.
+              </p>
+            )}
           </div>
 
           {/* Cliente */}

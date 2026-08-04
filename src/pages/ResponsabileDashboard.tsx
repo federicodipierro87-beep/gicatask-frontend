@@ -49,7 +49,7 @@ function formatDuration(minutes: number): string {
 
 function formatTimeSlot(start?: string, end?: string): string {
   if (start && end) {
-    return `${start}-${end}`;
+    return end < start ? `${start}-${end} (+1)` : `${start}-${end}`;
   }
   return '-';
 }
