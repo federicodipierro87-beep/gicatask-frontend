@@ -303,7 +303,7 @@ export function AttivitaListPage() {
                       {canEdit && (
                         <div className="flex gap-2 sm:flex-shrink-0">
                           <Link
-                            to={`/dipendente/modifica/${att.id}`}
+                            to={att.assenza ? `/dipendente/assenze/modifica/${att.id}` : `/dipendente/modifica/${att.id}`}
                             onClick={(e) => e.stopPropagation()}
                             className="text-sm text-primary-600 hover:text-primary-700"
                           >
@@ -420,7 +420,7 @@ export function AttivitaListPage() {
               {isWithinCurrentWeek(selectedAttivita.dataRiferimento) && (
                 <>
                   <Link
-                    to={`/dipendente/modifica/${selectedAttivita.id}`}
+                    to={selectedAttivita.assenza ? `/dipendente/assenze/modifica/${selectedAttivita.id}` : `/dipendente/modifica/${selectedAttivita.id}`}
                     className="btn-primary"
                     onClick={() => setSelectedAttivita(null)}
                   >

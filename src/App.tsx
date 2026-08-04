@@ -6,6 +6,7 @@ import { InactivityWarning } from './components/InactivityWarning';
 import { LoginPage } from './pages/Login';
 import { AttivitaListPage } from './pages/dipendente/AttivitaListPage';
 import { AttivitaFormPage } from './pages/dipendente/AttivitaFormPage';
+import { AssenzaFormPage } from './pages/dipendente/AssenzaFormPage';
 import { ResponsabileDashboard } from './pages/ResponsabileDashboard';
 import { ClientiPage } from './pages/responsabile/ClientiPage';
 import { ClienteDetailPage } from './pages/responsabile/ClienteDetailPage';
@@ -78,6 +79,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AttivitaFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dipendente/assenze"
+        element={
+          <ProtectedRoute>
+            <AssenzaFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dipendente/assenze/modifica/:id"
+        element={
+          <ProtectedRoute>
+            <AssenzaFormPage />
           </ProtectedRoute>
         }
       />

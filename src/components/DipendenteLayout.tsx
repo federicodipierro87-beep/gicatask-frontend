@@ -7,6 +7,7 @@ interface Props {
 
 const navItems = [
   { path: '/dipendente/nuova', label: 'Nuova Attività' },
+  { path: '/dipendente/assenze', label: 'Assenze' },
   { path: '/dipendente', label: 'Le Mie Attività', exact: true },
 ];
 

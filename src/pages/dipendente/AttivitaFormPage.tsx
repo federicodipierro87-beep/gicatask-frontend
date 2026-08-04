@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { DateTimeInput } from '../../components/DateTimeInput';
-import { clientiApi, cantieriApi, tipiAttivitaApi, tipiAssenzaApi, attivitaApi } from '../../api/client';
+import { clientiApi, cantieriApi, tipiAttivitaApi, attivitaApi } from '../../api/client';
 
 interface Cliente {
   id: number;
@@ -15,11 +15,6 @@ interface Cantiere {
 }
 
 interface TipoAttivita {
-  id: number;
-  nome: string;
-}
-
-interface TipoAssenza {
   id: number;
   nome: string;
 }
@@ -39,7 +34,6 @@ export function AttivitaFormPage() {
   const [clienti, setClienti] = useState<Cliente[]>([]);
   const [cantieri, setCantieri] = useState<Cantiere[]>([]);
   const [tipiAttivita, setTipiAttivita] = useState<TipoAttivita[]>([]);
-  const [tipiAssenza, setTipiAssenza] = useState<TipoAssenza[]>([]);
 
   // Form data
   const [dataRiferimento, setDataRiferimento] = useState(
@@ -52,29 +46,29 @@ export function AttivitaFormPage() {
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [cantiereId, setCantiereId] = useState<number | null>(null);
   const [tipoAttivitaId, setTipoAttivitaId] = useState<number | null>(null);
-  const [assenzaId, setAssenzaId] = useState<number | null>(null);
   const [note, setNote] = useState('');
-
-  // With an absence selected, cliente, cantiere and time slots are optional
-  const isAssenza = assenzaId !== null;
 
   // Load clienti and tipi attività on mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [clientiRes, tipiRes, assenzeRes] = await Promise.all([
+        const [clientiRes, tipiRes] = await Promise.all([
           clientiApi.getAll(),
           tipiAttivitaApi.getAll(),
-          tipiAssenzaApi.getAll(),
         ]);
         setClienti(clientiRes.data);
         setTipiAttivita(tipiRes.data);
-        setTipiAssenza(assenzeRes.data);
 
         // If editing, load the activity
         if (id) {
           const attivitaRes = await attivitaApi.getById(parseInt(id));
           const att = attivitaRes.data;
+
+          // An absence belongs to the dedicated form
+          if (att.assenzaId) {
+            navigate(`/dipendente/assenze/modifica/${id}`, { replace: true });
+            return;
+          }
 
           setDataRiferimento(att.dataRiferimento.split('T')[0]);
           setOraInizioMattino(att.oraInizioMattino || '');
@@ -84,10 +78,9 @@ export function AttivitaFormPage() {
           setClienteId(att.clienteId);
           setCantiereId(att.cantiereId);
           setTipoAttivitaId(att.tipoAttivitaId);
-          setAssenzaId(att.assenzaId ?? null);
           setNote(att.note || '');
 
-          // Load cantieri for the selected cliente (absences may have none)
+          // Load cantieri for the selected cliente
           if (att.clienteId) {
             const cantieriRes = await cantieriApi.getByCliente(att.clienteId);
             setCantieri(cantieriRes.data);
@@ -138,32 +131,30 @@ export function AttivitaFormPage() {
     const hasMattino = oraInizioMattino && oraFineMattino;
     const hasPomeriggio = oraInizioPomeriggio && oraFinePomeriggio;
 
-    if (!isAssenza) {
-      if (!clienteId) {
-        setError('Compila tutti i campi obbligatori');
-        return;
-      }
+    if (!clienteId) {
+      setError('Compila tutti i campi obbligatori');
+      return;
+    }
 
-      if (cantieri.length > 0 && !cantiereId) {
-        setError('Seleziona un cantiere');
-        return;
-      }
+    if (cantieri.length > 0 && !cantiereId) {
+      setError('Seleziona un cantiere');
+      return;
+    }
 
-      // Validate: at least one time slot
-      if (!hasMattino && !hasPomeriggio) {
-        setError('Devi inserire almeno una fascia oraria (mattino o pomeriggio)');
-        return;
-      }
+    // Validate: at least one time slot
+    if (!hasMattino && !hasPomeriggio) {
+      setError('Devi inserire almeno una fascia oraria (mattino o pomeriggio)');
+      return;
     }
 
     // Validate mattino times
-    if (!isAssenza && hasMattino && oraFineMattino === oraInizioMattino) {
+    if (hasMattino && oraFineMattino === oraInizioMattino) {
       setError('L\'ora di fine mattino deve essere diversa dall\'ora di inizio');
       return;
     }
 
     // Validate pomeriggio times
-    if (!isAssenza && hasPomeriggio && oraFinePomeriggio === oraInizioPomeriggio) {
+    if (hasPomeriggio && oraFinePomeriggio === oraInizioPomeriggio) {
       setError('L\'ora di fine pomeriggio deve essere diversa dall\'ora di inizio');
       return;
     }
@@ -181,7 +172,6 @@ export function AttivitaFormPage() {
         clienteId: clienteId ?? null,
         cantiereId: cantiereId ?? null,
         tipoAttivitaId: tipoAttivitaId ?? null,
-        assenzaId: assenzaId ?? null,
         note: note.trim() || undefined,
       };
 
@@ -242,76 +232,72 @@ export function AttivitaFormPage() {
           </div>
 
           {/* Fascia Mattino */}
-          {!isAssenza && (
-            <div className="border border-gray-200 rounded-lg p-4">
-              <label className="label mb-3">Mattino <span className="text-gray-400 font-normal">(opzionale)</span></label>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="oraInizioMattino" className="label text-sm">Inizio</label>
-                  <DateTimeInput
-                    type="time"
-                    id="oraInizioMattino"
-                    className="input"
-                    value={oraInizioMattino}
-                    onChange={setOraInizioMattino}
-                    defaultTime="06:00"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="oraFineMattino" className="label text-sm">Fine</label>
-                  <DateTimeInput
-                    type="time"
-                    id="oraFineMattino"
-                    className="input"
-                    value={oraFineMattino}
-                    onChange={setOraFineMattino}
-                    defaultTime="06:00"
-                  />
-                </div>
+          <div className="border border-gray-200 rounded-lg p-4">
+            <label className="label mb-3">Mattino <span className="text-gray-400 font-normal">(opzionale)</span></label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="oraInizioMattino" className="label text-sm">Inizio</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraInizioMattino"
+                  className="input"
+                  value={oraInizioMattino}
+                  onChange={setOraInizioMattino}
+                  defaultTime="06:00"
+                />
               </div>
-              {isOvernight(oraInizioMattino, oraFineMattino) && (
-                <p className="text-sm text-gray-500 mt-3">
-                  Il turno termina il giorno successivo. Le ore restano conteggiate su questa data.
-                </p>
-              )}
+              <div>
+                <label htmlFor="oraFineMattino" className="label text-sm">Fine</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraFineMattino"
+                  className="input"
+                  value={oraFineMattino}
+                  onChange={setOraFineMattino}
+                  defaultTime="06:00"
+                />
+              </div>
             </div>
-          )}
+            {isOvernight(oraInizioMattino, oraFineMattino) && (
+              <p className="text-sm text-gray-500 mt-3">
+                Il turno termina il giorno successivo. Le ore restano conteggiate su questa data.
+              </p>
+            )}
+          </div>
 
           {/* Fascia Pomeriggio */}
-          {!isAssenza && (
-            <div className="border border-gray-200 rounded-lg p-4">
-              <label className="label mb-3">Pomeriggio <span className="text-gray-400 font-normal">(opzionale)</span></label>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="oraInizioPomeriggio" className="label text-sm">Inizio</label>
-                  <DateTimeInput
-                    type="time"
-                    id="oraInizioPomeriggio"
-                    className="input"
-                    value={oraInizioPomeriggio}
-                    onChange={setOraInizioPomeriggio}
-                    defaultTime="13:00"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="oraFinePomeriggio" className="label text-sm">Fine</label>
-                  <DateTimeInput
-                    type="time"
-                    id="oraFinePomeriggio"
-                    className="input"
-                    value={oraFinePomeriggio}
-                    onChange={setOraFinePomeriggio}
-                    defaultTime="13:00"
-                  />
-                </div>
+          <div className="border border-gray-200 rounded-lg p-4">
+            <label className="label mb-3">Pomeriggio <span className="text-gray-400 font-normal">(opzionale)</span></label>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="oraInizioPomeriggio" className="label text-sm">Inizio</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraInizioPomeriggio"
+                  className="input"
+                  value={oraInizioPomeriggio}
+                  onChange={setOraInizioPomeriggio}
+                  defaultTime="13:00"
+                />
               </div>
-              {isOvernight(oraInizioPomeriggio, oraFinePomeriggio) && (
-                <p className="text-sm text-gray-500 mt-3">
-                  Il turno termina il giorno successivo. Le ore restano conteggiate su questa data.
-                </p>
-              )}
+              <div>
+                <label htmlFor="oraFinePomeriggio" className="label text-sm">Fine</label>
+                <DateTimeInput
+                  type="time"
+                  id="oraFinePomeriggio"
+                  className="input"
+                  value={oraFinePomeriggio}
+                  onChange={setOraFinePomeriggio}
+                  defaultTime="13:00"
+                />
+              </div>
             </div>
-          )}
+            {isOvernight(oraInizioPomeriggio, oraFinePomeriggio) && (
+              <p className="text-sm text-gray-500 mt-3">
+                Il turno termina il giorno successivo. Le ore restano conteggiate su questa data.
+              </p>
+            )}
+          </div>
 
           {/* Cliente */}
           <div>
@@ -321,7 +307,7 @@ export function AttivitaFormPage() {
               className="select"
               value={clienteId ?? ''}
               onChange={(e) => setClienteId(e.target.value ? parseInt(e.target.value) : null)}
-              required={!isAssenza}
+              required
             >
               <option value="">Seleziona cliente...</option>
               {clienti.map((c) => (
@@ -339,7 +325,7 @@ export function AttivitaFormPage() {
                 className="select"
                 value={cantiereId ?? ''}
                 onChange={(e) => setCantiereId(e.target.value ? parseInt(e.target.value) : null)}
-                required={!isAssenza}
+                required
               >
                 <option value="">Seleziona cantiere...</option>
                 {cantieri.map((c) => (
@@ -367,30 +353,6 @@ export function AttivitaFormPage() {
                 <option key={t.id} value={t.id}>{t.nome}</option>
               ))}
             </select>
-          </div>
-
-          {/* Assenza */}
-          <div>
-            <label htmlFor="assenza" className="label">
-              Assenza <span className="text-gray-400 font-normal">(opzionale)</span>
-            </label>
-            <select
-              id="assenza"
-              className="select"
-              value={assenzaId ?? ''}
-              onChange={(e) => setAssenzaId(e.target.value ? parseInt(e.target.value) : null)}
-            >
-              <option value="">Nessuna assenza</option>
-              {tipiAssenza.map((a) => (
-                <option key={a.id} value={a.id}>{a.nome}</option>
-              ))}
-            </select>
-            {isAssenza && (
-              <p className="text-sm text-gray-500 mt-1">
-                Con un'assenza selezionata cliente e cantiere sono facoltativi e la giornata viene
-                conteggiata come 8h 12m.
-              </p>
-            )}
           </div>
 
           {/* Note */}
@@ -421,7 +383,7 @@ export function AttivitaFormPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSaving || (!isAssenza && (!clienteId || (cantieri.length > 0 && !cantiereId) || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))))}
+              disabled={isSaving || !clienteId || (cantieri.length > 0 && !cantiereId) || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))}
             >
               {isSaving ? 'Salvataggio...' : isEditing ? 'Salva modifiche' : 'Registra attività'}
             </button>
