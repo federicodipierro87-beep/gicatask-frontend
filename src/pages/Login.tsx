@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api/client';
 import type { UserListItem } from '../types';
@@ -7,7 +7,6 @@ import { AxiosError } from 'axios';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { login, isAuthenticated, user } = useAuth();
 
   const [users, setUsers] = useState<UserListItem[]>([]);
@@ -21,11 +20,11 @@ export function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
-      const defaultPath = user.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente/nuova';
-      navigate(from ?? defaultPath, { replace: true });
+      navigate(user.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente/nuova', {
+        replace: true,
+      });
     }
-  }, [isAuthenticated, user, navigate, location.state]);
+  }, [isAuthenticated, user, navigate]);
 
   // Fetch users on mount
   useEffect(() => {

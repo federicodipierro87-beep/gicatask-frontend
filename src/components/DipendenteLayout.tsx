@@ -12,7 +12,7 @@ const navItems = [
 ];
 
 export function DipendenteLayout({ children }: Props) {
-  const { user, logout } = useAuth();
+  const { user, logout, isResponsabile } = useAuth();
   const location = useLocation();
 
   const isActive = (path: string, exact = false) => {
@@ -29,10 +29,18 @@ export function DipendenteLayout({ children }: Props) {
               <h1 className="text-xl font-semibold text-gray-900">GicaTask</h1>
               <p className="text-sm text-gray-600">Area Dipendente</p>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="text-sm text-gray-600 hidden sm:inline">
                 {user?.nome} {user?.cognome}
               </span>
+              {isResponsabile && (
+                <Link
+                  to="/responsabile"
+                  className="text-sm font-medium text-primary-600 hover:text-primary-700 whitespace-nowrap"
+                >
+                  ← Area Responsabile
+                </Link>
+              )}
               <button onClick={logout} className="btn-secondary text-sm">
                 Esci
               </button>
