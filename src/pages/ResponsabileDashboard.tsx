@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ResponsabileLayout } from '../components/ResponsabileLayout';
 import { Modal } from '../components/Modal';
 import { attivitaApi } from '../api/client';
+import { MonthNavigator, currentMonth, monthRange } from '../components/MonthNavigator';
 
 interface Attivita {
   id: number;
@@ -60,21 +61,31 @@ export function ResponsabileDashboard() {
   const [selectedAttivita, setSelectedAttivita] = useState<Attivita | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [mese, setMese] = useState(currentMonth);
+  const [refreshToken, setRefreshToken] = useState(0);
 
-  const fetchAttivita = async () => {
-    try {
-      const response = await attivitaApi.getAll();
-      setAttivita(Array.isArray(response.data) ? response.data : []);
-    } catch (err) {
-      console.error('Error loading attivita:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { startDate, endDate } = monthRange(mese);
 
   useEffect(() => {
-    fetchAttivita();
-  }, []);
+    let cancelled = false;
+    setIsLoading(true);
+    (async () => {
+      try {
+        const response = await attivitaApi.getAll({ startDate, endDate });
+        if (cancelled) return;
+        setAttivita(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        if (cancelled) return;
+        setAttivita([]);
+        console.error('Error loading attivita:', err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [startDate, endDate, refreshToken]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -83,7 +94,7 @@ export function ResponsabileDashboard() {
     try {
       await attivitaApi.delete(deleteId);
       setDeleteId(null);
-      fetchAttivita();
+      setRefreshToken((n) => n + 1);
     } catch (err) {
       console.error('Error deleting attivita:', err);
     } finally {
@@ -95,17 +106,21 @@ export function ResponsabileDashboard() {
     <ResponsabileLayout>
       {/* Dettaglio Attività */}
       <div className="card">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between gap-3 mb-2">
           <h3 className="font-medium text-gray-900">
             Dettaglio Attività
-            <span className="ml-2 text-sm font-normal text-gray-500">
-              ({attivita.length} totali)
-            </span>
+            {!isLoading && (
+              <span className="ml-2 text-sm font-normal text-gray-500">
+                ({attivita.length} nel mese)
+              </span>
+            )}
           </h3>
-          <Link to="/responsabile/report" className="text-sm text-primary-600 hover:text-primary-700">
+          <Link to="/responsabile/report" className="flex-shrink-0 text-sm text-primary-600 hover:text-primary-700">
             Vai ai Report →
           </Link>
         </div>
+
+        <MonthNavigator month={mese} onChange={setMese} className="mb-4" />
 
         {isLoading ? (
           <div className="flex justify-center py-8">
@@ -113,7 +128,7 @@ export function ResponsabileDashboard() {
           </div>
         ) : attivita.length === 0 ? (
           <p className="text-center text-gray-500 py-8">
-            Nessuna attività registrata
+            Nessuna attività registrata in questo mese
           </p>
         ) : (
           <div className="overflow-x-auto">

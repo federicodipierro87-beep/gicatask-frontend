@@ -3,6 +3,14 @@ import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { Modal } from '../../components/Modal';
 import { DateTimeInput } from '../../components/DateTimeInput';
 import { attivitaApi, clientiApi, cantieriApi, utentiApi } from '../../api/client';
+import {
+  MonthNavigator,
+  currentMonth,
+  monthRange,
+  monthOf,
+  wholeMonthOf,
+} from '../../components/MonthNavigator';
+import type { MonthKey } from '../../components/MonthNavigator';
 
 interface Attivita {
   id: number;
@@ -70,17 +78,6 @@ function formatDuration(minutes: number): string {
   return `${hours}h ${mins}m`;
 }
 
-function getDefaultDateRange() {
-  const now = new Date();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-  return {
-    startDate: firstDayOfMonth.toISOString().split('T')[0],
-    endDate: lastDayOfMonth.toISOString().split('T')[0],
-  };
-}
-
 export function ReportPage() {
   const [attivita, setAttivita] = useState<Attivita[]>([]);
   const [clienti, setClienti] = useState<Cliente[]>([]);
@@ -90,7 +87,7 @@ export function ReportPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Filters
-  const defaultDates = getDefaultDateRange();
+  const defaultDates = monthRange(currentMonth());
   const [startDate, setStartDate] = useState(defaultDates.startDate);
   const [endDate, setEndDate] = useState(defaultDates.endDate);
   const [clienteId, setClienteId] = useState<number | null>(null);
@@ -107,6 +104,18 @@ export function ReportPage() {
   // Delete state
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [refreshToken, setRefreshToken] = useState(0);
+
+  // Il mese è derivato dalle date: startDate/endDate restano l'unica fonte di verità
+  const wholeMonth = wholeMonthOf(startDate, endDate);
+  const navMonth = wholeMonth ?? monthOf(startDate) ?? currentMonth();
+
+  const handleMonthChange = (month: MonthKey) => {
+    const range = monthRange(month);
+    setStartDate(range.startDate);
+    setEndDate(range.endDate);
+  };
 
   useEffect(() => {
     const loadFiltersData = async () => {
@@ -143,36 +152,41 @@ export function ReportPage() {
     }
   }, [clienteId]);
 
-  const fetchAttivita = async () => {
+  useEffect(() => {
+    let cancelled = false;
     setIsLoading(true);
     setError(null);
-    try {
-      const filters: {
-        utenteId?: number;
-        clienteId?: number;
-        cantiereId?: number;
-        startDate?: string;
-        endDate?: string;
-      } = {};
+    (async () => {
+      try {
+        const filters: {
+          utenteId?: number;
+          clienteId?: number;
+          cantiereId?: number;
+          startDate?: string;
+          endDate?: string;
+        } = {};
 
-      if (startDate) filters.startDate = startDate;
-      if (endDate) filters.endDate = endDate;
-      if (clienteId) filters.clienteId = clienteId;
-      if (cantiereId) filters.cantiereId = cantiereId;
-      if (utenteId) filters.utenteId = utenteId;
+        if (startDate) filters.startDate = startDate;
+        if (endDate) filters.endDate = endDate;
+        if (clienteId) filters.clienteId = clienteId;
+        if (cantiereId) filters.cantiereId = cantiereId;
+        if (utenteId) filters.utenteId = utenteId;
 
-      const response = await attivitaApi.getAll(filters);
-      setAttivita(Array.isArray(response.data) ? response.data : []);
-    } catch (err) {
-      setError('Errore nel caricamento delle attività');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAttivita();
-  }, [startDate, endDate, clienteId, cantiereId, utenteId]);
+        const response = await attivitaApi.getAll(filters);
+        if (cancelled) return;
+        setAttivita(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        if (cancelled) return;
+        setAttivita([]);
+        setError('Errore nel caricamento delle attività');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [startDate, endDate, clienteId, cantiereId, utenteId, refreshToken]);
 
   const buildExportUrl = (format: 'pdf' | 'excel') => {
     const params = new URLSearchParams();
@@ -223,7 +237,7 @@ export function ReportPage() {
       await attivitaApi.delete(deleteId);
       setDeleteId(null);
       // Refresh the list
-      fetchAttivita();
+      setRefreshToken((n) => n + 1);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Errore durante l\'eliminazione');
     } finally {
@@ -263,7 +277,15 @@ export function ReportPage() {
 
       {/* Filters */}
       <div className="card mb-6">
-        <h3 className="font-medium text-gray-900 mb-4">Filtri</h3>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <h3 className="font-medium text-gray-900">Filtri</h3>
+          <MonthNavigator
+            month={navMonth}
+            onChange={handleMonthChange}
+            label={wholeMonth ? undefined : 'Periodo personalizzato'}
+            className="sm:w-64"
+          />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <div>
             <label htmlFor="startDate" className="label">Dal</label>
@@ -444,9 +466,11 @@ export function ReportPage() {
       <div className="card">
         <h3 className="font-medium text-gray-900 mb-4">
           Dettaglio Attività
-          <span className="ml-2 text-sm font-normal text-gray-500">
-            ({attivita.length} risultati)
-          </span>
+          {!isLoading && (
+            <span className="ml-2 text-sm font-normal text-gray-500">
+              ({attivita.length} risultati)
+            </span>
+          )}
         </h3>
 
         {isLoading ? (

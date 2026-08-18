@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { Modal } from '../../components/Modal';
 import { attivitaApi } from '../../api/client';
+import { MonthNavigator, currentMonth, monthRange } from '../../components/MonthNavigator';
 
 interface Attivita {
   id: number;
@@ -121,37 +122,48 @@ export function AttivitaListPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedAttivita, setSelectedAttivita] = useState<Attivita | null>(null);
+  const [mese, setMese] = useState(currentMonth);
+  const [refreshToken, setRefreshToken] = useState(0);
 
-  const fetchAttivita = async () => {
-    try {
-      const response = await attivitaApi.getMine();
-      setAttivita(Array.isArray(response.data) ? response.data : []);
-      setError(null);
-    } catch (err: any) {
-      console.error('Errore caricamento attività:', err);
-
-      let errorDetails = '';
-
-      if (err.response) {
-        // Errore dal server
-        errorDetails = `Status: ${err.response.status} | ${err.response.data?.error || err.response.statusText || 'Errore server'}`;
-      } else if (err.request) {
-        // Nessuna risposta dal server
-        errorDetails = 'Nessuna risposta dal server. Controlla la connessione.';
-      } else {
-        // Errore nella richiesta
-        errorDetails = `Errore: ${err.message}`;
-      }
-
-      setError(errorDetails);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { startDate, endDate } = monthRange(mese);
 
   useEffect(() => {
-    fetchAttivita();
-  }, []);
+    let cancelled = false;
+    setIsLoading(true);
+    (async () => {
+      try {
+        const response = await attivitaApi.getMine(startDate, endDate);
+        if (cancelled) return;
+        setAttivita(Array.isArray(response.data) ? response.data : []);
+        setError(null);
+      } catch (err: any) {
+        if (cancelled) return;
+        console.error('Errore caricamento attività:', err);
+
+        setAttivita([]);
+
+        let errorDetails = '';
+
+        if (err.response) {
+          // Errore dal server
+          errorDetails = `Status: ${err.response.status} | ${err.response.data?.error || err.response.statusText || 'Errore server'}`;
+        } else if (err.request) {
+          // Nessuna risposta dal server
+          errorDetails = 'Nessuna risposta dal server. Controlla la connessione.';
+        } else {
+          // Errore nella richiesta
+          errorDetails = `Errore: ${err.message}`;
+        }
+
+        setError(errorDetails);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [startDate, endDate, refreshToken]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -160,7 +172,7 @@ export function AttivitaListPage() {
     try {
       await attivitaApi.delete(deleteId);
       setDeleteId(null);
-      fetchAttivita();
+      setRefreshToken((n) => n + 1);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Errore durante l\'eliminazione');
     } finally {
@@ -187,7 +199,7 @@ export function AttivitaListPage() {
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Le Mie Attività</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Totale: {formatDuration(totalMinutes)} ({attivita.length} attività)
+            Totale mese: {formatDuration(totalMinutes)} ({attivita.length} attività)
           </p>
         </div>
         <Link to="/dipendente/nuova" className="btn-primary">
@@ -195,12 +207,16 @@ export function AttivitaListPage() {
         </Link>
       </div>
 
+      <div className="mb-6 rounded-xl border bg-white px-2 py-2 shadow-sm">
+        <MonthNavigator month={mese} onChange={setMese} />
+      </div>
+
       {error && (
         <div className="mb-4 p-4 bg-red-50 border-2 border-red-400 rounded-lg">
           <p className="text-red-800 font-bold text-lg mb-2">Errore</p>
           <p className="text-red-700 text-base break-all">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => setRefreshToken((n) => n + 1)}
             className="mt-3 bg-red-600 text-white px-4 py-2 rounded"
           >
             Riprova
@@ -214,10 +230,16 @@ export function AttivitaListPage() {
         </div>
       ) : attivita.length === 0 ? (
         <div className="card text-center py-8">
-          <p className="text-gray-500 mb-4">Nessuna attività registrata</p>
-          <Link to="/dipendente/nuova" className="btn-primary">
-            Registra la tua prima attività
-          </Link>
+          <p className="text-gray-500 mb-4">Nessuna attività registrata in questo mese</p>
+          {mese === currentMonth() ? (
+            <Link to="/dipendente/nuova" className="btn-primary">
+              Registra la tua prima attività
+            </Link>
+          ) : (
+            <p className="text-sm text-gray-400">
+              Usa le frecce qui sopra per cambiare mese
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
