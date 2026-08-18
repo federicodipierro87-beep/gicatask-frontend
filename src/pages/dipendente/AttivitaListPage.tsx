@@ -45,33 +45,6 @@ function formatDuration(minutes: number): string {
   return `${hours}h ${mins}m`;
 }
 
-function isWithinCurrentWeek(dateStr: string): boolean {
-  const date = new Date(dateStr);
-  const now = new Date();
-
-  const getMonday = (d: Date): Date => {
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(d);
-    monday.setDate(diff);
-    monday.setHours(0, 0, 0, 0);
-    return monday;
-  };
-
-  const getSunday = (d: Date): Date => {
-    const monday = getMonday(d);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
-    return sunday;
-  };
-
-  const weekStart = getMonday(now);
-  const weekEnd = getSunday(now);
-
-  return date >= weekStart && date <= weekEnd;
-}
-
 type DateStatus = 'past' | 'today' | 'future';
 
 function getDateStatus(dateStr: string): DateStatus {
@@ -255,11 +228,6 @@ export function AttivitaListPage() {
                       (oggi)
                     </span>
                   )}
-                  {dateStatus !== 'today' && isWithinCurrentWeek(date) && (
-                    <span className="ml-2 text-xs text-primary-600 font-normal">
-                      (questa settimana)
-                    </span>
-                  )}
                 </h3>
                 <span className="text-sm text-gray-500">
                   {formatDuration(
@@ -269,82 +237,76 @@ export function AttivitaListPage() {
               </div>
 
               <div className="space-y-3">
-                {groupedAttivita[date]?.map((att) => {
-                  const canEdit = isWithinCurrentWeek(att.dataRiferimento);
-
-                  return (
-                    <div
-                      key={att.id}
-                      onClick={() => setSelectedAttivita(att)}
-                      className={`flex flex-col sm:flex-row sm:items-center justify-between ${getActivityRowClasses(dateStatus)} gap-2 cursor-pointer hover:opacity-80 transition-opacity`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {formatTimeSlot(att.oraInizioMattino, att.oraFineMattino) && (
-                            <span className="font-medium text-gray-900">
-                              M: {formatTimeSlot(att.oraInizioMattino, att.oraFineMattino)}
-                            </span>
-                          )}
-                          {formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio) && (
-                            <span className="font-medium text-gray-900">
-                              P: {formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio)}
-                            </span>
-                          )}
-                          <span className="text-xs text-gray-500">
-                            ({formatDuration(att.durataMinuti)})
+                {groupedAttivita[date]?.map((att) => (
+                  <div
+                    key={att.id}
+                    onClick={() => setSelectedAttivita(att)}
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between ${getActivityRowClasses(dateStatus)} gap-2 cursor-pointer hover:opacity-80 transition-opacity`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {formatTimeSlot(att.oraInizioMattino, att.oraFineMattino) && (
+                          <span className="font-medium text-gray-900">
+                            M: {formatTimeSlot(att.oraInizioMattino, att.oraFineMattino)}
                           </span>
-                        </div>
-                        <div className="text-sm text-gray-600 mt-1 truncate">
-                          {att.assenza ? (
-                            <span className="font-medium text-primary-600">{att.assenza.nome}</span>
-                          ) : (
-                            <>
-                              {att.cliente && <span className="font-medium">{att.cliente.nome}</span>}
-                              {att.cantiere && (
-                                <>
-                                  {att.cliente && ' → '}
-                                  <span>{att.cantiere.nome}</span>
-                                </>
-                              )}
-                              {att.tipoAttivita && (
-                                <>
-                                  {(att.cliente || att.cantiere) && ' → '}
-                                  <span className="text-primary-600">{att.tipoAttivita.nome}</span>
-                                </>
-                              )}
-                            </>
-                          )}
-                        </div>
-                        {att.note && (
-                          <p className="text-sm text-gray-500 mt-1 italic truncate">
-                            "{att.note}"
-                          </p>
+                        )}
+                        {formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio) && (
+                          <span className="font-medium text-gray-900">
+                            P: {formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio)}
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-500">
+                          ({formatDuration(att.durataMinuti)})
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1 truncate">
+                        {att.assenza ? (
+                          <span className="font-medium text-primary-600">{att.assenza.nome}</span>
+                        ) : (
+                          <>
+                            {att.cliente && <span className="font-medium">{att.cliente.nome}</span>}
+                            {att.cantiere && (
+                              <>
+                                {att.cliente && ' → '}
+                                <span>{att.cantiere.nome}</span>
+                              </>
+                            )}
+                            {att.tipoAttivita && (
+                              <>
+                                {(att.cliente || att.cantiere) && ' → '}
+                                <span className="text-primary-600">{att.tipoAttivita.nome}</span>
+                              </>
+                            )}
+                          </>
                         )}
                       </div>
-
-                      {canEdit && (
-                        <div className="flex gap-2 sm:flex-shrink-0">
-                          <Link
-                            to={att.assenza ? `/dipendente/assenze/modifica/${att.id}` : `/dipendente/modifica/${att.id}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-sm text-primary-600 hover:text-primary-700"
-                          >
-                            Modifica
-                          </Link>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteId(att.id);
-                            }}
-                            className="text-sm text-red-600 hover:text-red-700"
-                          >
-                            Elimina
-                          </button>
-                        </div>
+                      {att.note && (
+                        <p className="text-sm text-gray-500 mt-1 italic truncate">
+                          "{att.note}"
+                        </p>
                       )}
                     </div>
-                  );
-                })}
+
+                    <div className="flex gap-2 sm:flex-shrink-0">
+                      <Link
+                        to={att.assenza ? `/dipendente/assenze/modifica/${att.id}` : `/dipendente/modifica/${att.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-sm text-primary-600 hover:text-primary-700"
+                      >
+                        Modifica
+                      </Link>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(att.id);
+                        }}
+                        className="text-sm text-red-600 hover:text-red-700"
+                      >
+                        Elimina
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
             );
@@ -439,26 +401,22 @@ export function AttivitaListPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
-              {isWithinCurrentWeek(selectedAttivita.dataRiferimento) && (
-                <>
-                  <Link
-                    to={selectedAttivita.assenza ? `/dipendente/assenze/modifica/${selectedAttivita.id}` : `/dipendente/modifica/${selectedAttivita.id}`}
-                    className="btn-primary"
-                    onClick={() => setSelectedAttivita(null)}
-                  >
-                    Modifica
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setDeleteId(selectedAttivita.id);
-                      setSelectedAttivita(null);
-                    }}
-                    className="btn-danger"
-                  >
-                    Elimina
-                  </button>
-                </>
-              )}
+              <Link
+                to={selectedAttivita.assenza ? `/dipendente/assenze/modifica/${selectedAttivita.id}` : `/dipendente/modifica/${selectedAttivita.id}`}
+                className="btn-primary"
+                onClick={() => setSelectedAttivita(null)}
+              >
+                Modifica
+              </Link>
+              <button
+                onClick={() => {
+                  setDeleteId(selectedAttivita.id);
+                  setSelectedAttivita(null);
+                }}
+                className="btn-danger"
+              >
+                Elimina
+              </button>
               <button
                 onClick={() => setSelectedAttivita(null)}
                 className="btn-secondary"

@@ -170,6 +170,7 @@ export const attivitaApi = {
     note?: string;
   }) => apiClient.post('/attivita', data),
   update: (id: number, data: {
+    utenteId?: number;
     dataRiferimento?: string;
     oraInizioMattino?: string;
     oraFineMattino?: string;

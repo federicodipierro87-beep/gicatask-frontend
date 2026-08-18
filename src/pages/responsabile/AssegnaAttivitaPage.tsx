@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { DateTimeInput } from '../../components/DateTimeInput';
 import { Modal } from '../../components/Modal';
@@ -37,6 +37,8 @@ const isOvernight = (start: string, end: string) => Boolean(start && end && end 
 
 export function AssegnaAttivitaPage() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditing = Boolean(id);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -90,6 +92,29 @@ export function AssegnaAttivitaPage() {
         setClienti(Array.isArray(clientiRes.data) ? clientiRes.data : []);
         setTipiAttivita(Array.isArray(tipiRes.data) ? tipiRes.data : []);
         setTipiAssenza(Array.isArray(assenzeRes.data) ? assenzeRes.data : []);
+
+        // If editing, load the activity
+        if (id) {
+          const attivitaRes = await attivitaApi.getById(parseInt(id));
+          const att = attivitaRes.data;
+
+          setUtenteId(att.utenteId);
+          setDataRiferimento(att.dataRiferimento.split('T')[0]);
+          setOraInizioMattino(att.oraInizioMattino || '');
+          setOraFineMattino(att.oraFineMattino || '');
+          setOraInizioPomeriggio(att.oraInizioPomeriggio || '');
+          setOraFinePomeriggio(att.oraFinePomeriggio || '');
+          setClienteId(att.clienteId);
+          setCantiereId(att.cantiereId);
+          setTipoAttivitaId(att.tipoAttivitaId);
+          setAssenzaId(att.assenzaId);
+          setNote(att.note || '');
+
+          if (att.clienteId) {
+            const cantieriRes = await cantieriApi.getByCliente(att.clienteId);
+            setCantieri(Array.isArray(cantieriRes.data) ? cantieriRes.data : []);
+          }
+        }
       } catch (err) {
         setError('Errore nel caricamento dei dati');
       } finally {
@@ -98,7 +123,7 @@ export function AssegnaAttivitaPage() {
     };
 
     loadData();
-  }, []);
+  }, [id]);
 
   // Load cantieri when cliente changes
   useEffect(() => {
@@ -116,7 +141,7 @@ export function AssegnaAttivitaPage() {
 
         if (response.data.length === 1) {
           setCantiereId(response.data[0].id);
-        } else {
+        } else if (!isEditing) {
           setCantiereId(null);
         }
       } catch (err) {
@@ -125,7 +150,7 @@ export function AssegnaAttivitaPage() {
     };
 
     loadCantieri();
-  }, [clienteId]);
+  }, [clienteId, isEditing]);
 
   const handleClienteChange = (value: string) => {
     if (value === NEW_ITEM_VALUE) {
@@ -314,20 +339,28 @@ export function AssegnaAttivitaPage() {
     setError(null);
     setSuccess(null);
 
+    const payload = {
+      utenteId,
+      dataRiferimento,
+      oraInizioMattino: oraInizioMattino || undefined,
+      oraFineMattino: oraFineMattino || undefined,
+      oraInizioPomeriggio: oraInizioPomeriggio || undefined,
+      oraFinePomeriggio: oraFinePomeriggio || undefined,
+      clienteId: clienteId ?? null,
+      cantiereId: cantiereId ?? null,
+      tipoAttivitaId: tipoAttivitaId ?? null,
+      assenzaId: assenzaId ?? null,
+      note: note.trim() || undefined,
+    };
+
     try {
-      await attivitaApi.create({
-        utenteId,
-        dataRiferimento,
-        oraInizioMattino: oraInizioMattino || undefined,
-        oraFineMattino: oraFineMattino || undefined,
-        oraInizioPomeriggio: oraInizioPomeriggio || undefined,
-        oraFinePomeriggio: oraFinePomeriggio || undefined,
-        clienteId: clienteId ?? null,
-        cantiereId: cantiereId ?? null,
-        tipoAttivitaId: tipoAttivitaId ?? null,
-        assenzaId: assenzaId ?? null,
-        note: note.trim() || undefined,
-      });
+      if (isEditing) {
+        await attivitaApi.update(Number(id), payload);
+        navigate('/responsabile');
+        return;
+      }
+
+      await attivitaApi.create(payload);
 
       const selectedUtente = utenti.find(u => u.id === utenteId);
       setSuccess(`Attivita assegnata a ${selectedUtente?.nome} ${selectedUtente?.cognome}`);
@@ -352,9 +385,13 @@ export function AssegnaAttivitaPage() {
   return (
     <ResponsabileLayout>
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Assegna Attivita</h2>
+        <h2 className="text-xl font-semibold text-gray-900">
+          {isEditing ? 'Modifica Attivita' : 'Assegna Attivita'}
+        </h2>
         <p className="text-sm text-gray-600 mt-1">
-          Inserisci attivita per conto dei dipendenti
+          {isEditing
+            ? 'Modifica i dati dell\'attivita, anche riassegnandola a un altro dipendente'
+            : 'Inserisci attivita per conto dei dipendenti'}
         </p>
       </div>
 
@@ -596,7 +633,7 @@ export function AssegnaAttivitaPage() {
               className="btn-primary"
               disabled={isSaving || !utenteId || (!isAssenza && (!clienteId || (cantieri.length > 0 && !cantiereId) || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))))}
             >
-              {isSaving ? 'Salvataggio...' : 'Assegna attivita'}
+              {isSaving ? 'Salvataggio...' : isEditing ? 'Salva modifiche' : 'Assegna attivita'}
             </button>
           </div>
         </form>

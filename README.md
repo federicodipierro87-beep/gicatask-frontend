@@ -98,13 +98,13 @@ src/
 ### Area Dipendente
 - **Le Mie Attività** - Lista attività raggruppate per data
 - **Nuova Attività** - Form con select a cascata (Cliente → Cantiere → Tipo)
-- **Modifica/Elimina** - Solo per attività della settimana corrente
+- **Modifica/Elimina** - Su tutte le proprie attività, senza limiti di data
 
 ### Area Responsabile
 - **Dashboard** - Panoramica con accesso rapido alle funzioni
 - **Gestione Clienti** - CRUD clienti, cantieri e tipi attività
 - **Gestione Utenti** - CRUD utenti con gestione password
-- **Assegna Attività** - Inserimento attività per conto dei dipendenti
+- **Assegna Attività** - Inserimento e modifica attività per conto dei dipendenti
 - **Report** - Filtri, statistiche, export PDF/Excel
 - **Backup** - Gestione backup e ripristino database
 

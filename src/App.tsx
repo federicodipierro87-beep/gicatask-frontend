@@ -149,6 +149,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/responsabile/attivita/modifica/:id"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <AssegnaAttivitaPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/responsabile/backup"
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
