@@ -142,8 +142,8 @@ export function ResponsabileDashboard() {
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cantiere</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Tipo</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Assenza</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-600">Mattino</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-600">Pomeriggio</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600 whitespace-nowrap">Mattino</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600 whitespace-nowrap">Pomeriggio</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Durata</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Note</th>
                 </tr>
@@ -187,8 +187,8 @@ export function ResponsabileDashboard() {
                     <td className="py-3 px-2">{att.cantiere?.nome ?? ''}</td>
                     <td className="py-3 px-2 text-primary-600">{att.tipoAttivita?.nome ?? ''}</td>
                     <td className="py-3 px-2 text-primary-600">{att.assenza?.nome ?? ''}</td>
-                    <td className="py-3 px-2">{formatTimeSlot(att.oraInizioMattino, att.oraFineMattino)}</td>
-                    <td className="py-3 px-2">{formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio)}</td>
+                    <td className="py-3 px-2 whitespace-nowrap">{formatTimeSlot(att.oraInizioMattino, att.oraFineMattino)}</td>
+                    <td className="py-3 px-2 whitespace-nowrap">{formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio)}</td>
                     <td className="py-3 px-2">{formatDuration(att.durataMinuti)}</td>
                     <td className="py-3 px-2 text-gray-500 max-w-[150px] truncate">
                       {att.note || '-'}
