@@ -526,7 +526,7 @@ export function ReportPage() {
                     <td className="py-3 px-2">{att.utente.nome} {att.utente.cognome}</td>
                     <td className="py-3 px-2 font-medium">{att.cliente?.nome ?? ''}</td>
                     <td className="py-3 px-2">{att.cantiere?.nome ?? ''}</td>
-                    <td className="py-3 px-2 text-primary-600 whitespace-nowrap">{att.tipoAttivita?.nome ?? ''}</td>
+                    <td className="py-3 px-2 text-primary-600 max-w-[150px] truncate">{att.tipoAttivita?.nome ?? ''}</td>
                     <td className="py-3 px-2 text-primary-600">{att.assenza?.nome ?? ''}</td>
                     <td className="py-3 px-2 whitespace-nowrap">{formatTimeSlot(att.oraInizioMattino, att.oraFineMattino)}</td>
                     <td className="py-3 px-2 whitespace-nowrap">{formatTimeSlot(att.oraInizioPomeriggio, att.oraFinePomeriggio)}</td>
