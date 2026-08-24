@@ -217,7 +217,9 @@ export function ReportPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `report-attivita-${new Date().toISOString().split('T')[0]}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+      // Il periodo sta nel nome del file: nel foglio Excel non e' piu' riportato
+      const periodo = startDate && endDate ? `${startDate}_${endDate}` : 'tutto';
+      a.download = `report-attivita-${periodo}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
