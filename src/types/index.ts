@@ -5,6 +5,7 @@ export interface User {
   nome: string;
   cognome: string;
   ruolo: Ruolo;
+  abilitatoBollettini: boolean;
 }
 
 export interface UserListItem {
@@ -68,4 +69,45 @@ export interface Attivita {
   createdById: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export type TipoVoce = 'MEZZO' | 'MATERIALE' | 'TRASPORTO';
+
+/** Slug usato nelle URL dell'anagrafica voci. */
+export type TipoVoceSlug = 'mezzi' | 'materiali' | 'trasporti';
+
+export interface VoceBollettino {
+  id: number;
+  tipo: TipoVoce;
+  nome: string;
+  attivo: boolean;
+}
+
+export interface RigaBollettino {
+  id: number;
+  tipo: TipoVoce;
+  voceId: number | null;
+  descrizione: string;
+  quantita: number;
+}
+
+/**
+ * Le firme non compaiono qui: il backend le esclude dagli elenchi e dal
+ * dettaglio, perché servono solo a generare il PDF lato server.
+ */
+export interface Bollettino {
+  id: number;
+  utenteId: number;
+  cantiereId: number;
+  dataRiferimento: string;
+  attivita: string;
+  numeroOperai: number;
+  ore: number;
+  clienteNome: string;
+  cantiereNome: string;
+  firmaOperatoreNome: string;
+  firmaCommittenteNome: string;
+  createdAt: string;
+  utente: { id: number; nome: string; cognome: string };
+  righe?: RigaBollettino[];
 }

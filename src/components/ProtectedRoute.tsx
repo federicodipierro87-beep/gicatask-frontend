@@ -5,9 +5,11 @@ import type { Ruolo } from '../types';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: Ruolo;
+  /** Riservato a chi ha il flag bollettini; il responsabile passa sempre. */
+  requireBollettini?: boolean;
 }
 
-export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requiredRole, requireBollettini }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
@@ -26,6 +28,12 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     // Redirect to appropriate dashboard based on role
     const redirectPath = user?.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente/nuova';
     return <Navigate to={redirectPath} replace />;
+  }
+
+  // Questo è solo il menu: l'accesso vero è deciso dalla guardia server, che
+  // rilegge il flag dal database a ogni richiesta
+  if (requireBollettini && user?.ruolo !== 'RESPONSABILE' && !user?.abilitatoBollettini) {
+    return <Navigate to="/dipendente/nuova" replace />;
   }
 
   return <>{children}</>;

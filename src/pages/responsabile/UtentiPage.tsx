@@ -9,6 +9,7 @@ interface Utente {
   cognome: string;
   ruolo: 'DIPENDENTE' | 'RESPONSABILE';
   attivo: boolean;
+  abilitatoBollettini: boolean;
 }
 
 export function UtentiPage() {
@@ -24,6 +25,7 @@ export function UtentiPage() {
   const [formCognome, setFormCognome] = useState('');
   const [formRuolo, setFormRuolo] = useState<'DIPENDENTE' | 'RESPONSABILE'>('DIPENDENTE');
   const [formPassword, setFormPassword] = useState('');
+  const [formAbilitatoBollettini, setFormAbilitatoBollettini] = useState(false);
   const [newPassword, setNewPassword] = useState('');
 
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +52,7 @@ export function UtentiPage() {
     setFormCognome('');
     setFormRuolo('DIPENDENTE');
     setFormPassword('');
+    setFormAbilitatoBollettini(false);
     setError(null);
     setIsModalOpen(true);
   };
@@ -60,6 +63,7 @@ export function UtentiPage() {
     setFormCognome(utente.cognome);
     setFormRuolo(utente.ruolo);
     setFormPassword('');
+    setFormAbilitatoBollettini(utente.abilitatoBollettini);
     setError(null);
     setIsModalOpen(true);
   };
@@ -90,6 +94,7 @@ export function UtentiPage() {
           nome: formNome.trim(),
           cognome: formCognome.trim(),
           ruolo: formRuolo,
+          abilitatoBollettini: formAbilitatoBollettini,
         });
       } else {
         await utentiApi.create({
@@ -289,6 +294,25 @@ export function UtentiPage() {
                 <option value="RESPONSABILE">Responsabile</option>
               </select>
             </div>
+            {editingUtente && (
+              <div>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={formRuolo === 'RESPONSABILE' || formAbilitatoBollettini}
+                    onChange={(e) => setFormAbilitatoBollettini(e.target.checked)}
+                    disabled={formRuolo === 'RESPONSABILE'}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 disabled:opacity-50"
+                  />
+                  Abilita Bollettini
+                </label>
+                <p className="text-sm text-gray-500 mt-1">
+                  {formRuolo === 'RESPONSABILE'
+                    ? 'Il responsabile accede sempre ai bollettini.'
+                    : 'Permette di compilare i bollettini di cantiere.'}
+                </p>
+              </div>
+            )}
             {!editingUtente && (
               <div>
                 <label htmlFor="password" className="label">

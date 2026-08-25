@@ -180,6 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           nome: response.data.user.nome,
           cognome: response.data.user.cognome,
           ruolo: response.data.user.ruolo as Ruolo,
+          abilitatoBollettini: response.data.user.abilitatoBollettini,
         });
         // Refresh session marker
         sessionStorage.setItem(SESSION_MARKER_KEY, 'true');
@@ -246,6 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       nome: response.data.user.nome,
       cognome: response.data.user.cognome,
       ruolo: response.data.user.ruolo as Ruolo,
+      abilitatoBollettini: response.data.user.abilitatoBollettini,
     });
   }, [clearTimers]);
 

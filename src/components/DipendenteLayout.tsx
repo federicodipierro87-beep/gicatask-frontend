@@ -5,15 +5,20 @@ interface Props {
   children: React.ReactNode;
 }
 
-const navItems = [
-  { path: '/dipendente/nuova', label: 'Nuova Attività' },
-  { path: '/dipendente/assenze', label: 'Assenze' },
-  { path: '/dipendente', label: 'Le Mie Attività', exact: true },
-];
-
 export function DipendenteLayout({ children }: Props) {
   const { user, logout, isResponsabile } = useAuth();
   const location = useLocation();
+
+  // "Le Mie Attività" resta in fondo: isActive usa startsWith e /dipendente è
+  // prefisso di /dipendente/bollettini, per questo ha exact
+  const navItems = [
+    { path: '/dipendente/nuova', label: 'Nuova Attività' },
+    { path: '/dipendente/assenze', label: 'Assenze' },
+    ...(user?.abilitatoBollettini || isResponsabile
+      ? [{ path: '/dipendente/bollettini', label: 'Bollettini' }]
+      : []),
+    { path: '/dipendente', label: 'Le Mie Attività', exact: true },
+  ];
 
   const isActive = (path: string, exact = false) => {
     if (exact) return location.pathname === path;

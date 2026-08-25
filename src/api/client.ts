@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import type { ApiError } from '../types';
+import type { ApiError, Bollettino, TipoVoceSlug, VoceBollettino } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'gicatask_token';
@@ -57,18 +57,18 @@ export const authApi = {
     apiClient.get<{ hasPassword: boolean }>(`/auth/check-password/${userId}`),
 
   login: (utenteId: number, password?: string) =>
-    apiClient.post<{ token: string; user: { id: number; nome: string; cognome: string; ruolo: string } }>(
-      '/auth/login',
-      { utenteId, password }
-    ),
+    apiClient.post<{
+      token: string;
+      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean };
+    }>('/auth/login', { utenteId, password }),
 
   logout: () =>
     apiClient.post('/auth/logout'),
 
   getMe: () =>
-    apiClient.get<{ user: { id: number; nome: string; cognome: string; ruolo: string } }>(
-      '/auth/me'
-    ),
+    apiClient.get<{
+      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean };
+    }>('/auth/me'),
 };
 
 // Clienti API
@@ -223,12 +223,105 @@ export const utentiApi = {
     apiClient.get(`/utenti/${id}`),
   create: (data: { nome: string; cognome: string; ruolo: string; password?: string }) =>
     apiClient.post('/utenti', data),
-  update: (id: number, data: { nome?: string; cognome?: string; ruolo?: string }) =>
-    apiClient.put(`/utenti/${id}`, data),
+  update: (
+    id: number,
+    data: { nome?: string; cognome?: string; ruolo?: string; abilitatoBollettini?: boolean }
+  ) => apiClient.put(`/utenti/${id}`, data),
   setPassword: (id: number, password: string | null) =>
     apiClient.post(`/utenti/${id}/password`, { password }),
   delete: (id: number) =>
     apiClient.delete(`/utenti/${id}`),
   activate: (id: number) =>
     apiClient.post(`/utenti/${id}/activate`),
+};
+
+// Anagrafica voci bollettino (mezzi / materiali / trasporti)
+export const vociBollettinoApi = {
+  getAll: (tipo: TipoVoceSlug, includeInactive = false) =>
+    apiClient.get<VoceBollettino[]>(
+      `/voci-bollettino/${tipo}${includeInactive ? '?includeInactive=true' : ''}`
+    ),
+  create: (tipo: TipoVoceSlug, nome: string) =>
+    apiClient.post<VoceBollettino>(`/voci-bollettino/${tipo}`, { nome }),
+  update: (id: number, nome: string) =>
+    apiClient.put<VoceBollettino>(`/voci-bollettino/${id}`, { nome }),
+  delete: (id: number) =>
+    apiClient.delete(`/voci-bollettino/${id}`),
+  activate: (id: number) =>
+    apiClient.post<VoceBollettino>(`/voci-bollettino/${id}/activate`),
+};
+
+export interface BollettinoFilters {
+  utenteId?: number;
+  clienteId?: number;
+  cantiereId?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface RigaBollettinoInput {
+  voceId: number;
+  quantita: number;
+}
+
+export interface CreateBollettinoInput {
+  cantiereId: number;
+  dataRiferimento: string;
+  attivita: string;
+  numeroOperai: number;
+  ore: number;
+  mezzi: RigaBollettinoInput[];
+  materiali: RigaBollettinoInput[];
+  trasporti: RigaBollettinoInput[];
+  firmaOperatoreNome: string;
+  firmaOperatoreImg: string;
+  firmaCommittenteNome: string;
+  firmaCommittenteImg: string;
+}
+
+function bollettinoParams(filters?: BollettinoFilters): string {
+  const params = new URLSearchParams();
+  if (filters?.utenteId) params.append('utenteId', String(filters.utenteId));
+  if (filters?.clienteId) params.append('clienteId', String(filters.clienteId));
+  if (filters?.cantiereId) params.append('cantiereId', String(filters.cantiereId));
+  if (filters?.startDate) params.append('startDate', filters.startDate);
+  if (filters?.endDate) params.append('endDate', filters.endDate);
+  return params.toString() ? `?${params.toString()}` : '';
+}
+
+/**
+ * I PDF passano da apiClient e non da fetch: il token Bearer è aggiunto
+ * dall'interceptor axios, mentre una fetch nuda si autenticherebbe con il solo
+ * cookie SameSite=None, che Safari limita.
+ */
+async function downloadPdf(url: string, filename: string): Promise<void> {
+  const response = await apiClient.get(url, { responseType: 'blob' });
+
+  const blobUrl = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(blobUrl);
+}
+
+// Bollettini API
+export const bollettiniApi = {
+  getAll: (filters?: BollettinoFilters) =>
+    apiClient.get<Bollettino[]>(`/bollettini${bollettinoParams(filters)}`),
+  getById: (id: number) =>
+    apiClient.get<Bollettino>(`/bollettini/${id}`),
+  create: (data: CreateBollettinoInput) =>
+    apiClient.post<{ id: number }>('/bollettini', data),
+  delete: (id: number) =>
+    apiClient.delete(`/bollettini/${id}`),
+  downloadPdf: (id: number) =>
+    downloadPdf(`/bollettini/${id}/pdf`, `bollettino-${id}.pdf`),
+  downloadCumulativo: (cantiereId: number, startDate?: string, endDate?: string) =>
+    downloadPdf(
+      `/bollettini/cantiere/${cantiereId}/pdf${bollettinoParams({ startDate, endDate })}`,
+      `bollettini-cantiere-${cantiereId}.pdf`
+    ),
 };

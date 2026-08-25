@@ -11,6 +11,9 @@ const mainNavItems = [
   { path: '/responsabile', label: 'Dashboard', exact: true },
   { path: '/responsabile/assegna', label: 'Assegna' },
   { path: '/responsabile/report', label: 'Report' },
+  // L'archivio si consulta di frequente: in settingsNavItems la riga desktop
+  // arriverebbe a undici voci
+  { path: '/responsabile/bollettini', label: 'Bollettini' },
 ];
 
 // Settings items (in dropdown on mobile, visible on desktop)
@@ -19,6 +22,9 @@ const settingsNavItems = [
   { path: '/responsabile/cantieri', label: 'Cantieri' },
   { path: '/responsabile/tipi-attivita', label: 'Tipi Attività' },
   { path: '/responsabile/tipi-assenza', label: 'Assenze' },
+  { path: '/responsabile/mezzi', label: 'Mezzi' },
+  { path: '/responsabile/materiali', label: 'Materiali' },
+  { path: '/responsabile/trasporti', label: 'Trasporti' },
   { path: '/responsabile/utenti', label: 'Utenti' },
   { path: '/responsabile/import', label: 'Import' },
   { path: '/responsabile/backup', label: 'Backup' },

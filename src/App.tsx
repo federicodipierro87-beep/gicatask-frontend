@@ -18,6 +18,10 @@ import { ImportPage } from './pages/responsabile/ImportPage';
 import { CantieriPage } from './pages/responsabile/CantieriPage';
 import { TipiAttivitaPage } from './pages/responsabile/TipiAttivitaPage';
 import { TipiAssenzaPage } from './pages/responsabile/TipiAssenzaPage';
+import { BollettiniListPage } from './pages/dipendente/BollettiniListPage';
+import { BollettinoFormPage } from './pages/dipendente/BollettinoFormPage';
+import { BollettiniArchivioPage } from './pages/responsabile/BollettiniArchivioPage';
+import { VociBollettinoPage } from './pages/responsabile/VociBollettinoPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -95,6 +99,23 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AssenzaFormPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dipendente/bollettini"
+        element={
+          <ProtectedRoute requireBollettini>
+            <BollettiniListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dipendente/bollettini/nuovo"
+        element={
+          <ProtectedRoute requireBollettini>
+            <BollettinoFormPage />
           </ProtectedRoute>
         }
       />
@@ -193,6 +214,39 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <TipiAssenzaPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/responsabile/bollettini"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <BollettiniArchivioPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/mezzi"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <VociBollettinoPage tipo="mezzi" titolo="Mezzi" singolare="Mezzo" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/materiali"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <VociBollettinoPage tipo="materiali" titolo="Materiali" singolare="Materiale" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/trasporti"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <VociBollettinoPage tipo="trasporti" titolo="Trasporti" singolare="Trasporto" />
           </ProtectedRoute>
         }
       />
