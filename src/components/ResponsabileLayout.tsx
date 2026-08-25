@@ -11,9 +11,6 @@ const mainNavItems = [
   { path: '/responsabile', label: 'Dashboard', exact: true },
   { path: '/responsabile/assegna', label: 'Assegna' },
   { path: '/responsabile/report', label: 'Report' },
-  // L'archivio si consulta di frequente: in settingsNavItems la riga desktop
-  // arriverebbe a undici voci
-  { path: '/responsabile/bollettini', label: 'Bollettini' },
 ];
 
 // Settings items (in dropdown on mobile, visible on desktop)
@@ -22,25 +19,41 @@ const settingsNavItems = [
   { path: '/responsabile/cantieri', label: 'Cantieri' },
   { path: '/responsabile/tipi-attivita', label: 'Tipi Attività' },
   { path: '/responsabile/tipi-assenza', label: 'Assenze' },
-  { path: '/responsabile/mezzi', label: 'Mezzi' },
-  { path: '/responsabile/materiali', label: 'Materiali' },
-  { path: '/responsabile/trasporti', label: 'Trasporti' },
   { path: '/responsabile/utenti', label: 'Utenti' },
   { path: '/responsabile/import', label: 'Import' },
   { path: '/responsabile/backup', label: 'Backup' },
+];
+
+// Raggruppate sotto un'unica voce: sparse in barra sarebbero quattro tab in
+// piu' su una riga gia' lunga, e nulla direbbe che appartengono alla stessa cosa
+const bollettinoNavItems = [
+  { path: '/responsabile/bollettini', label: 'Archivio' },
+  { path: '/responsabile/mezzi', label: 'Mezzi' },
+  { path: '/responsabile/materiali', label: 'Materiali' },
+  { path: '/responsabile/trasporti', label: 'Trasporti' },
 ];
 
 export function ResponsabileLayout({ children }: Props) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [showSettings, setShowSettings] = useState(false);
+  const [showBollettino, setShowBollettino] = useState(false);
+
+  // Il flag vale anche per il responsabile: senza, la sezione non compare
+  const vedeBollettini = user?.abilitatoBollettini ?? false;
 
   const isActive = (path: string, exact = false) => {
     if (exact) return location.pathname === path;
     return location.pathname.startsWith(path);
   };
 
-  const isSettingsActive = settingsNavItems.some(item => isActive(item.path));
+  const isBollettinoActive = bollettinoNavItems.some(item => isActive(item.path));
+
+  // Su mobile il gruppo Bollettino vive dentro la rotella, quindi deve
+  // accenderla anche lui
+  const isSettingsActive =
+    settingsNavItems.some(item => isActive(item.path)) ||
+    (vedeBollettini && isBollettinoActive);
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
@@ -98,6 +111,30 @@ export function ResponsabileLayout({ children }: Props) {
                           {item.label}
                         </Link>
                       ))}
+
+                      {vedeBollettini && (
+                        <>
+                          <div className="px-4 py-2 mt-1 border-t border-gray-100">
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">
+                              Bollettino
+                            </p>
+                          </div>
+                          {bollettinoNavItems.map((item) => (
+                            <Link
+                              key={item.path}
+                              to={item.path}
+                              onClick={() => setShowSettings(false)}
+                              className={`block px-4 py-2 text-sm ${
+                                isActive(item.path)
+                                  ? 'bg-primary-50 text-primary-700 font-medium'
+                                  : 'text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              {item.label}
+                            </Link>
+                          ))}
+                        </>
+                      )}
                     </div>
                   </>
                 )}
@@ -113,37 +150,88 @@ export function ResponsabileLayout({ children }: Props) {
           </div>
 
           {/* Navigation tabs */}
-          <nav className="flex gap-1 -mb-px overflow-x-auto">
-            {/* Main nav items (always visible) */}
-            {mainNavItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
-                  isActive(item.path, item.exact)
-                    ? 'bg-white text-primary-700'
-                    : 'text-primary-100 hover:text-white hover:bg-primary-600'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+          <div className="flex items-end gap-1">
+            <nav className="flex gap-1 -mb-px overflow-x-auto min-w-0">
+              {/* Main nav items (always visible) */}
+              {mainNavItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+                    isActive(item.path, item.exact)
+                      ? 'bg-white text-primary-700'
+                      : 'text-primary-100 hover:text-white hover:bg-primary-600'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
 
-            {/* Settings nav items (only visible on desktop) */}
-            {settingsNavItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`hidden sm:block px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
-                  isActive(item.path)
-                    ? 'bg-white text-primary-700'
-                    : 'text-primary-100 hover:text-white hover:bg-primary-600'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+              {/* Settings nav items (only visible on desktop) */}
+              {settingsNavItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`hidden sm:block px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+                    isActive(item.path)
+                      ? 'bg-white text-primary-700'
+                      : 'text-primary-100 hover:text-white hover:bg-primary-600'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            {/*
+              La tendina sta fuori dalla nav: overflow-x-auto crea un
+              contenitore di scorrimento che ritaglierebbe il pannello invece
+              di lasciarlo uscire. Su mobile il gruppo e' gia' nella rotella,
+              quindi qui e' nascosta.
+            */}
+            {vedeBollettini && (
+              <div className="relative hidden sm:block -mb-px">
+                <button
+                  onClick={() => setShowBollettino(!showBollettino)}
+                  className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+                    showBollettino || isBollettinoActive
+                      ? 'bg-white text-primary-700'
+                      : 'text-primary-100 hover:text-white hover:bg-primary-600'
+                  }`}
+                >
+                  Bollettino
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showBollettino && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowBollettino(false)}
+                    />
+                    <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg z-20 py-2">
+                      {bollettinoNavItems.map((item) => (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setShowBollettino(false)}
+                          className={`block px-4 py-2 text-sm ${
+                            isActive(item.path)
+                              ? 'bg-primary-50 text-primary-700 font-medium'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

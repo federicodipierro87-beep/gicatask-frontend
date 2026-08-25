@@ -221,7 +221,7 @@ function AppRoutes() {
       <Route
         path="/responsabile/bollettini"
         element={
-          <ProtectedRoute requiredRole="RESPONSABILE">
+          <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>
             <BollettiniArchivioPage />
           </ProtectedRoute>
         }
@@ -229,7 +229,7 @@ function AppRoutes() {
       <Route
         path="/responsabile/mezzi"
         element={
-          <ProtectedRoute requiredRole="RESPONSABILE">
+          <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>
             <VociBollettinoPage tipo="mezzi" titolo="Mezzi" singolare="Mezzo" />
           </ProtectedRoute>
         }
@@ -237,7 +237,7 @@ function AppRoutes() {
       <Route
         path="/responsabile/materiali"
         element={
-          <ProtectedRoute requiredRole="RESPONSABILE">
+          <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>
             <VociBollettinoPage tipo="materiali" titolo="Materiali" singolare="Materiale" />
           </ProtectedRoute>
         }
@@ -245,7 +245,7 @@ function AppRoutes() {
       <Route
         path="/responsabile/trasporti"
         element={
-          <ProtectedRoute requiredRole="RESPONSABILE">
+          <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>
             <VociBollettinoPage tipo="trasporti" titolo="Trasporti" singolare="Trasporto" />
           </ProtectedRoute>
         }

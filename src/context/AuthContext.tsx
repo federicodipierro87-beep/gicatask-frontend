@@ -24,12 +24,33 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (utenteId: number, password?: string) => Promise<void>;
   logout: () => Promise<void>;
+  /** Rilegge /auth/me: serve a chi modifica i permessi di se stesso. */
+  refreshUser: () => Promise<void>;
   isResponsabile: boolean;
   showInactivityWarning: boolean;
   dismissInactivityWarning: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Login e /auth/me restituiscono lo stesso oggetto. Con la conversione ripetuta
+// a mano un campo nuovo finiva in un punto e veniva scordato nell'altro, e il
+// sintomo era un permesso che spariva dopo un refresh della pagina
+function toUser(raw: {
+  id: number;
+  nome: string;
+  cognome: string;
+  ruolo: string;
+  abilitatoBollettini: boolean;
+}): User {
+  return {
+    id: raw.id,
+    nome: raw.nome,
+    cognome: raw.cognome,
+    ruolo: raw.ruolo as Ruolo,
+    abilitatoBollettini: raw.abilitatoBollettini,
+  };
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -175,13 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         const response = await authApi.getMe();
-        setUser({
-          id: response.data.user.id,
-          nome: response.data.user.nome,
-          cognome: response.data.user.cognome,
-          ruolo: response.data.user.ruolo as Ruolo,
-          abilitatoBollettini: response.data.user.abilitatoBollettini,
-        });
+        setUser(toUser(response.data.user));
         // Refresh session marker
         sessionStorage.setItem(SESSION_MARKER_KEY, 'true');
       } catch {
@@ -242,14 +257,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set session marker in sessionStorage (cleared on browser close)
     sessionStorage.setItem(SESSION_MARKER_KEY, 'true');
 
-    setUser({
-      id: response.data.user.id,
-      nome: response.data.user.nome,
-      cognome: response.data.user.cognome,
-      ruolo: response.data.user.ruolo as Ruolo,
-      abilitatoBollettini: response.data.user.abilitatoBollettini,
-    });
+    setUser(toUser(response.data.user));
   }, [clearTimers]);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const response = await authApi.getMe();
+      setUser(toUser(response.data.user));
+    } catch {
+      // Un refresh fallito non deve buttare fuori l'utente: se il token è
+      // scaduto ci pensa l'interceptor alla prossima chiamata
+    }
+  }, []);
 
   const value: AuthContextType = {
     user,
@@ -257,6 +276,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: user !== null,
     login,
     logout,
+    refreshUser,
     isResponsabile: user?.ruolo === 'RESPONSABILE',
     showInactivityWarning,
     dismissInactivityWarning,

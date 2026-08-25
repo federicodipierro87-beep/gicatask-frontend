@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { Modal } from '../../components/Modal';
 import { utentiApi } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 
 interface Utente {
   id: number;
@@ -13,6 +14,7 @@ interface Utente {
 }
 
 export function UtentiPage() {
+  const { user, refreshUser } = useAuth();
   const [utenti, setUtenti] = useState<Utente[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showInactive, setShowInactive] = useState(false);
@@ -96,6 +98,12 @@ export function UtentiPage() {
           ruolo: formRuolo,
           abilitatoBollettini: formAbilitatoBollettini,
         });
+
+        // Chi modifica i permessi di se stesso vedrebbe altrimenti il menu
+        // aggiornarsi solo al ricaricamento della pagina
+        if (editingUtente.id === user?.id) {
+          await refreshUser();
+        }
       } else {
         await utentiApi.create({
           nome: formNome.trim(),
@@ -299,17 +307,14 @@ export function UtentiPage() {
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input
                     type="checkbox"
-                    checked={formRuolo === 'RESPONSABILE' || formAbilitatoBollettini}
+                    checked={formAbilitatoBollettini}
                     onChange={(e) => setFormAbilitatoBollettini(e.target.checked)}
-                    disabled={formRuolo === 'RESPONSABILE'}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 disabled:opacity-50"
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
                   Abilita Bollettini
                 </label>
                 <p className="text-sm text-gray-500 mt-1">
-                  {formRuolo === 'RESPONSABILE'
-                    ? 'Il responsabile accede sempre ai bollettini.'
-                    : 'Permette di compilare i bollettini di cantiere.'}
+                  Mostra la sezione Bollettini. Vale anche per i responsabili.
                 </p>
               </div>
             )}

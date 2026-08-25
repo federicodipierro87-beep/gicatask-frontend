@@ -14,7 +14,7 @@ export function DipendenteLayout({ children }: Props) {
   const navItems = [
     { path: '/dipendente/nuova', label: 'Nuova Attività' },
     { path: '/dipendente/assenze', label: 'Assenze' },
-    ...(user?.abilitatoBollettini || isResponsabile
+    ...(user?.abilitatoBollettini
       ? [{ path: '/dipendente/bollettini', label: 'Bollettini' }]
       : []),
     { path: '/dipendente', label: 'Le Mie Attività', exact: true },
