@@ -188,42 +188,20 @@ export function ReportPage() {
     };
   }, [startDate, endDate, clienteId, cantiereId, utenteId, refreshToken]);
 
-  const buildExportUrl = (format: 'pdf' | 'excel') => {
-    const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    if (clienteId) params.append('clienteId', clienteId.toString());
-    if (cantiereId) params.append('cantiereId', cantiereId.toString());
-    if (utenteId) params.append('utenteId', utenteId.toString());
-
-    const baseUrl = import.meta.env.VITE_API_URL || '';
-    return `${baseUrl}/api/attivita/export/${format}?${params.toString()}`;
-  };
-
   const handleExport = async (format: 'pdf' | 'excel') => {
     const setLoading = format === 'pdf' ? setIsExportingPdf : setIsExportingExcel;
     setLoading(true);
 
     try {
-      const response = await fetch(buildExportUrl(format), {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Export failed');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
       // Il periodo sta nel nome del file: nel foglio Excel non e' piu' riportato
       const periodo = startDate && endDate ? `${startDate}_${endDate}` : 'tutto';
-      a.download = `report-attivita-${periodo}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const filename = `report-attivita-${periodo}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+
+      await attivitaApi.exportReport(
+        format,
+        { startDate, endDate, clienteId, cantiereId, utenteId },
+        filename
+      );
     } catch (err) {
       setError(`Errore durante l'esportazione ${format.toUpperCase()}`);
     } finally {

@@ -137,17 +137,32 @@ export const tipiAssenzaApi = {
     apiClient.post(`/tipi-assenza/${id}/activate`),
 };
 
+interface AttivitaFilters {
+  utenteId?: number | null;
+  clienteId?: number | null;
+  cantiereId?: number | null;
+  startDate?: string;
+  endDate?: string;
+}
+
+// Serializzazione condivisa fra elenco ed export: i due devono applicare gli
+// stessi filtri, e con due copie separate prima o poi divergono
+function attivitaParams(filters?: AttivitaFilters): string {
+  const params = new URLSearchParams();
+  if (filters?.utenteId) params.append('utenteId', String(filters.utenteId));
+  if (filters?.clienteId) params.append('clienteId', String(filters.clienteId));
+  if (filters?.cantiereId) params.append('cantiereId', String(filters.cantiereId));
+  if (filters?.startDate) params.append('startDate', filters.startDate);
+  if (filters?.endDate) params.append('endDate', filters.endDate);
+  return params.toString() ? `?${params.toString()}` : '';
+}
+
 // Attività API
 export const attivitaApi = {
-  getAll: (filters?: { utenteId?: number; clienteId?: number; cantiereId?: number; startDate?: string; endDate?: string }) => {
-    const params = new URLSearchParams();
-    if (filters?.utenteId) params.append('utenteId', filters.utenteId.toString());
-    if (filters?.clienteId) params.append('clienteId', filters.clienteId.toString());
-    if (filters?.cantiereId) params.append('cantiereId', filters.cantiereId.toString());
-    if (filters?.startDate) params.append('startDate', filters.startDate);
-    if (filters?.endDate) params.append('endDate', filters.endDate);
-    return apiClient.get(`/attivita${params.toString() ? '?' + params.toString() : ''}`);
-  },
+  getAll: (filters?: AttivitaFilters) =>
+    apiClient.get(`/attivita${attivitaParams(filters)}`),
+  exportReport: (format: 'pdf' | 'excel', filters: AttivitaFilters, filename: string) =>
+    downloadFile(`/attivita/export/${format}${attivitaParams(filters)}`, filename),
   getMine: (startDate?: string, endDate?: string) => {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
@@ -290,14 +305,18 @@ function bollettinoParams(filters?: BollettinoFilters): string {
 }
 
 /**
- * I PDF passano da apiClient e non da fetch: il token Bearer è aggiunto
+ * I download passano da apiClient e non da fetch: il token Bearer è aggiunto
  * dall'interceptor axios, mentre una fetch nuda si autenticherebbe con il solo
- * cookie SameSite=None, che Safari limita.
+ * cookie SameSite=None, che è di terze parti fra Netlify e Railway e che i
+ * browser mobili bloccano.
+ *
+ * Il blob conserva il Content-Type della risposta, quindi l'helper va bene sia
+ * per i PDF sia per gli xlsx.
  */
-async function downloadPdf(url: string, filename: string): Promise<void> {
+async function downloadFile(url: string, filename: string): Promise<void> {
   const response = await apiClient.get(url, { responseType: 'blob' });
 
-  const blobUrl = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+  const blobUrl = URL.createObjectURL(response.data);
   const link = document.createElement('a');
   link.href = blobUrl;
   link.download = filename;
@@ -318,9 +337,9 @@ export const bollettiniApi = {
   delete: (id: number) =>
     apiClient.delete(`/bollettini/${id}`),
   downloadPdf: (id: number) =>
-    downloadPdf(`/bollettini/${id}/pdf`, `bollettino-${id}.pdf`),
+    downloadFile(`/bollettini/${id}/pdf`, `bollettino-${id}.pdf`),
   downloadCumulativo: (cantiereId: number, startDate?: string, endDate?: string) =>
-    downloadPdf(
+    downloadFile(
       `/bollettini/cantiere/${cantiereId}/pdf${bollettinoParams({ startDate, endDate })}`,
       `bollettini-cantiere-${cantiereId}.pdf`
     ),
