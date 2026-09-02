@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { Modal } from '../../components/Modal';
 import { CalendarioEventiGrid } from '../../components/CalendarioEventiGrid';
@@ -42,6 +42,62 @@ function formatImporto(importo: number | null): string {
 
 function nomeEvento(evento: CalendarioEvento): string {
   return evento.nome?.trim() || evento.cliente.nome;
+}
+
+interface CampoDataProps {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+}
+
+/**
+ * Campo data che si lascia sia digitare sia scegliere dal calendario.
+ *
+ * `index.css` nasconde l'icona nativa su tutti gli input date, quindi senza
+ * un'icona propria il calendario non sarebbe raggiungibile col mouse. Il
+ * picker si apre solo dal bottone e non da un onClick sull'input: aprirlo a
+ * ogni click sul campo, come fa DateTimeInput, impedirebbe di posizionare il
+ * cursore per scrivere la data a mano.
+ */
+function CampoData({ id, label, value, onChange, required = false }: CampoDataProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const apriCalendario = () => {
+    inputRef.current?.focus();
+    // showPicker manca sui browser piu' vecchi: li' resta la digitazione
+    inputRef.current?.showPicker?.();
+  };
+
+  return (
+    <div>
+      <label htmlFor={id} className="label">{label}</label>
+      <div className="relative">
+        <input
+          ref={inputRef}
+          id={id}
+          type="date"
+          className="input pr-10"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          required={required}
+        />
+        <button
+          type="button"
+          onClick={apriCalendario}
+          // Fuori dal giro di TAB: si tabula fra i campi, non fra le icone
+          tabIndex={-1}
+          aria-label={`Apri il calendario: ${label}`}
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function CalendarioEventiPage() {
@@ -288,48 +344,32 @@ export function CalendarioEventiPage() {
               onChange={(e) => setForm({ ...form, importo: e.target.value })}
             />
           </div>
-          <div>
-            <label htmlFor="dataInizio" className="label">Dal *</label>
-            <input
-              id="dataInizio"
-              type="date"
-              className="input"
-              value={form.dataInizio}
-              onChange={(e) => setForm({ ...form, dataInizio: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="dataFine" className="label">Al *</label>
-            <input
-              id="dataFine"
-              type="date"
-              className="input"
-              value={form.dataFine}
-              onChange={(e) => setForm({ ...form, dataFine: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="dataConsegna" className="label">Data consegna</label>
-            <input
-              id="dataConsegna"
-              type="date"
-              className="input"
-              value={form.dataConsegna}
-              onChange={(e) => setForm({ ...form, dataConsegna: e.target.value })}
-            />
-          </div>
-          <div>
-            <label htmlFor="dataSmontaggio" className="label">Data smontaggio</label>
-            <input
-              id="dataSmontaggio"
-              type="date"
-              className="input"
-              value={form.dataSmontaggio}
-              onChange={(e) => setForm({ ...form, dataSmontaggio: e.target.value })}
-            />
-          </div>
+          <CampoData
+            id="dataInizio"
+            label="Dal *"
+            value={form.dataInizio}
+            onChange={(dataInizio) => setForm({ ...form, dataInizio })}
+            required
+          />
+          <CampoData
+            id="dataFine"
+            label="Al *"
+            value={form.dataFine}
+            onChange={(dataFine) => setForm({ ...form, dataFine })}
+            required
+          />
+          <CampoData
+            id="dataConsegna"
+            label="Data consegna"
+            value={form.dataConsegna}
+            onChange={(dataConsegna) => setForm({ ...form, dataConsegna })}
+          />
+          <CampoData
+            id="dataSmontaggio"
+            label="Data smontaggio"
+            value={form.dataSmontaggio}
+            onChange={(dataSmontaggio) => setForm({ ...form, dataSmontaggio })}
+          />
         </div>
 
         <div className="flex gap-3 mt-4 pt-4 border-t">
