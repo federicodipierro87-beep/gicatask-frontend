@@ -71,6 +71,34 @@ export interface Attivita {
   updatedAt: string;
 }
 
+/**
+ * Le date arrivano dal backend come stringhe ISO complete, ma rappresentano
+ * giorni: vanno lette con `slice(0, 10)` e mai convertite in `Date` locale,
+ * che in Europe/Rome sposterebbe la mezzanotte UTC al giorno precedente.
+ */
+export interface CalendarioEvento {
+  id: number;
+  clienteId: number;
+  nome: string | null;
+  dataInizio: string;
+  dataFine: string;
+  dataConsegna: string | null;
+  dataSmontaggio: string | null;
+  importo: number | null;
+  cliente: { id: number; nome: string };
+}
+
+/** Le date sono `YYYY-MM-DD`, il formato nativo degli input di tipo date. */
+export interface CalendarioEventoInput {
+  clienteId: number;
+  nome?: string | null;
+  dataInizio: string;
+  dataFine: string;
+  dataConsegna?: string | null;
+  dataSmontaggio?: string | null;
+  importo?: number | null;
+}
+
 export type TipoVoce = 'MEZZO' | 'MATERIALE' | 'TRASPORTO';
 
 /** Slug usato nelle URL dell'anagrafica voci. */

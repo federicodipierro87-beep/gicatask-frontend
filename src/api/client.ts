@@ -1,5 +1,12 @@
 import axios, { AxiosError } from 'axios';
-import type { ApiError, Bollettino, TipoVoceSlug, VoceBollettino } from '../types';
+import type {
+  ApiError,
+  Bollettino,
+  CalendarioEvento,
+  CalendarioEventoInput,
+  TipoVoceSlug,
+  VoceBollettino,
+} from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'gicatask_token';
@@ -343,4 +350,20 @@ export const bollettiniApi = {
       `/bollettini/cantiere/${cantiereId}/pdf${bollettinoParams({ startDate, endDate })}`,
       `bollettini-cantiere-${cantiereId}.pdf`
     ),
+};
+
+// Calendario eventi API
+export const calendarioEventiApi = {
+  getAll: (anno: number) =>
+    apiClient.get<CalendarioEvento[]>(`/calendario-eventi?anno=${anno}`),
+  getAnni: () =>
+    apiClient.get<number[]>('/calendario-eventi/anni'),
+  create: (data: CalendarioEventoInput) =>
+    apiClient.post<CalendarioEvento>('/calendario-eventi', data),
+  update: (id: number, data: CalendarioEventoInput) =>
+    apiClient.put<CalendarioEvento>(`/calendario-eventi/${id}`, data),
+  delete: (id: number) =>
+    apiClient.delete(`/calendario-eventi/${id}`),
+  exportExcel: (anno: number) =>
+    downloadFile(`/calendario-eventi/export/excel?anno=${anno}`, `calendario-eventi-${anno}.xlsx`),
 };

@@ -11,6 +11,7 @@ const mainNavItems = [
   { path: '/responsabile', label: 'Dashboard', exact: true },
   { path: '/responsabile/assegna', label: 'Assegna' },
   { path: '/responsabile/report', label: 'Report' },
+  { path: '/responsabile/calendari-eventi', label: 'Calendari Eventi' },
 ];
 
 // Settings items (in dropdown on mobile, visible on desktop)

@@ -22,6 +22,7 @@ import { BollettiniListPage } from './pages/dipendente/BollettiniListPage';
 import { BollettinoFormPage } from './pages/dipendente/BollettinoFormPage';
 import { BollettiniArchivioPage } from './pages/responsabile/BollettiniArchivioPage';
 import { VociBollettinoPage } from './pages/responsabile/VociBollettinoPage';
+import { CalendarioEventiPage } from './pages/responsabile/CalendarioEventiPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -158,6 +159,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <ReportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/calendari-eventi"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <CalendarioEventiPage />
           </ProtectedRoute>
         }
       />
