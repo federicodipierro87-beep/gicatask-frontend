@@ -7,9 +7,9 @@ type Pallino = 'consegna' | 'evento' | 'smontaggio';
 const ORDINE_PALLINI: Pallino[] = ['consegna', 'evento', 'smontaggio'];
 
 const COLORE_PALLINO: Record<Pallino, string> = {
-  consegna: 'bg-green-600',
+  consegna: 'bg-red-600',
   evento: 'bg-black',
-  smontaggio: 'bg-red-600',
+  smontaggio: 'bg-green-600',
 };
 
 /** Larghezza in px di una colonna giorno, usata anche per lo scroll al mese. */

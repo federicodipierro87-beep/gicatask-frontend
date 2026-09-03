@@ -50,6 +50,7 @@ interface CampoDataProps {
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
+  className?: string;
 }
 
 /**
@@ -61,7 +62,7 @@ interface CampoDataProps {
  * ogni click sul campo, come fa DateTimeInput, impedirebbe di posizionare il
  * cursore per scrivere la data a mano.
  */
-function CampoData({ id, label, value, onChange, required = false }: CampoDataProps) {
+function CampoData({ id, label, value, onChange, required = false, className }: CampoDataProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const apriCalendario = () => {
@@ -71,7 +72,7 @@ function CampoData({ id, label, value, onChange, required = false }: CampoDataPr
   };
 
   return (
-    <div>
+    <div className={className}>
       <label htmlFor={id} className="label">{label}</label>
       <div className="relative">
         <input
@@ -358,9 +359,12 @@ export function CalendarioEventiPage() {
             onChange={(dataFine) => setForm({ ...form, dataFine })}
             required
           />
+          {/* col-start-1: consegna apre una riga nuova, cosi' restano
+              affiancate a smontaggio sia a 2 sia a 3 colonne */}
           <CampoData
             id="dataConsegna"
             label="Data consegna"
+            className="sm:col-start-1"
             value={form.dataConsegna}
             onChange={(dataConsegna) => setForm({ ...form, dataConsegna })}
           />
@@ -455,10 +459,10 @@ export function CalendarioEventiPage() {
               <span className="w-[8px] h-[8px] rounded-full bg-black" /> giorni evento
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-[8px] h-[8px] rounded-full bg-green-600" /> consegna
+              <span className="w-[8px] h-[8px] rounded-full bg-red-600" /> consegna
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-[8px] h-[8px] rounded-full bg-red-600" /> smontaggio
+              <span className="w-[8px] h-[8px] rounded-full bg-green-600" /> smontaggio
             </span>
           </div>
         </div>
