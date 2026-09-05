@@ -407,6 +407,6 @@ export const dreamNoleggiApi = {
   exportPdf: (startDate: string, endDate: string) =>
     downloadFile(
       `/dream-noleggi/export/pdf${dreamNoleggiParams(startDate, endDate)}`,
-      `dream-noleggio-${startDate}_${endDate}.pdf`
+      `dream-${startDate}_${endDate}.pdf`
     ),
 };

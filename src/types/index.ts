@@ -112,12 +112,14 @@ export interface DreamVeicolo {
 export interface DreamNoleggio {
   id: number;
   veicoloId: number;
+  clienteId: number | null;
   data: string;
   osservazioni: string | null;
   importo: number;
   quota: QuotaNoleggio;
   importoCalcolato: number;
   veicolo: { id: number; nome: string };
+  cliente: { id: number; nome: string } | null;
 }
 
 /**
@@ -126,6 +128,7 @@ export interface DreamNoleggio {
  */
 export interface DreamNoleggioInput {
   veicoloId: number;
+  clienteId?: number | null;
   data: string;
   osservazioni?: string | null;
   importo: number;

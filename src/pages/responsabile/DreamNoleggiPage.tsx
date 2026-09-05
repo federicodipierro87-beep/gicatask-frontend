@@ -2,12 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { Modal } from '../../components/Modal';
 import { CampoData } from '../../components/CampoData';
-import { dreamNoleggiApi, dreamVeicoliApi } from '../../api/client';
-import type { DreamNoleggio, DreamNoleggioInput, DreamVeicolo, QuotaNoleggio } from '../../types';
+import { clientiApi, dreamNoleggiApi, dreamVeicoliApi } from '../../api/client';
+import type {
+  Cliente,
+  DreamNoleggio,
+  DreamNoleggioInput,
+  DreamVeicolo,
+  QuotaNoleggio,
+} from '../../types';
 
 interface FormState {
   data: string;
   veicoloId: string;
+  clienteId: string;
   osservazioni: string;
   importo: string;
   quota: QuotaNoleggio;
@@ -16,6 +23,7 @@ interface FormState {
 const FORM_VUOTO: FormState = {
   data: '',
   veicoloId: '',
+  clienteId: '',
   osservazioni: '',
   importo: '',
   quota: 'SETTANTA_TRENTA',
@@ -71,6 +79,7 @@ export function DreamNoleggiPage() {
 
   const [noleggi, setNoleggi] = useState<DreamNoleggio[]>([]);
   const [veicoli, setVeicoli] = useState<DreamVeicolo[]>([]);
+  const [clienti, setClienti] = useState<Cliente[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,10 +96,14 @@ export function DreamNoleggiPage() {
   useEffect(() => {
     (async () => {
       try {
-        const response = await dreamVeicoliApi.getAll();
-        setVeicoli(Array.isArray(response.data) ? response.data : []);
+        const [veicoliRes, clientiRes] = await Promise.all([
+          dreamVeicoliApi.getAll(),
+          clientiApi.getAll(),
+        ]);
+        setVeicoli(Array.isArray(veicoliRes.data) ? veicoliRes.data : []);
+        setClienti(Array.isArray(clientiRes.data) ? clientiRes.data : []);
       } catch {
-        setError('Errore nel caricamento dei veicoli');
+        setError('Errore nel caricamento di veicoli e clienti');
       }
     })();
   }, [refreshToken]);
@@ -146,6 +159,7 @@ export function DreamNoleggiPage() {
     setForm({
       data: noleggio.data.slice(0, 10),
       veicoloId: String(noleggio.veicoloId),
+      clienteId: noleggio.clienteId !== null ? String(noleggio.clienteId) : '',
       osservazioni: noleggio.osservazioni ?? '',
       importo: String(noleggio.importo),
       quota: noleggio.quota,
@@ -164,6 +178,7 @@ export function DreamNoleggiPage() {
 
     const payload: DreamNoleggioInput = {
       veicoloId: parseInt(form.veicoloId, 10),
+      clienteId: form.clienteId ? parseInt(form.clienteId, 10) : null,
       data: form.data,
       osservazioni: form.osservazioni.trim() || null,
       importo: parseFloat(form.importo),
@@ -211,19 +226,25 @@ export function DreamNoleggiPage() {
     }
   };
 
-  // Un veicolo disattivato dopo la registrazione del noleggio non torna dalla
-  // lista degli attivi: senza questa aggiunta la select si svuoterebbe in modifica
+  // Un veicolo o un cliente disattivato dopo la registrazione del noleggio non
+  // torna dalla lista degli attivi: senza queste aggiunte la select si
+  // svuoterebbe in modifica
   const noleggioInModifica = noleggi.find((n) => n.id === editId);
   const opzioniVeicoli =
     noleggioInModifica && !veicoli.some((v) => v.id === noleggioInModifica.veicoloId)
       ? [...veicoli, { ...noleggioInModifica.veicolo, attivo: false }]
       : veicoli;
+  const clienteInModifica = noleggioInModifica?.cliente;
+  const opzioniClienti =
+    clienteInModifica && !clienti.some((c) => c.id === clienteInModifica.id)
+      ? [...clienti, { ...clienteInModifica, attivo: false }]
+      : clienti;
 
   return (
     <ResponsabileLayout>
       <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Dream Noleggio</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Dream</h2>
           <p className="text-sm text-gray-600 mt-1">
             Registra i noleggi ed esporta il report del periodo in PDF
           </p>
@@ -282,6 +303,20 @@ export function DreamNoleggiPage() {
               <option value="">Seleziona veicolo</option>
               {opzioniVeicoli.map((v) => (
                 <option key={v.id} value={v.id}>{v.nome}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="cliente" className="label">Cliente</label>
+            <select
+              id="cliente"
+              className="select"
+              value={form.clienteId}
+              onChange={(e) => setForm({ ...form, clienteId: e.target.value })}
+            >
+              <option value="">Nessun cliente</option>
+              {opzioniClienti.map((c) => (
+                <option key={c.id} value={c.id}>{c.nome}</option>
               ))}
             </select>
           </div>
@@ -380,6 +415,7 @@ export function DreamNoleggiPage() {
                 <tr className="border-b bg-gray-50">
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Data</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Veicolo</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600">Cliente</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Osservazioni</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Importo</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Quota</th>
@@ -392,6 +428,7 @@ export function DreamNoleggiPage() {
                   <tr key={noleggio.id} className="border-b hover:bg-gray-50">
                     <td className="py-3 px-2 whitespace-nowrap">{formatData(noleggio.data)}</td>
                     <td className="py-3 px-2 font-medium">{noleggio.veicolo.nome}</td>
+                    <td className="py-3 px-2">{noleggio.cliente?.nome ?? '-'}</td>
                     <td className="py-3 px-2 text-gray-600">{noleggio.osservazioni}</td>
                     <td className="py-3 px-2 text-right whitespace-nowrap">{formatImporto(noleggio.importo)}</td>
                     <td className="py-3 px-2 whitespace-nowrap">{etichettaQuota(noleggio.quota)}</td>
@@ -415,7 +452,7 @@ export function DreamNoleggiPage() {
               </tbody>
               <tfoot>
                 <tr className="border-t-2 font-medium bg-gray-50">
-                  <td className="py-3 px-2" colSpan={3}>Totale periodo</td>
+                  <td className="py-3 px-2" colSpan={4}>Totale periodo</td>
                   <td className="py-3 px-2 text-right whitespace-nowrap">{formatImporto(totali.importo)}</td>
                   <td className="py-3 px-2">-</td>
                   <td className="py-3 px-2 text-right whitespace-nowrap">{formatImporto(totali.calcolato)}</td>
