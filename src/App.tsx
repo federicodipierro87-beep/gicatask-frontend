@@ -23,6 +23,8 @@ import { BollettinoFormPage } from './pages/dipendente/BollettinoFormPage';
 import { BollettiniArchivioPage } from './pages/responsabile/BollettiniArchivioPage';
 import { VociBollettinoPage } from './pages/responsabile/VociBollettinoPage';
 import { CalendarioEventiPage } from './pages/responsabile/CalendarioEventiPage';
+import { DreamNoleggiPage } from './pages/responsabile/DreamNoleggiPage';
+import { DreamVeicoliPage } from './pages/responsabile/DreamVeicoliPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -223,6 +225,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <TipiAssenzaPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/dream-noleggio"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <DreamNoleggiPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/dream-veicoli"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <DreamVeicoliPage />
           </ProtectedRoute>
         }
       />

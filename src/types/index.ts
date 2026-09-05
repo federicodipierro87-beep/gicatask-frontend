@@ -99,6 +99,39 @@ export interface CalendarioEventoInput {
   importo?: number | null;
 }
 
+/** Quota del noleggio: 70/30 trattiene il 70% dell'importo, 100 lo lascia intero. */
+export type QuotaNoleggio = 'SETTANTA_TRENTA' | 'CENTO';
+
+export interface DreamVeicolo {
+  id: number;
+  nome: string;
+  attivo: boolean;
+}
+
+/** `data` e' una ISO completa che vale come giorno: si legge con `slice(0, 10)`. */
+export interface DreamNoleggio {
+  id: number;
+  veicoloId: number;
+  data: string;
+  osservazioni: string | null;
+  importo: number;
+  quota: QuotaNoleggio;
+  importoCalcolato: number;
+  veicolo: { id: number; nome: string };
+}
+
+/**
+ * `importoCalcolato` non compare: lo ricava il server dall'importo e dalla
+ * quota, il form ne mostra solo un'anteprima.
+ */
+export interface DreamNoleggioInput {
+  veicoloId: number;
+  data: string;
+  osservazioni?: string | null;
+  importo: number;
+  quota: QuotaNoleggio;
+}
+
 export type TipoVoce = 'MEZZO' | 'MATERIALE' | 'TRASPORTO';
 
 /** Slug usato nelle URL dell'anagrafica voci. */

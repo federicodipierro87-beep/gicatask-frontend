@@ -4,6 +4,9 @@ import type {
   Bollettino,
   CalendarioEvento,
   CalendarioEventoInput,
+  DreamNoleggio,
+  DreamNoleggioInput,
+  DreamVeicolo,
   TipoVoceSlug,
   VoceBollettino,
 } from '../types';
@@ -366,4 +369,44 @@ export const calendarioEventiApi = {
     apiClient.delete(`/calendario-eventi/${id}`),
   exportExcel: (anno: number) =>
     downloadFile(`/calendario-eventi/export/excel?anno=${anno}`, `calendario-eventi-${anno}.xlsx`),
+};
+
+// Anagrafica veicoli Dream
+export const dreamVeicoliApi = {
+  getAll: (includeInactive = false) =>
+    apiClient.get<DreamVeicolo[]>(`/dream-veicoli${includeInactive ? '?includeInactive=true' : ''}`),
+  getById: (id: number) =>
+    apiClient.get<DreamVeicolo>(`/dream-veicoli/${id}`),
+  create: (nome: string) =>
+    apiClient.post<DreamVeicolo>('/dream-veicoli', { nome }),
+  update: (id: number, nome: string) =>
+    apiClient.put<DreamVeicolo>(`/dream-veicoli/${id}`, { nome }),
+  delete: (id: number) =>
+    apiClient.delete(`/dream-veicoli/${id}`),
+  activate: (id: number) =>
+    apiClient.post<DreamVeicolo>(`/dream-veicoli/${id}/activate`),
+};
+
+// Il periodo e' lo stesso per elenco ed export: cio' che si vede e' cio' che si stampa
+function dreamNoleggiParams(startDate?: string, endDate?: string): string {
+  const params = new URLSearchParams();
+  if (startDate) params.append('startDate', startDate);
+  if (endDate) params.append('endDate', endDate);
+  return params.toString() ? `?${params.toString()}` : '';
+}
+
+export const dreamNoleggiApi = {
+  getAll: (startDate?: string, endDate?: string) =>
+    apiClient.get<DreamNoleggio[]>(`/dream-noleggi${dreamNoleggiParams(startDate, endDate)}`),
+  create: (data: DreamNoleggioInput) =>
+    apiClient.post<DreamNoleggio>('/dream-noleggi', data),
+  update: (id: number, data: DreamNoleggioInput) =>
+    apiClient.put<DreamNoleggio>(`/dream-noleggi/${id}`, data),
+  delete: (id: number) =>
+    apiClient.delete(`/dream-noleggi/${id}`),
+  exportPdf: (startDate: string, endDate: string) =>
+    downloadFile(
+      `/dream-noleggi/export/pdf${dreamNoleggiParams(startDate, endDate)}`,
+      `dream-noleggio-${startDate}_${endDate}.pdf`
+    ),
 };

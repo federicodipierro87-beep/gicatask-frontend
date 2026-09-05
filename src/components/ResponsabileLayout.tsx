@@ -21,6 +21,8 @@ const settingsNavItems = [
   { path: '/responsabile/tipi-attivita', label: 'Tipi Attività' },
   { path: '/responsabile/tipi-assenza', label: 'Assenze' },
   { path: '/responsabile/utenti', label: 'Utenti' },
+  { path: '/responsabile/dream-noleggio', label: 'Dream Noleggio' },
+  { path: '/responsabile/dream-veicoli', label: 'Dream Veicoli' },
   { path: '/responsabile/import', label: 'Import' },
   { path: '/responsabile/backup', label: 'Backup' },
 ];
