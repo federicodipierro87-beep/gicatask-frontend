@@ -7,6 +7,7 @@ import type {
   DreamNoleggio,
   DreamNoleggioInput,
   DreamVeicolo,
+  DreamCliente,
   TipoVoceSlug,
   VoceBollettino,
 } from '../types';
@@ -385,6 +386,21 @@ export const dreamVeicoliApi = {
     apiClient.delete(`/dream-veicoli/${id}`),
   activate: (id: number) =>
     apiClient.post<DreamVeicolo>(`/dream-veicoli/${id}/activate`),
+};
+
+export const dreamClientiApi = {
+  getAll: (includeInactive = false) =>
+    apiClient.get<DreamCliente[]>(`/dream-clienti${includeInactive ? '?includeInactive=true' : ''}`),
+  getById: (id: number) =>
+    apiClient.get<DreamCliente>(`/dream-clienti/${id}`),
+  create: (nome: string) =>
+    apiClient.post<DreamCliente>('/dream-clienti', { nome }),
+  update: (id: number, nome: string) =>
+    apiClient.put<DreamCliente>(`/dream-clienti/${id}`, { nome }),
+  delete: (id: number) =>
+    apiClient.delete(`/dream-clienti/${id}`),
+  activate: (id: number) =>
+    apiClient.post<DreamCliente>(`/dream-clienti/${id}/activate`),
 };
 
 // Il periodo e' lo stesso per elenco ed export: cio' che si vede e' cio' che si stampa

@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { Modal } from '../../components/Modal';
 import { CampoData } from '../../components/CampoData';
-import { clientiApi, dreamNoleggiApi, dreamVeicoliApi } from '../../api/client';
+import { dreamClientiApi, dreamNoleggiApi, dreamVeicoliApi } from '../../api/client';
 import type {
-  Cliente,
+  DreamCliente,
   DreamNoleggio,
   DreamNoleggioInput,
   DreamVeicolo,
@@ -79,7 +79,7 @@ export function DreamNoleggiPage() {
 
   const [noleggi, setNoleggi] = useState<DreamNoleggio[]>([]);
   const [veicoli, setVeicoli] = useState<DreamVeicolo[]>([]);
-  const [clienti, setClienti] = useState<Cliente[]>([]);
+  const [clienti, setClienti] = useState<DreamCliente[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,7 +98,7 @@ export function DreamNoleggiPage() {
       try {
         const [veicoliRes, clientiRes] = await Promise.all([
           dreamVeicoliApi.getAll(),
-          clientiApi.getAll(),
+          dreamClientiApi.getAll(),
         ]);
         setVeicoli(Array.isArray(veicoliRes.data) ? veicoliRes.data : []);
         setClienti(Array.isArray(clientiRes.data) ? clientiRes.data : []);

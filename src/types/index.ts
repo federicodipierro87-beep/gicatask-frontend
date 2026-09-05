@@ -108,6 +108,13 @@ export interface DreamVeicolo {
   attivo: boolean;
 }
 
+/** Anagrafica separata da `Cliente`: i clienti Dream sono un altro insieme. */
+export interface DreamCliente {
+  id: number;
+  nome: string;
+  attivo: boolean;
+}
+
 /** `data` e' una ISO completa che vale come giorno: si legge con `slice(0, 10)`. */
 export interface DreamNoleggio {
   id: number;

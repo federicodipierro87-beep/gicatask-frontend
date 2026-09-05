@@ -25,6 +25,7 @@ import { VociBollettinoPage } from './pages/responsabile/VociBollettinoPage';
 import { CalendarioEventiPage } from './pages/responsabile/CalendarioEventiPage';
 import { DreamNoleggiPage } from './pages/responsabile/DreamNoleggiPage';
 import { DreamVeicoliPage } from './pages/responsabile/DreamVeicoliPage';
+import { DreamClientiPage } from './pages/responsabile/DreamClientiPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -241,6 +242,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <DreamVeicoliPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/dream-clienti"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <DreamClientiPage />
           </ProtectedRoute>
         }
       />

@@ -17,13 +17,14 @@ const mainNavItems = [
 ];
 
 // Anagrafiche e manutenzione: stanno in una tendina, su desktop come su mobile.
-// Sono sette e sparse in barra la riempivano da sole
+// Sparse in barra la riempivano da sole
 const settingsNavItems = [
   { path: '/responsabile/clienti', label: 'Clienti' },
   { path: '/responsabile/cantieri', label: 'Cantieri' },
   { path: '/responsabile/tipi-attivita', label: 'Tipi Attività' },
   { path: '/responsabile/utenti', label: 'Utenti' },
   { path: '/responsabile/dream-veicoli', label: 'Dream Veicoli' },
+  { path: '/responsabile/dream-clienti', label: 'Dream Clienti' },
   { path: '/responsabile/import', label: 'Import' },
   { path: '/responsabile/backup', label: 'Backup' },
 ];
