@@ -6,22 +6,23 @@ interface Props {
   children: React.ReactNode;
 }
 
-// Main navigation items (always visible)
+// Le pagine di uso quotidiano: sempre in barra, sia su desktop sia su mobile
 const mainNavItems = [
   { path: '/responsabile', label: 'Dashboard', exact: true },
   { path: '/responsabile/assegna', label: 'Assegna' },
   { path: '/responsabile/report', label: 'Report' },
   { path: '/responsabile/calendari-eventi', label: 'Calendari Eventi' },
+  { path: '/responsabile/tipi-assenza', label: 'Assenze' },
+  { path: '/responsabile/dream-noleggio', label: 'Dream' },
 ];
 
-// Settings items (in dropdown on mobile, visible on desktop)
+// Anagrafiche e manutenzione: stanno in una tendina, su desktop come su mobile.
+// Sono sette e sparse in barra la riempivano da sole
 const settingsNavItems = [
   { path: '/responsabile/clienti', label: 'Clienti' },
   { path: '/responsabile/cantieri', label: 'Cantieri' },
   { path: '/responsabile/tipi-attivita', label: 'Tipi Attività' },
-  { path: '/responsabile/tipi-assenza', label: 'Assenze' },
   { path: '/responsabile/utenti', label: 'Utenti' },
-  { path: '/responsabile/dream-noleggio', label: 'Dream' },
   { path: '/responsabile/dream-veicoli', label: 'Dream Veicoli' },
   { path: '/responsabile/import', label: 'Import' },
   { path: '/responsabile/backup', label: 'Backup' },
@@ -52,11 +53,11 @@ export function ResponsabileLayout({ children }: Props) {
 
   const isBollettinoActive = bollettinoNavItems.some(item => isActive(item.path));
 
+  const isSettingsActive = settingsNavItems.some(item => isActive(item.path));
+
   // Su mobile il gruppo Bollettino vive dentro la rotella, quindi deve
-  // accenderla anche lui
-  const isSettingsActive =
-    settingsNavItems.some(item => isActive(item.path)) ||
-    (vedeBollettini && isBollettinoActive);
+  // accenderla anche lui. Su desktop ha un pulsante suo e resta fuori
+  const isRotellaActive = isSettingsActive || (vedeBollettini && isBollettinoActive);
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
@@ -77,7 +78,7 @@ export function ResponsabileLayout({ children }: Props) {
                 <button
                   onClick={() => setShowSettings(!showSettings)}
                   className={`p-2 rounded-lg transition-colors ${
-                    showSettings || isSettingsActive
+                    showSettings || isRotellaActive
                       ? 'bg-white text-primary-700'
                       : 'bg-primary-600 hover:bg-primary-500'
                   }`}
@@ -155,7 +156,6 @@ export function ResponsabileLayout({ children }: Props) {
           {/* Navigation tabs */}
           <div className="flex items-end gap-1">
             <nav className="flex gap-1 -mb-px overflow-x-auto min-w-0">
-              {/* Main nav items (always visible) */}
               {mainNavItems.map((item) => (
                 <Link
                   key={item.path}
@@ -169,28 +169,13 @@ export function ResponsabileLayout({ children }: Props) {
                   {item.label}
                 </Link>
               ))}
-
-              {/* Settings nav items (only visible on desktop) */}
-              {settingsNavItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`hidden sm:block px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
-                    isActive(item.path)
-                      ? 'bg-white text-primary-700'
-                      : 'text-primary-100 hover:text-white hover:bg-primary-600'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
             </nav>
 
             {/*
-              La tendina sta fuori dalla nav: overflow-x-auto crea un
+              Le tendine stanno fuori dalla nav: overflow-x-auto crea un
               contenitore di scorrimento che ritaglierebbe il pannello invece
-              di lasciarlo uscire. Su mobile il gruppo e' gia' nella rotella,
-              quindi qui e' nascosta.
+              di lasciarlo uscire. Su mobile i due gruppi sono gia' nella
+              rotella, quindi qui sono nascoste.
             */}
             {vedeBollettini && (
               <div className="relative hidden sm:block -mb-px">
@@ -234,6 +219,47 @@ export function ResponsabileLayout({ children }: Props) {
                 )}
               </div>
             )}
+
+            <div className="relative hidden sm:block -mb-px">
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+                  showSettings || isSettingsActive
+                    ? 'bg-white text-primary-700'
+                    : 'text-primary-100 hover:text-white hover:bg-primary-600'
+                }`}
+              >
+                Impostazioni
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {showSettings && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowSettings(false)}
+                  />
+                  <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg z-20 py-2">
+                    {settingsNavItems.map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setShowSettings(false)}
+                        className={`block px-4 py-2 text-sm ${
+                          isActive(item.path)
+                            ? 'bg-primary-50 text-primary-700 font-medium'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
