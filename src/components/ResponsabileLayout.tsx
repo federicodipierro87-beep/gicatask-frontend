@@ -13,6 +13,7 @@ const mainNavItems = [
   { path: '/responsabile/report', label: 'Report' },
   { path: '/responsabile/calendari-eventi', label: 'Calendari Eventi' },
   { path: '/responsabile/tipi-assenza', label: 'Assenze' },
+  { path: '/responsabile/gica-noleggio', label: 'Gica' },
   { path: '/responsabile/dream-noleggio', label: 'Dream' },
 ];
 
@@ -23,8 +24,8 @@ const settingsNavItems = [
   { path: '/responsabile/cantieri', label: 'Cantieri' },
   { path: '/responsabile/tipi-attivita', label: 'Tipi Attività' },
   { path: '/responsabile/utenti', label: 'Utenti' },
-  { path: '/responsabile/dream-veicoli', label: 'Dream Veicoli' },
-  { path: '/responsabile/dream-clienti', label: 'Dream Clienti' },
+  { path: '/responsabile/dream-veicoli', label: 'Banca dati veicoli' },
+  { path: '/responsabile/dream-clienti', label: 'Banca dati clienti' },
   { path: '/responsabile/import', label: 'Import' },
   { path: '/responsabile/backup', label: 'Backup' },
 ];

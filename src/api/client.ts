@@ -8,6 +8,8 @@ import type {
   DreamNoleggioInput,
   DreamVeicolo,
   DreamCliente,
+  GicaNoleggio,
+  GicaNoleggioInput,
   TipoVoceSlug,
   VoceBollettino,
 } from '../types';
@@ -404,7 +406,7 @@ export const dreamClientiApi = {
 };
 
 // Il periodo e' lo stesso per elenco ed export: cio' che si vede e' cio' che si stampa
-function dreamNoleggiParams(startDate?: string, endDate?: string): string {
+function periodoParams(startDate?: string, endDate?: string): string {
   const params = new URLSearchParams();
   if (startDate) params.append('startDate', startDate);
   if (endDate) params.append('endDate', endDate);
@@ -413,7 +415,7 @@ function dreamNoleggiParams(startDate?: string, endDate?: string): string {
 
 export const dreamNoleggiApi = {
   getAll: (startDate?: string, endDate?: string) =>
-    apiClient.get<DreamNoleggio[]>(`/dream-noleggi${dreamNoleggiParams(startDate, endDate)}`),
+    apiClient.get<DreamNoleggio[]>(`/dream-noleggi${periodoParams(startDate, endDate)}`),
   create: (data: DreamNoleggioInput) =>
     apiClient.post<DreamNoleggio>('/dream-noleggi', data),
   update: (id: number, data: DreamNoleggioInput) =>
@@ -422,7 +424,29 @@ export const dreamNoleggiApi = {
     apiClient.delete(`/dream-noleggi/${id}`),
   exportPdf: (startDate: string, endDate: string) =>
     downloadFile(
-      `/dream-noleggi/export/pdf${dreamNoleggiParams(startDate, endDate)}`,
+      `/dream-noleggi/export/pdf${periodoParams(startDate, endDate)}`,
       `dream-${startDate}_${endDate}.pdf`
+    ),
+};
+
+// Registro Gica: veicoli e clienti sono quelli di dreamVeicoliApi/dreamClientiApi
+export const gicaNoleggiApi = {
+  getAll: (startDate?: string, endDate?: string) =>
+    apiClient.get<GicaNoleggio[]>(`/gica-noleggi${periodoParams(startDate, endDate)}`),
+  create: (data: GicaNoleggioInput) =>
+    apiClient.post<GicaNoleggio>('/gica-noleggi', data),
+  update: (id: number, data: GicaNoleggioInput) =>
+    apiClient.put<GicaNoleggio>(`/gica-noleggi/${id}`, data),
+  delete: (id: number) =>
+    apiClient.delete(`/gica-noleggi/${id}`),
+  exportPdf: (startDate: string, endDate: string) =>
+    downloadFile(
+      `/gica-noleggi/export/pdf${periodoParams(startDate, endDate)}`,
+      `gica-${startDate}_${endDate}.pdf`
+    ),
+  exportExcel: (startDate: string, endDate: string) =>
+    downloadFile(
+      `/gica-noleggi/export/excel${periodoParams(startDate, endDate)}`,
+      `gica-${startDate}_${endDate}.xlsx`
     ),
 };

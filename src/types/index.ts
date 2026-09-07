@@ -142,6 +142,29 @@ export interface DreamNoleggioInput {
   quota: QuotaNoleggio;
 }
 
+/**
+ * Registro Gica: stessa anagrafica di veicoli e clienti del noleggio Dream, ma
+ * senza quota e quindi senza importo calcolato.
+ */
+export interface GicaNoleggio {
+  id: number;
+  veicoloId: number;
+  clienteId: number | null;
+  data: string;
+  osservazioni: string | null;
+  importo: number;
+  veicolo: { id: number; nome: string };
+  cliente: { id: number; nome: string } | null;
+}
+
+export interface GicaNoleggioInput {
+  veicoloId: number;
+  clienteId?: number | null;
+  data: string;
+  osservazioni?: string | null;
+  importo: number;
+}
+
 export type TipoVoce = 'MEZZO' | 'MATERIALE' | 'TRASPORTO';
 
 /** Slug usato nelle URL dell'anagrafica voci. */

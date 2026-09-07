@@ -96,7 +96,7 @@ export function DreamClientiPage() {
     <ResponsabileLayout>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Dream Clienti</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Banca dati clienti</h2>
           <p className="text-sm text-gray-600 mt-1">
             {clienti.length} clienti totali
           </p>

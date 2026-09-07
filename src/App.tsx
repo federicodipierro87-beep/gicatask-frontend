@@ -26,6 +26,7 @@ import { CalendarioEventiPage } from './pages/responsabile/CalendarioEventiPage'
 import { DreamNoleggiPage } from './pages/responsabile/DreamNoleggiPage';
 import { DreamVeicoliPage } from './pages/responsabile/DreamVeicoliPage';
 import { DreamClientiPage } from './pages/responsabile/DreamClientiPage';
+import { GicaNoleggiPage } from './pages/responsabile/GicaNoleggiPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -226,6 +227,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <TipiAssenzaPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/gica-noleggio"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <GicaNoleggiPage />
           </ProtectedRoute>
         }
       />
