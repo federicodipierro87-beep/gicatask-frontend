@@ -222,35 +222,35 @@ export function GicaNoleggiPage() {
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Gica</h2>
           <p className="text-sm text-gray-600 mt-1">
-            Registra i noleggi ed esporta il report del periodo in PDF o Excel
+            Registra i noleggi ed esporta il report del periodo in Excel o PDF
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-3">
           <CampoData id="periodoDal" label="Dal" value={dal} onChange={setDal} />
           <CampoData id="periodoAl" label="Al" value={al} onChange={setAl} />
           <button
-            onClick={() => handleExport('pdf')}
+            onClick={() => handleExport('excel')}
             disabled={isExporting !== null || noleggi.length === 0}
             className="btn-primary flex items-center gap-2"
           >
-            {isExporting === 'pdf' ? (
+            {isExporting === 'excel' ? (
               <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
             ) : (
               iconaExport
             )}
-            Esporta PDF
+            Esporta Excel
           </button>
           <button
-            onClick={() => handleExport('excel')}
+            onClick={() => handleExport('pdf')}
             disabled={isExporting !== null || noleggi.length === 0}
             className="btn-secondary flex items-center gap-2"
           >
-            {isExporting === 'excel' ? (
+            {isExporting === 'pdf' ? (
               <span className="animate-spin h-4 w-4 border-2 border-gray-600 border-t-transparent rounded-full"></span>
             ) : (
               iconaExport
             )}
-            Esporta Excel
+            Esporta PDF
           </button>
         </div>
       </div>
