@@ -1,7 +1,7 @@
 /**
  * Festivi del Canton Ticino e calendario annuale per la griglia a schermo.
  *
- * La sorgente di verita' e' `backend/src/services/calendarioEventiExport.service.ts`:
+ * La sorgente di verita' e' `backend/src/utils/festivita.ts`:
  * i due repository sono separati e non c'e' un package condiviso, quindi le
  * due copie vanno tenute allineate a mano. Se cambiano i festivi, cambiarli
  * prima nel backend, che e' quello che genera l'export.

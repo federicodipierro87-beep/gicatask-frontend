@@ -331,7 +331,7 @@ export function ReportPage() {
         <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t">
           <button
             onClick={() => handleExport('excel')}
-            disabled={isExportingExcel || attivita.length === 0}
+            disabled={isExportingExcel || !startDate || !endDate}
             className="btn-primary flex items-center gap-2"
           >
             {isExportingExcel ? (
@@ -345,7 +345,7 @@ export function ReportPage() {
           </button>
           <button
             onClick={() => handleExport('pdf')}
-            disabled={isExportingPdf || attivita.length === 0}
+            disabled={isExportingPdf || !startDate || !endDate}
             className="btn-secondary flex items-center gap-2"
           >
             {isExportingPdf ? (
