@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { DateTimeInput } from '../../components/DateTimeInput';
 import { tipiAssenzaApi, attivitaApi } from '../../api/client';
+import { isAssenzaNegativa } from '../../utils/durata';
 
 interface TipoAssenza {
   id: number;
@@ -25,6 +26,11 @@ export function AssenzaFormPage() {
   );
   const [assenzaId, setAssenzaId] = useState<number | null>(null);
   const [note, setNote] = useState('');
+
+  const tipoSelezionato = tipiAssenza.find((a) => a.id === assenzaId);
+  const assenzaNegativa = tipoSelezionato
+    ? isAssenzaNegativa(tipoSelezionato.nome)
+    : false;
 
   useEffect(() => {
     const loadData = async () => {
@@ -152,7 +158,9 @@ export function AssenzaFormPage() {
               ))}
             </select>
             <p className="text-sm text-gray-500 mt-1">
-              La giornata viene conteggiata come 8h 12m.
+              {assenzaNegativa
+                ? 'La giornata sottrae 8h 12m dal montante ore.'
+                : 'La giornata viene conteggiata come 8h 12m.'}
             </p>
           </div>
 

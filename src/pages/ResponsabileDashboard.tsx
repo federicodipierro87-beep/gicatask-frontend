@@ -4,6 +4,7 @@ import { ResponsabileLayout } from '../components/ResponsabileLayout';
 import { Modal } from '../components/Modal';
 import { attivitaApi } from '../api/client';
 import { MonthNavigator, currentMonth, monthRange } from '../components/MonthNavigator';
+import { formatDuration } from '../utils/durata';
 
 interface Attivita {
   id: number;
@@ -38,14 +39,6 @@ function formatDateFull(dateStr: string): string {
     month: '2-digit',
     year: 'numeric',
   });
-}
-
-function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours === 0) return `${mins}m`;
-  if (mins === 0) return `${hours}h`;
-  return `${hours}h ${mins}m`;
 }
 
 function formatTimeSlot(start?: string, end?: string): string {

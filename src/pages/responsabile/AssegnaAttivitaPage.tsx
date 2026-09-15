@@ -4,6 +4,7 @@ import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { DateTimeInput } from '../../components/DateTimeInput';
 import { Modal } from '../../components/Modal';
 import { clientiApi, cantieriApi, tipiAttivitaApi, tipiAssenzaApi, attivitaApi, utentiApi } from '../../api/client';
+import { isAssenzaNegativa } from '../../utils/durata';
 
 interface Cliente {
   id: number;
@@ -69,6 +70,11 @@ export function AssegnaAttivitaPage() {
 
   // With an absence selected, cliente, cantiere and time slots are optional
   const isAssenza = assenzaId !== null;
+
+  // Il Recupero ore sottrae le ore invece di aggiungerle
+  const assenzaNegativa = isAssenzaNegativa(
+    tipiAssenza.find((a) => a.id === assenzaId)?.nome ?? ''
+  );
 
   // Modal states for creating new items
   const [showNewClienteModal, setShowNewClienteModal] = useState(false);
@@ -597,8 +603,10 @@ export function AssegnaAttivitaPage() {
             </select>
             {isAssenza && (
               <p className="text-sm text-gray-500 mt-1">
-                Con un'assenza selezionata cliente e cantiere sono facoltativi e la giornata viene
-                conteggiata come 8h 12m.
+                Con un'assenza selezionata cliente e cantiere sono facoltativi e la giornata{' '}
+                {assenzaNegativa
+                  ? 'sottrae 8h 12m dal montante ore.'
+                  : 'viene conteggiata come 8h 12m.'}
               </p>
             )}
           </div>
