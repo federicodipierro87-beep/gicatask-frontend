@@ -96,6 +96,25 @@ export function BollettinoFormPage() {
     loadCantieri();
   }, [clienteId]);
 
+  // L'elenco arriva ordinato dal server: un append metterebbe la voce appena
+  // creata in fondo alla tendina fino al ricaricamento della pagina.
+  const inserisciOrdinata = (
+    setter: React.Dispatch<React.SetStateAction<VoceBollettino[]>>
+  ) => (voce: VoceBollettino) => {
+    setter((prev) =>
+      [...prev, voce].sort((a, b) => a.nome.localeCompare(b.nome, 'it'))
+    );
+  };
+
+  // L'uid serve solo a dare un'identità alle righe lato client: il backend non
+  // lo conosce e lo schema della POST rifiuta le proprietà in più.
+  const toRighe = (righe: VoceSelezionata[]) =>
+    righe.map(({ voceId, descrizione, quantita }) => ({
+      voceId,
+      descrizione,
+      quantita,
+    }));
+
   const puoSalvare =
     Boolean(cantiereId) &&
     attivita.trim().length > 0 &&
@@ -122,9 +141,9 @@ export function BollettinoFormPage() {
         attivita: attivita.trim(),
         numeroOperai: parseInt(numeroOperai, 10) || 0,
         ore: parseFloat(ore) || 0,
-        mezzi,
-        materiali,
-        trasporti,
+        mezzi: toRighe(mezzi),
+        materiali: toRighe(materiali),
+        trasporti: toRighe(trasporti),
         firmaOperatoreNome: firmaOperatoreNome.trim(),
         firmaOperatoreImg,
         firmaCommittenteNome: firmaCommittenteNome.trim(),
@@ -224,27 +243,33 @@ export function BollettinoFormPage() {
           <VociSelector
             titolo="Mezzi"
             labelQuantita="Ore"
+            tipo="mezzi"
             voci={mezziDisponibili}
             value={mezzi}
             onChange={setMezzi}
+            onVoceCreata={inserisciOrdinata(setMezziDisponibili)}
             disabled={isSaving}
           />
 
           <VociSelector
             titolo="Materiali"
             labelQuantita="Quantità"
+            tipo="materiali"
             voci={materialiDisponibili}
             value={materiali}
             onChange={setMateriali}
+            onVoceCreata={inserisciOrdinata(setMaterialiDisponibili)}
             disabled={isSaving}
           />
 
           <VociSelector
             titolo="Trasporti"
             labelQuantita="Viaggi"
+            tipo="trasporti"
             voci={trasportiDisponibili}
             value={trasporti}
             onChange={setTrasporti}
+            onVoceCreata={inserisciOrdinata(setTrasportiDisponibili)}
             disabled={isSaving}
           />
 

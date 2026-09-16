@@ -287,8 +287,11 @@ export interface BollettinoFilters {
   endDate?: string;
 }
 
+// voceId nullo per le righe scritte a mano e non salvate in anagrafica:
+// in quel caso la descrizione è l'unica cosa che finisce nel PDF.
 export interface RigaBollettinoInput {
-  voceId: number;
+  voceId: number | null;
+  descrizione: string;
   quantita: number;
 }
 
