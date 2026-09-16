@@ -201,6 +201,12 @@ export interface Bollettino {
   cantiereNome: string;
   firmaOperatoreNome: string;
   firmaCommittenteNome: string;
+  // Opzionali: i bollettini creati prima dell'invio per e-mail non li hanno,
+  // e restano nulli in quelli per cui non e' stato indicato un indirizzo
+  emailDestinatario?: string | null;
+  emailStato?: string | null;
+  emailInviataAt?: string | null;
+  emailErrore?: string | null;
   createdAt: string;
   utente: { id: number; nome: string; cognome: string };
   righe?: RigaBollettino[];

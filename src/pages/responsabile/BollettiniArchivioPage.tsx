@@ -37,6 +37,41 @@ function formatDate(dateStr: string): string {
   });
 }
 
+/**
+ * Stato dell'invio in una cella. Il `title` porta il motivo tecnico del
+ * fallimento, che e' l'unica diagnosi disponibile quando qualcosa non va:
+ * dominio non verificato, chiave assente, indirizzo rifiutato.
+ */
+function CellaMail({ bollettino }: { bollettino: Bollettino }) {
+  const { emailStato, emailDestinatario, emailInviataAt, emailErrore } = bollettino;
+
+  // I bollettini creati prima della funzione, e quelli senza indirizzo
+  if (!emailStato) return <span className="text-gray-400">—</span>;
+
+  if (emailStato === 'INVIATA') {
+    const quando = emailInviataAt ? ` il ${formatDate(emailInviataAt)}` : '';
+    return (
+      <span className="text-green-700" title={`${emailDestinatario ?? ''}${quando}`}>
+        Inviata
+      </span>
+    );
+  }
+
+  if (emailStato === 'IN_CORSO') {
+    return (
+      <span className="text-amber-700" title={emailDestinatario ?? undefined}>
+        In corso
+      </span>
+    );
+  }
+
+  return (
+    <span className="text-red-600" title={emailErrore ?? emailDestinatario ?? undefined}>
+      Non inviata
+    </span>
+  );
+}
+
 export function BollettiniArchivioPage() {
   const [bollettini, setBollettini] = useState<Bollettino[]>([]);
   const [clienti, setClienti] = useState<Cliente[]>([]);
@@ -57,6 +92,11 @@ export function BollettiniArchivioPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
+
+  const [mailBollettino, setMailBollettino] = useState<Bollettino | null>(null);
+  const [mailIndirizzo, setMailIndirizzo] = useState('');
+  const [isInviando, setIsInviando] = useState(false);
+  const [mailErrore, setMailErrore] = useState<string | null>(null);
 
   const wholeMonth = wholeMonthOf(startDate, endDate);
   const navMonth = wholeMonth ?? monthOf(startDate) ?? currentMonth();
@@ -155,6 +195,45 @@ export function BollettiniArchivioPage() {
       setError('Errore durante il download del cumulativo');
     } finally {
       setIsDownloadingCumulativo(false);
+    }
+  };
+
+  // Una modale e non un pulsante secco: il caso piu' comune non e' "rimanda
+  // uguale" ma "correggi l'indirizzo che l'operaio ha digitato male".
+  const apriModaleMail = (bollettino: Bollettino) => {
+    setMailBollettino(bollettino);
+    setMailIndirizzo(bollettino.emailDestinatario ?? '');
+    setMailErrore(null);
+  };
+
+  const handleInviaMail = async () => {
+    if (!mailBollettino) return;
+
+    setIsInviando(true);
+    setMailErrore(null);
+    try {
+      const { data } = await bollettiniApi.inviaMail(
+        mailBollettino.id,
+        mailIndirizzo.trim() || undefined
+      );
+      setRefreshToken((t) => t + 1);
+
+      if (data.stato !== 'INVIATA') {
+        // Modale aperta di proposito: il motivo va letto e l'indirizzo corretto
+        setMailErrore(data.messaggio ?? 'Invio non riuscito');
+        return;
+      }
+
+      setMailBollettino(null);
+    } catch (err: any) {
+      // L'error handler globale risponde {statusCode, error, message}, non {error}
+      setMailErrore(
+        err.response?.data?.message ??
+          err.response?.data?.error ??
+          'Errore durante l\'invio della mail'
+      );
+    } finally {
+      setIsInviando(false);
     }
   };
 
@@ -295,6 +374,7 @@ export function BollettiniArchivioPage() {
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cantiere</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Operai</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Ore</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600">Mail</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Azioni</th>
                 </tr>
               </thead>
@@ -311,6 +391,9 @@ export function BollettiniArchivioPage() {
                     <td className="py-3 px-2">{bollettino.cantiereNome}</td>
                     <td className="py-3 px-2 text-right">{bollettino.numeroOperai}</td>
                     <td className="py-3 px-2 text-right">{bollettino.ore}</td>
+                    <td className="py-3 px-2 whitespace-nowrap">
+                      <CellaMail bollettino={bollettino} />
+                    </td>
                     <td className="py-3 px-2 text-right space-x-3 whitespace-nowrap">
                       <button
                         onClick={() => handleDownload(bollettino.id)}
@@ -318,6 +401,12 @@ export function BollettiniArchivioPage() {
                         className="text-primary-600 hover:text-primary-700 text-sm"
                       >
                         {downloadId === bollettino.id ? 'Download...' : 'PDF'}
+                      </button>
+                      <button
+                        onClick={() => apriModaleMail(bollettino)}
+                        className="text-primary-600 hover:text-primary-700 text-sm"
+                      >
+                        {bollettino.emailStato === 'INVIATA' ? 'Reinvia' : 'Invia mail'}
                       </button>
                       <button
                         onClick={() => setDeleteId(bollettino.id)}
@@ -333,6 +422,55 @@ export function BollettiniArchivioPage() {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={mailBollettino !== null}
+        onClose={() => setMailBollettino(null)}
+        title="Invia bollettino per e-mail"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700">
+            Il PDF del bollettino verrà inviato in allegato all'indirizzo indicato.
+          </p>
+          <div>
+            <label htmlFor="mailIndirizzo" className="label">Indirizzo e-mail</label>
+            <input
+              type="email"
+              id="mailIndirizzo"
+              className="input"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              maxLength={254}
+              placeholder="committente@esempio.it"
+              value={mailIndirizzo}
+              onChange={(e) => setMailIndirizzo(e.target.value)}
+              disabled={isInviando}
+            />
+          </div>
+          {mailErrore && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+              {mailErrore}
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              onClick={() => setMailBollettino(null)}
+              className="btn-secondary"
+              disabled={isInviando}
+            >
+              Chiudi
+            </button>
+            <button
+              onClick={handleInviaMail}
+              disabled={isInviando || mailIndirizzo.trim().length === 0}
+              className="btn-primary"
+            >
+              {isInviando ? 'Invio...' : 'Invia'}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         isOpen={deleteId !== null}

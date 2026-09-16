@@ -5,7 +5,28 @@ import { SignaturePad } from '../../components/SignaturePad';
 import { VociSelector, type VoceSelezionata } from '../../components/VociSelector';
 import { useAuth } from '../../context/AuthContext';
 import { bollettiniApi, cantieriApi, clientiApi, vociBollettinoApi } from '../../api/client';
+import type { EsitoEmailBollettino } from '../../api/client';
 import type { Cliente, Cantiere, VoceBollettino } from '../../types';
+
+// Stessa regola del backend: piu' severa di RFC 5322 perche' l'indirizzo
+// finisce nel campo `to` dell'API, dove una virgola varrebbe piu' destinatari.
+const EMAIL_RE = /^[^\s@,;<>]+@[^\s@,;<>.]+(\.[^\s@,;<>.]+)+$/;
+
+/**
+ * Testo dell'avviso quando il bollettino e' salvato ma la mail non e' partita.
+ * Il tono non e' quello di un errore: il documento c'e' e le firme sono al
+ * sicuro, e' solo la consegna che va rimediata dall'archivio.
+ */
+function messaggioAvviso(esito: EsitoEmailBollettino): string {
+  switch (esito.stato) {
+    case 'NON_CONFIGURATA':
+      return 'Bollettino salvato. L\'invio e-mail non è ancora attivo: il responsabile potrà inviarlo dall\'archivio.';
+    case 'NON_VALIDA':
+      return `Bollettino salvato. L'indirizzo «${esito.destinatario ?? ''}» non sembra valido: la mail non è stata inviata.`;
+    default:
+      return 'Bollettino salvato, ma l\'invio non è riuscito. Le firme sono al sicuro: il responsabile può reinviarla dall\'archivio.';
+  }
+}
 
 export function BollettinoFormPage() {
   const navigate = useNavigate();
@@ -14,6 +35,10 @@ export function BollettinoFormPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Il bollettino e' firmato: una volta salvato il pulsante resta spento per
+  // sempre, altrimenti chi legge l'avviso e ritocca crea un doppione identico
+  const [salvato, setSalvato] = useState(false);
+  const [avvisoMail, setAvvisoMail] = useState<string | null>(null);
 
   const [clienti, setClienti] = useState<Cliente[]>([]);
   const [cantieri, setCantieri] = useState<Cantiere[]>([]);
@@ -32,6 +57,8 @@ export function BollettinoFormPage() {
   const [trasporti, setTrasporti] = useState<VoceSelezionata[]>([]);
   const [numeroOperai, setNumeroOperai] = useState('1');
   const [ore, setOre] = useState('');
+
+  const [email, setEmail] = useState('');
 
   const [firmaOperatoreNome, setFirmaOperatoreNome] = useState('');
   const [firmaOperatoreImg, setFirmaOperatoreImg] = useState<string | null>(null);
@@ -115,6 +142,10 @@ export function BollettinoFormPage() {
       quantita,
     }));
 
+  const emailNonValida = email.trim().length > 0 && !EMAIL_RE.test(email.trim());
+
+  // `emailNonValida` **non** entra in puoSalvare: spegnere il pulsante per un
+  // campo facoltativo sarebbe peggio del problema che risolve.
   const puoSalvare =
     Boolean(cantiereId) &&
     attivita.trim().length > 0 &&
@@ -135,7 +166,7 @@ export function BollettinoFormPage() {
     setError(null);
 
     try {
-      await bollettiniApi.create({
+      const { data } = await bollettiniApi.create({
         cantiereId,
         dataRiferimento,
         attivita: attivita.trim(),
@@ -148,7 +179,16 @@ export function BollettinoFormPage() {
         firmaOperatoreImg,
         firmaCommittenteNome: firmaCommittenteNome.trim(),
         firmaCommittenteImg,
+        ...(email.trim() ? { email: email.trim() } : {}),
       });
+
+      // Il bollettino c'e': da qui il pulsante non deve piu' poter ripartire
+      setSalvato(true);
+
+      if (data.email && data.email.stato !== 'INVIATA') {
+        setAvvisoMail(messaggioAvviso(data.email));
+        return; // niente navigate: l'avviso va letto
+      }
 
       navigate('/dipendente/bollettini');
     } catch (err: any) {
@@ -175,6 +215,20 @@ export function BollettinoFormPage() {
         <p className="text-sm text-gray-600 mb-6">
           Una volta firmato il bollettino non è più modificabile.
         </p>
+
+        {/* Ambra e non rosso: il bollettino e' salvato, non e' un errore */}
+        {avvisoMail && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+            <p>{avvisoMail}</p>
+            <button
+              type="button"
+              onClick={() => navigate('/dipendente/bollettini')}
+              className="btn-primary mt-3"
+            >
+              Torna ai bollettini
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -303,6 +357,38 @@ export function BollettinoFormPage() {
             </div>
           </div>
 
+          <div>
+            <label htmlFor="email" className="label">
+              E-mail per l'invio <span className="text-gray-400 font-normal">(facoltativa)</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              className="input"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              maxLength={254}
+              placeholder="committente@esempio.it"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isSaving || salvato}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Il PDF del bollettino verrà inviato a questo indirizzo dopo la firma.
+            </p>
+            {/* type="email" in un <form> attiva la validazione nativa: con un
+                indirizzo malformato il submit non parte e appare solo un
+                fumetto di sistema, che da telefono sembra un pulsante rotto */}
+            {emailNonValida && (
+              <p className="mt-1 text-xs text-amber-700">
+                L'indirizzo non sembra valido: correggilo oppure svuota il campo per salvare
+                senza inviare la mail.
+              </p>
+            )}
+          </div>
+
           <div className="border-t pt-5 space-y-5">
             <div>
               <label htmlFor="nomeOperatore" className="label">Nome operatore</label>
@@ -352,7 +438,11 @@ export function BollettinoFormPage() {
             >
               Annulla
             </button>
-            <button type="submit" className="btn-primary" disabled={isSaving || !puoSalvare}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSaving || !puoSalvare || salvato}
+            >
               {isSaving ? 'Salvataggio...' : 'Firma e salva'}
             </button>
           </div>

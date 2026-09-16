@@ -295,6 +295,23 @@ export interface RigaBollettinoInput {
   quantita: number;
 }
 
+/**
+ * NON_CONFIGURATA e' lo stato normale finche' RESEND_API_KEY non e' impostata
+ * su Railway: il bollettino e' salvato, semplicemente non e' partito nulla.
+ */
+export type StatoEmailBollettino =
+  | 'IN_CORSO'
+  | 'INVIATA'
+  | 'ERRORE'
+  | 'NON_VALIDA'
+  | 'NON_CONFIGURATA';
+
+export interface EsitoEmailBollettino {
+  stato: StatoEmailBollettino;
+  destinatario: string | null;
+  messaggio?: string;
+}
+
 export interface CreateBollettinoInput {
   cantiereId: number;
   dataRiferimento: string;
@@ -308,6 +325,7 @@ export interface CreateBollettinoInput {
   firmaOperatoreImg: string;
   firmaCommittenteNome: string;
   firmaCommittenteImg: string;
+  email?: string;
 }
 
 function bollettinoParams(filters?: BollettinoFilters): string {
@@ -348,8 +366,15 @@ export const bollettiniApi = {
     apiClient.get<Bollettino[]>(`/bollettini${bollettinoParams(filters)}`),
   getById: (id: number) =>
     apiClient.get<Bollettino>(`/bollettini/${id}`),
+  // `email` e' assente quando il campo del form era vuoto
   create: (data: CreateBollettinoInput) =>
-    apiClient.post<{ id: number }>('/bollettini', data),
+    apiClient.post<{ id: number; email?: EsitoEmailBollettino }>('/bollettini', data),
+  // Risponde 200 anche quando l'invio fallisce: l'esito sta nel corpo
+  inviaMail: (id: number, email?: string) =>
+    apiClient.post<EsitoEmailBollettino>(
+      `/bollettini/${id}/invia-mail`,
+      email ? { email } : {}
+    ),
   delete: (id: number) =>
     apiClient.delete(`/bollettini/${id}`),
   downloadPdf: (id: number) =>
