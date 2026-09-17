@@ -186,6 +186,17 @@ export interface RigaBollettino {
 }
 
 /**
+ * Metadati dell'allegato: i byte stanno su R2 e si scaricano dalla rotta
+ * dedicata, non passano mai dal corpo del bollettino.
+ */
+export interface AllegatoBollettino {
+  id: number;
+  nomeFile: string;
+  mimeType: string;
+  dimensione: number;
+}
+
+/**
  * Le firme non compaiono qui: il backend le esclude dagli elenchi e dal
  * dettaglio, perché servono solo a generare il PDF lato server.
  */
@@ -213,4 +224,6 @@ export interface Bollettino {
   createdAt: string;
   utente: { id: number; nome: string; cognome: string };
   righe?: RigaBollettino[];
+  // Assente nei bollettini creati prima degli allegati
+  allegati?: AllegatoBollettino[];
 }

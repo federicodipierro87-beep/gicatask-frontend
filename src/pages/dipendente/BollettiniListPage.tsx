@@ -99,6 +99,11 @@ export function BollettiniListPage() {
                   <p className="text-sm text-gray-600">{bollettino.clienteNome}</p>
                   <p className="text-sm text-gray-600 mt-1">
                     {bollettino.numeroOperai} operai × {bollettino.ore} ore
+                    {bollettino.allegati && bollettino.allegati.length > 0 && (
+                      <span className="text-gray-500 ml-2">
+                        📎 {bollettino.allegati.length}
+                      </span>
+                    )}
                   </p>
                   <p className="text-sm text-gray-500 mt-1 line-clamp-2">{bollettino.attivita}</p>
                 </div>

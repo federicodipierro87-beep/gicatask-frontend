@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { SignaturePad } from '../../components/SignaturePad';
+import { AllegatiUploader } from '../../components/AllegatiUploader';
 import { VociSelector, type VoceSelezionata } from '../../components/VociSelector';
 import { useAuth } from '../../context/AuthContext';
 import { bollettiniApi, cantieriApi, clientiApi, vociBollettinoApi } from '../../api/client';
 import type { EsitoEmailBollettino } from '../../api/client';
-import type { Cliente, Cantiere, VoceBollettino } from '../../types';
+import type { AllegatoBollettino, Cliente, Cantiere, VoceBollettino } from '../../types';
 
 // Stessa regola del backend: piu' severa di RFC 5322 perche' l'indirizzo
 // finisce nel campo `to` dell'API, dove una virgola varrebbe piu' destinatari.
@@ -59,6 +60,9 @@ export function BollettinoFormPage() {
   const [ore, setOre] = useState('');
 
   const [email, setEmail] = useState('');
+  // Gia' caricati sul server: qui restano i soli metadati, e nella POST solo
+  // gli id. Non entrano in `puoSalvare`: sono facoltativi come l'e-mail.
+  const [allegati, setAllegati] = useState<AllegatoBollettino[]>([]);
 
   const [firmaOperatoreNome, setFirmaOperatoreNome] = useState('');
   const [firmaOperatoreImg, setFirmaOperatoreImg] = useState<string | null>(null);
@@ -183,6 +187,7 @@ export function BollettinoFormPage() {
         firmaCommittenteNome: firmaCommittenteNome.trim(),
         firmaCommittenteImg,
         ...(email.trim() ? { email: email.trim() } : {}),
+        allegatiIds: allegati.map((a) => a.id),
       });
 
       // Il bollettino c'e': da qui il pulsante non deve piu' poter ripartire
@@ -392,6 +397,12 @@ export function BollettinoFormPage() {
               </p>
             )}
           </div>
+
+          <AllegatiUploader
+            value={allegati}
+            onChange={setAllegati}
+            disabled={isSaving || salvato}
+          />
 
           <div className="border-t pt-5 space-y-5">
             <div>

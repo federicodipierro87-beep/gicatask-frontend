@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import type {
+  AllegatoBollettino,
   ApiError,
   Bollettino,
   CalendarioEvento,
@@ -329,6 +330,9 @@ export interface CreateBollettinoInput {
   firmaCommittenteNome: string;
   firmaCommittenteImg: string;
   email?: string;
+  // Solo gli id: i file sono gia' stati caricati mentre l'operatore compilava,
+  // cosi' un upload che fallisce fallisce prima delle firme
+  allegatiIds?: number[];
 }
 
 function bollettinoParams(filters?: BollettinoFilters): string {
@@ -393,6 +397,20 @@ export const bollettiniApi = {
       `/bollettini/cliente/${clienteId}/pdf${bollettinoParams({ startDate, endDate })}`,
       `bollettini-cliente-${clienteId}.pdf`
     ),
+  uploadAllegato: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    // Il Content-Type va *tolto*, non lasciato al default dell'istanza: con
+    // `application/json` in testa axios serializza la FormData in JSON invece
+    // di spedirla come multipart, e il server non troverebbe nessun file.
+    // Azzerandolo, il browser mette da solo il boundary.
+    return apiClient.post<AllegatoBollettino>('/bollettini/allegati', form, {
+      headers: { 'Content-Type': undefined },
+    });
+  },
+  deleteAllegato: (id: number) => apiClient.delete(`/bollettini/allegati/${id}`),
+  downloadAllegato: (id: number, nomeFile: string) =>
+    downloadFile(`/bollettini/allegati/${id}/file`, nomeFile),
 };
 
 // Calendario eventi API

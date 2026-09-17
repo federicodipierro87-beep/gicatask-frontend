@@ -72,6 +72,38 @@ function CellaMail({ bollettino }: { bollettino: Bollettino }) {
   );
 }
 
+/**
+ * Nomi dei file allegati, cliccabili. La tabella non ha una riga di dettaglio
+ * espandibile su cui appoggiarsi, quindi i nomi stanno in colonna: sono pochi
+ * per bollettino e il troncamento tiene la riga alla sua altezza.
+ */
+function CellaAllegati({
+  bollettino,
+  onDownload,
+}: {
+  bollettino: Bollettino;
+  onDownload: (id: number, nomeFile: string) => void;
+}) {
+  const allegati = bollettino.allegati ?? [];
+
+  if (allegati.length === 0) return <span className="text-gray-400">—</span>;
+
+  return (
+    <div className="flex flex-col items-start gap-0.5 max-w-[12rem]">
+      {allegati.map((allegato) => (
+        <button
+          key={allegato.id}
+          onClick={() => onDownload(allegato.id, allegato.nomeFile)}
+          className="text-primary-600 hover:text-primary-700 text-sm truncate max-w-full"
+          title={allegato.nomeFile}
+        >
+          {allegato.nomeFile}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function BollettiniArchivioPage() {
   const [bollettini, setBollettini] = useState<Bollettino[]>([]);
   const [clienti, setClienti] = useState<Cliente[]>([]);
@@ -181,6 +213,15 @@ export function BollettiniArchivioPage() {
       setError('Errore durante il download del PDF');
     } finally {
       setDownloadId(null);
+    }
+  };
+
+  const handleDownloadAllegato = async (id: number, nomeFile: string) => {
+    try {
+      await bollettiniApi.downloadAllegato(id, nomeFile);
+      setError(null);
+    } catch {
+      setError('Errore durante il download dell\'allegato');
     }
   };
 
@@ -385,6 +426,7 @@ export function BollettiniArchivioPage() {
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Operai</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Ore</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Mail</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600">Allegati</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Azioni</th>
                 </tr>
               </thead>
@@ -403,6 +445,12 @@ export function BollettiniArchivioPage() {
                     <td className="py-3 px-2 text-right">{bollettino.ore}</td>
                     <td className="py-3 px-2 whitespace-nowrap">
                       <CellaMail bollettino={bollettino} />
+                    </td>
+                    <td className="py-3 px-2">
+                      <CellaAllegati
+                        bollettino={bollettino}
+                        onDownload={handleDownloadAllegato}
+                      />
                     </td>
                     <td className="py-3 px-2 text-right space-x-3 whitespace-nowrap">
                       <button
@@ -489,8 +537,8 @@ export function BollettiniArchivioPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-700">
-            Il bollettino e le sue righe verranno eliminati definitivamente. Le firme raccolte
-            andranno perse.
+            Il bollettino, le sue righe e i suoi allegati verranno eliminati definitivamente.
+            Le firme raccolte andranno perse.
           </p>
           <div className="flex justify-end gap-3 pt-4">
             <button onClick={() => setDeleteId(null)} className="btn-secondary" disabled={isDeleting}>
