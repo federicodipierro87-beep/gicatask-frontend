@@ -192,13 +192,16 @@ export interface RigaBollettino {
 export interface Bollettino {
   id: number;
   utenteId: number;
-  cantiereId: number;
+  // Il cantiere manca quando il cliente non ne ha; `clienteId` e' invece nullo
+  // nei bollettini creati prima che la colonna esistesse
+  clienteId?: number | null;
+  cantiereId: number | null;
   dataRiferimento: string;
   attivita: string;
   numeroOperai: number;
   ore: number;
   clienteNome: string;
-  cantiereNome: string;
+  cantiereNome: string | null;
   firmaOperatoreNome: string;
   firmaCommittenteNome: string;
   // Opzionali: i bollettini creati prima dell'invio per e-mail non li hanno,

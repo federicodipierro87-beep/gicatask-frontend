@@ -312,8 +312,11 @@ export interface EsitoEmailBollettino {
   messaggio?: string;
 }
 
+// Il cantiere e' facoltativo, il cliente no: lato server il cantiere serve solo
+// quando il cliente ne ha almeno uno attivo.
 export interface CreateBollettinoInput {
-  cantiereId: number;
+  clienteId: number;
+  cantiereId?: number | null;
   dataRiferimento: string;
   attivita: string;
   numeroOperai: number;
@@ -383,6 +386,12 @@ export const bollettiniApi = {
     downloadFile(
       `/bollettini/cantiere/${cantiereId}/pdf${bollettinoParams({ startDate, endDate })}`,
       `bollettini-cantiere-${cantiereId}.pdf`
+    ),
+  // Cumulativo di tutto il cliente, cantieri compresi
+  downloadCumulativoCliente: (clienteId: number, startDate?: string, endDate?: string) =>
+    downloadFile(
+      `/bollettini/cliente/${clienteId}/pdf${bollettinoParams({ startDate, endDate })}`,
+      `bollettini-cliente-${clienteId}.pdf`
     ),
 };
 

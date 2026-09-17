@@ -93,7 +93,8 @@ export function BollettiniListPage() {
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-medium text-gray-900">
-                    {formatDate(bollettino.dataRiferimento)} — {bollettino.cantiereNome}
+                    {formatDate(bollettino.dataRiferimento)} —{' '}
+                    {bollettino.cantiereNome ?? bollettino.clienteNome}
                   </p>
                   <p className="text-sm text-gray-600">{bollettino.clienteNome}</p>
                   <p className="text-sm text-gray-600 mt-1">

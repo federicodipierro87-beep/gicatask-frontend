@@ -184,12 +184,18 @@ export function BollettiniArchivioPage() {
     }
   };
 
+  // Col cantiere selezionato il cumulativo resta quello di cantiere; col solo
+  // cliente comprende tutto, cantieri e bollettini senza cantiere
   const handleDownloadCumulativo = async () => {
-    if (!cantiereId) return;
+    if (!clienteId && !cantiereId) return;
 
     setIsDownloadingCumulativo(true);
     try {
-      await bollettiniApi.downloadCumulativo(cantiereId, startDate, endDate);
+      if (cantiereId) {
+        await bollettiniApi.downloadCumulativo(cantiereId, startDate, endDate);
+      } else {
+        await bollettiniApi.downloadCumulativoCliente(clienteId!, startDate, endDate);
+      }
       setError(null);
     } catch {
       setError('Errore durante il download del cumulativo');
@@ -347,11 +353,15 @@ export function BollettiniArchivioPage() {
         <div className="mt-4 flex flex-col sm:flex-row sm:justify-end gap-3">
           <button
             onClick={handleDownloadCumulativo}
-            disabled={!cantiereId || isDownloadingCumulativo}
+            disabled={(!clienteId && !cantiereId) || isDownloadingCumulativo}
             className="btn-primary"
-            title={cantiereId ? undefined : 'Seleziona un cantiere'}
+            title={clienteId || cantiereId ? undefined : 'Seleziona un cliente o un cantiere'}
           >
-            {isDownloadingCumulativo ? 'Generazione...' : 'Scarica cumulativo cantiere'}
+            {isDownloadingCumulativo
+              ? 'Generazione...'
+              : cantiereId
+                ? 'Scarica cumulativo cantiere'
+                : 'Scarica cumulativo cliente'}
           </button>
         </div>
       </div>
@@ -388,7 +398,7 @@ export function BollettiniArchivioPage() {
                       {bollettino.utente.nome} {bollettino.utente.cognome}
                     </td>
                     <td className="py-3 px-2">{bollettino.clienteNome}</td>
-                    <td className="py-3 px-2">{bollettino.cantiereNome}</td>
+                    <td className="py-3 px-2">{bollettino.cantiereNome ?? '—'}</td>
                     <td className="py-3 px-2 text-right">{bollettino.numeroOperai}</td>
                     <td className="py-3 px-2 text-right">{bollettino.ore}</td>
                     <td className="py-3 px-2 whitespace-nowrap">

@@ -147,7 +147,9 @@ export function BollettinoFormPage() {
   // `emailNonValida` **non** entra in puoSalvare: spegnere il pulsante per un
   // campo facoltativo sarebbe peggio del problema che risolve.
   const puoSalvare =
-    Boolean(cantiereId) &&
+    Boolean(clienteId) &&
+    // Il cantiere e' obbligatorio solo quando il cliente ne ha
+    (cantieri.length === 0 || Boolean(cantiereId)) &&
     attivita.trim().length > 0 &&
     firmaOperatoreNome.trim().length > 0 &&
     firmaCommittenteNome.trim().length > 0 &&
@@ -157,7 +159,7 @@ export function BollettinoFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!cantiereId || !firmaOperatoreImg || !firmaCommittenteImg) {
+    if (!clienteId || !firmaOperatoreImg || !firmaCommittenteImg) {
       setError('Compila tutti i campi obbligatori e apponi entrambe le firme');
       return;
     }
@@ -167,7 +169,8 @@ export function BollettinoFormPage() {
 
     try {
       const { data } = await bollettiniApi.create({
-        cantiereId,
+        clienteId,
+        cantiereId: cantiereId ?? null,
         dataRiferimento,
         attivita: attivita.trim(),
         numeroOperai: parseInt(numeroOperai, 10) || 0,
@@ -264,23 +267,24 @@ export function BollettinoFormPage() {
             </select>
           </div>
 
-          <div>
-            <label htmlFor="cantiere" className="label">Cantiere</label>
-            <select
-              id="cantiere"
-              className="input"
-              value={cantiereId ?? ''}
-              onChange={(e) => setCantiereId(e.target.value ? parseInt(e.target.value, 10) : null)}
-              disabled={!clienteId}
-            >
-              <option value="">
-                {clienteId ? 'Seleziona...' : 'Scegli prima un cliente'}
-              </option>
-              {cantieri.map((cantiere) => (
-                <option key={cantiere.id} value={cantiere.id}>{cantiere.nome}</option>
-              ))}
-            </select>
-          </div>
+          {/* Il box compare solo se il cliente ha cantieri: per la maggior
+              parte dei clienti sarebbe una tendina vuota e obbligatoria */}
+          {cantieri.length > 0 && (
+            <div>
+              <label htmlFor="cantiere" className="label">Cantiere</label>
+              <select
+                id="cantiere"
+                className="input"
+                value={cantiereId ?? ''}
+                onChange={(e) => setCantiereId(e.target.value ? parseInt(e.target.value, 10) : null)}
+              >
+                <option value="">Seleziona...</option>
+                {cantieri.map((cantiere) => (
+                  <option key={cantiere.id} value={cantiere.id}>{cantiere.nome}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label htmlFor="attivita" className="label">Attività svolte</label>
