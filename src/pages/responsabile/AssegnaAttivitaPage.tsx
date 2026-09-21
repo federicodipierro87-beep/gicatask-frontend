@@ -5,6 +5,7 @@ import { DateTimeInput } from '../../components/DateTimeInput';
 import { Modal } from '../../components/Modal';
 import { clientiApi, cantieriApi, tipiAttivitaApi, tipiAssenzaApi, attivitaApi, utentiApi } from '../../api/client';
 import { isAssenzaNegativa } from '../../utils/durata';
+import { nomeUtente } from '../../utils/nomeUtente';
 
 interface Cliente {
   id: number;
@@ -427,7 +428,7 @@ export function AssegnaAttivitaPage() {
             >
               <option value="">Seleziona dipendente...</option>
               {utenti.map((u) => (
-                <option key={u.id} value={u.id}>{u.nome} {u.cognome}</option>
+                <option key={u.id} value={u.id}>{nomeUtente(u)}</option>
               ))}
             </select>
           </div>

@@ -5,6 +5,7 @@ import { Modal } from '../components/Modal';
 import { attivitaApi } from '../api/client';
 import { MonthNavigator, currentMonth, monthRange } from '../components/MonthNavigator';
 import { formatDuration } from '../utils/durata';
+import { nomeUtente } from '../utils/nomeUtente';
 
 interface Attivita {
   id: number;
@@ -175,7 +176,7 @@ export function ResponsabileDashboard() {
                       </div>
                     </td>
                     <td className="py-3 px-2">{formatDate(att.dataRiferimento)}</td>
-                    <td className="py-3 px-2">{att.utente.nome} {att.utente.cognome}</td>
+                    <td className="py-3 px-2">{nomeUtente(att.utente)}</td>
                     <td className="py-3 px-2 font-medium">{att.cliente?.nome ?? ''}</td>
                     <td className="py-3 px-2">{att.cantiere?.nome ?? ''}</td>
                     <td className="py-3 px-2 text-primary-600 max-w-[150px] truncate">{att.tipoAttivita?.nome ?? ''}</td>
@@ -210,7 +211,7 @@ export function ResponsabileDashboard() {
 
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Dipendente</p>
-                <p className="font-medium text-gray-900">{selectedAttivita.utente.nome} {selectedAttivita.utente.cognome}</p>
+                <p className="font-medium text-gray-900">{nomeUtente(selectedAttivita.utente)}</p>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg">

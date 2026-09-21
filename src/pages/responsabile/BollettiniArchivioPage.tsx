@@ -12,6 +12,7 @@ import {
 } from '../../components/MonthNavigator';
 import type { MonthKey } from '../../components/MonthNavigator';
 import type { Bollettino } from '../../types';
+import { nomeUtente } from '../../utils/nomeUtente';
 
 interface Cliente {
   id: number;
@@ -384,7 +385,7 @@ export function BollettiniArchivioPage() {
               <option value="">Tutti</option>
               {utenti.map((utente) => (
                 <option key={utente.id} value={utente.id}>
-                  {utente.nome} {utente.cognome}
+                  {nomeUtente(utente)}
                 </option>
               ))}
             </select>
@@ -436,9 +437,7 @@ export function BollettiniArchivioPage() {
                     <td className="py-3 px-2 whitespace-nowrap">
                       {formatDate(bollettino.dataRiferimento)}
                     </td>
-                    <td className="py-3 px-2">
-                      {bollettino.utente.nome} {bollettino.utente.cognome}
-                    </td>
+                    <td className="py-3 px-2">{nomeUtente(bollettino.utente)}</td>
                     <td className="py-3 px-2">{bollettino.clienteNome}</td>
                     <td className="py-3 px-2">{bollettino.cantiereNome ?? '—'}</td>
                     <td className="py-3 px-2 text-right">{bollettino.numeroOperai}</td>

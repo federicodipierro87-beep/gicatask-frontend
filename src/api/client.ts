@@ -152,17 +152,22 @@ export const tipiAssenzaApi = {
 };
 
 interface AttivitaFilters {
-  utenteId?: number | null;
-  clienteId?: number | null;
+  utentiIds?: number[];
+  clientiIds?: number[];
   cantiereId?: number | null;
   startDate?: string;
   endDate?: string;
+  /** Usato dalle pagine che filtrano ancora su una persona sola. */
+  utenteId?: number | null;
+  clienteId?: number | null;
 }
 
 // Serializzazione condivisa fra elenco ed export: i due devono applicare gli
 // stessi filtri, e con due copie separate prima o poi divergono
 function attivitaParams(filters?: AttivitaFilters): string {
   const params = new URLSearchParams();
+  if (filters?.utentiIds?.length) params.append('utenteIds', filters.utentiIds.join(','));
+  if (filters?.clientiIds?.length) params.append('clienteIds', filters.clientiIds.join(','));
   if (filters?.utenteId) params.append('utenteId', String(filters.utenteId));
   if (filters?.clienteId) params.append('clienteId', String(filters.clienteId));
   if (filters?.cantiereId) params.append('cantiereId', String(filters.cantiereId));

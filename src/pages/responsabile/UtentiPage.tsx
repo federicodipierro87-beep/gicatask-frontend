@@ -3,6 +3,7 @@ import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { Modal } from '../../components/Modal';
 import { utentiApi } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import { nomeUtente } from '../../utils/nomeUtente';
 
 interface Utente {
   id: number;
@@ -85,7 +86,9 @@ export function UtentiPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formNome.trim() || !formCognome.trim()) return;
+    // Il solo cognome basta: l'account amministratore non è una persona e non
+    // ha un nome di battesimo
+    if (!formCognome.trim()) return;
 
     setIsSaving(true);
     setError(null);
@@ -201,7 +204,7 @@ export function UtentiPage() {
                 {utenti.map((utente) => (
                   <tr key={utente.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 font-medium text-gray-900">
-                      {utente.cognome} {utente.nome}
+                      {nomeUtente(utente)}
                     </td>
                     <td className="py-3 px-4">
                       <span
@@ -268,7 +271,9 @@ export function UtentiPage() {
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="nome" className="label">Nome</label>
+              <label htmlFor="nome" className="label">
+                Nome <span className="text-gray-400">(opzionale)</span>
+              </label>
               <input
                 type="text"
                 id="nome"
@@ -341,7 +346,7 @@ export function UtentiPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSaving || !formNome.trim() || !formCognome.trim()}
+              disabled={isSaving || !formCognome.trim()}
             >
               {isSaving ? 'Salvataggio...' : 'Salva'}
             </button>
@@ -353,7 +358,7 @@ export function UtentiPage() {
       <Modal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
-        title={`Password - ${passwordUtente?.cognome} ${passwordUtente?.nome}`}
+        title={`Password - ${passwordUtente ? nomeUtente(passwordUtente) : ''}`}
       >
         <form onSubmit={handleSetPassword}>
           <div className="mb-4">

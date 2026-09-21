@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api/client';
 import type { UserListItem } from '../types';
+import { nomeUtente } from '../utils/nomeUtente';
 import { AxiosError } from 'axios';
 
 export function LoginPage() {
@@ -130,7 +131,7 @@ export function LoginPage() {
                   <option value="">Seleziona...</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
-                      {user.cognome} {user.nome}
+                      {nomeUtente(user)}
                     </option>
                   ))}
                 </select>

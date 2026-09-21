@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { Modal } from '../../components/Modal';
 import { DateTimeInput } from '../../components/DateTimeInput';
+import { MultiSelect } from '../../components/MultiSelect';
 import { attivitaApi, clientiApi, cantieriApi, utentiApi } from '../../api/client';
+import { nomeUtente } from '../../utils/nomeUtente';
 import {
   MonthNavigator,
   currentMonth,
@@ -83,9 +85,9 @@ export function ReportPage() {
   const defaultDates = monthRange(currentMonth());
   const [startDate, setStartDate] = useState(defaultDates.startDate);
   const [endDate, setEndDate] = useState(defaultDates.endDate);
-  const [clienteId, setClienteId] = useState<number | null>(null);
+  const [clientiIds, setClientiIds] = useState<number[]>([]);
   const [cantiereId, setCantiereId] = useState<number | null>(null);
-  const [utenteId, setUtenteId] = useState<number | null>(null);
+  const [utentiIds, setUtentiIds] = useState<number[]>([]);
 
   // Export loading states
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -126,12 +128,15 @@ export function ReportPage() {
     loadFiltersData();
   }, []);
 
-  // Load cantieri when cliente changes
+  // I cantieri si caricano per cliente e non esiste una lista trasversale,
+  // quindi il filtro ha senso solo con esattamente un cliente selezionato
+  const clienteSingoloId = clientiIds.length === 1 ? (clientiIds[0] as number) : null;
+
   useEffect(() => {
-    if (clienteId) {
+    if (clienteSingoloId) {
       const loadCantieri = async () => {
         try {
-          const res = await cantieriApi.getByCliente(clienteId);
+          const res = await cantieriApi.getByCliente(clienteSingoloId);
           setCantieri(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
           console.error('Error loading cantieri:', err);
@@ -143,7 +148,7 @@ export function ReportPage() {
       setCantieri([]);
       setCantiereId(null);
     }
-  }, [clienteId]);
+  }, [clienteSingoloId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,21 +156,13 @@ export function ReportPage() {
     setError(null);
     (async () => {
       try {
-        const filters: {
-          utenteId?: number;
-          clienteId?: number;
-          cantiereId?: number;
-          startDate?: string;
-          endDate?: string;
-        } = {};
-
-        if (startDate) filters.startDate = startDate;
-        if (endDate) filters.endDate = endDate;
-        if (clienteId) filters.clienteId = clienteId;
-        if (cantiereId) filters.cantiereId = cantiereId;
-        if (utenteId) filters.utenteId = utenteId;
-
-        const response = await attivitaApi.getAll(filters);
+        const response = await attivitaApi.getAll({
+          startDate,
+          endDate,
+          clientiIds,
+          cantiereId,
+          utentiIds,
+        });
         if (cancelled) return;
         setAttivita(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
@@ -179,7 +176,11 @@ export function ReportPage() {
     return () => {
       cancelled = true;
     };
-  }, [startDate, endDate, clienteId, cantiereId, utenteId, refreshToken]);
+  }, [startDate, endDate, clientiIds, cantiereId, utentiIds, refreshToken]);
+
+  // Con due o più dipendenti il report è spezzato in una sezione per ciascuno;
+  // con zero o uno è quello di sempre
+  const perDipendente = utentiIds.length > 1;
 
   const handleExport = async (format: 'pdf' | 'excel') => {
     const setLoading = format === 'pdf' ? setIsExportingPdf : setIsExportingExcel;
@@ -188,11 +189,14 @@ export function ReportPage() {
     try {
       // Il periodo sta nel nome del file: nel foglio Excel non e' piu' riportato
       const periodo = startDate && endDate ? `${startDate}_${endDate}` : 'tutto';
-      const filename = `report-attivita-${periodo}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+      // Il suffisso distingue il report spezzato da quello unico: senza, due
+      // esportazioni consecutive si sovrascrivono nella cartella Download
+      const suffisso = perDipendente ? '-per-dipendente' : '';
+      const filename = `report-attivita-${periodo}${suffisso}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
 
       await attivitaApi.exportReport(
         format,
-        { startDate, endDate, clienteId, cantiereId, utenteId },
+        { startDate, endDate, clientiIds, cantiereId, utentiIds },
         filename
       );
     } catch (err) {
@@ -232,7 +236,7 @@ export function ReportPage() {
 
   // Group by employee for summary
   const byEmployee = attivita.reduce((acc, att) => {
-    const key = `${att.utente.nome} ${att.utente.cognome}`;
+    const key = nomeUtente(att.utente);
     if (!acc[key]) acc[key] = { count: 0, minutes: 0 };
     acc[key].count++;
     acc[key].minutes += att.durataMinuti;
@@ -281,21 +285,16 @@ export function ReportPage() {
             />
           </div>
           <div>
-            <label htmlFor="cliente" className="label">Cliente</label>
-            <select
-              id="cliente"
-              className="select"
-              value={clienteId ?? ''}
-              onChange={(e) => {
-                setClienteId(e.target.value ? parseInt(e.target.value) : null);
+            <span className="label">Cliente</span>
+            <MultiSelect
+              options={clienti.map((c) => ({ id: c.id, label: c.nome }))}
+              value={clientiIds}
+              onChange={(ids) => {
+                setClientiIds(ids);
                 setCantiereId(null);
               }}
-            >
-              <option value="">Tutti i clienti</option>
-              {clienti.map((c) => (
-                <option key={c.id} value={c.id}>{c.nome}</option>
-              ))}
-            </select>
+              placeholder="Tutti i clienti"
+            />
           </div>
           <div>
             <label htmlFor="cantiere" className="label">Cantiere</label>
@@ -304,7 +303,7 @@ export function ReportPage() {
               className="select"
               value={cantiereId ?? ''}
               onChange={(e) => setCantiereId(e.target.value ? parseInt(e.target.value) : null)}
-              disabled={!clienteId}
+              disabled={!clienteSingoloId}
             >
               <option value="">Tutti i cantieri</option>
               {cantieri.map((c) => (
@@ -313,18 +312,13 @@ export function ReportPage() {
             </select>
           </div>
           <div>
-            <label htmlFor="utente" className="label">Dipendente</label>
-            <select
-              id="utente"
-              className="select"
-              value={utenteId ?? ''}
-              onChange={(e) => setUtenteId(e.target.value ? parseInt(e.target.value) : null)}
-            >
-              <option value="">Tutti i dipendenti</option>
-              {utenti.map((u) => (
-                <option key={u.id} value={u.id}>{u.nome} {u.cognome}</option>
-              ))}
-            </select>
+            <span className="label">Dipendente</span>
+            <MultiSelect
+              options={utenti.map((u) => ({ id: u.id, label: nomeUtente(u) }))}
+              value={utentiIds}
+              onChange={setUtentiIds}
+              placeholder="Tutti i dipendenti"
+            />
           </div>
         </div>
 
@@ -358,6 +352,13 @@ export function ReportPage() {
             Esporta PDF
           </button>
         </div>
+
+        {perDipendente && (
+          <p className="mt-3 text-sm text-gray-600">
+            Il PDF conterrà una sezione per ciascuno dei {utentiIds.length} dipendenti
+            selezionati.
+          </p>
+        )}
       </div>
 
       {error && (
@@ -494,7 +495,7 @@ export function ReportPage() {
                       </button>
                     </td>
                     <td className="py-3 px-2">{formatDate(att.dataRiferimento)}</td>
-                    <td className="py-3 px-2">{att.utente.nome} {att.utente.cognome}</td>
+                    <td className="py-3 px-2">{nomeUtente(att.utente)}</td>
                     <td className="py-3 px-2 font-medium">{att.cliente?.nome ?? ''}</td>
                     <td className="py-3 px-2">{att.cantiere?.nome ?? ''}</td>
                     <td className="py-3 px-2 text-primary-600 max-w-[150px] truncate">{att.tipoAttivita?.nome ?? ''}</td>
@@ -529,7 +530,7 @@ export function ReportPage() {
 
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Dipendente</p>
-                <p className="font-medium text-gray-900">{selectedAttivita.utente.nome} {selectedAttivita.utente.cognome}</p>
+                <p className="font-medium text-gray-900">{nomeUtente(selectedAttivita.utente)}</p>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg">
