@@ -4,10 +4,26 @@ import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { SignaturePad } from '../../components/SignaturePad';
 import { AllegatiUploader } from '../../components/AllegatiUploader';
 import { VociSelector, type VoceSelezionata } from '../../components/VociSelector';
+import { MezziSelector, type MezzoSelezionato } from '../../components/MezziSelector';
+import { MultiSelect } from '../../components/MultiSelect';
 import { useAuth } from '../../context/AuthContext';
-import { bollettiniApi, cantieriApi, clientiApi, vociBollettinoApi } from '../../api/client';
+import {
+  bollettiniApi,
+  cantieriApi,
+  clientiApi,
+  utentiApi,
+  vociBollettinoApi,
+} from '../../api/client';
 import type { EsitoEmailBollettino } from '../../api/client';
-import type { AllegatoBollettino, Cliente, Cantiere, VoceBollettino } from '../../types';
+import type {
+  AllegatoBollettino,
+  Cliente,
+  Cantiere,
+  User,
+  VeicoloBollettino,
+  VoceBollettino,
+} from '../../types';
+import { nomeUtente } from '../../utils/nomeUtente';
 
 // Stessa regola del backend: piu' severa di RFC 5322 perche' l'indirizzo
 // finisce nel campo `to` dell'API, dove una virgola varrebbe piu' destinatari.
@@ -43,7 +59,8 @@ export function BollettinoFormPage() {
 
   const [clienti, setClienti] = useState<Cliente[]>([]);
   const [cantieri, setCantieri] = useState<Cantiere[]>([]);
-  const [mezziDisponibili, setMezziDisponibili] = useState<VoceBollettino[]>([]);
+  const [utenti, setUtenti] = useState<User[]>([]);
+  const [veicoli, setVeicoli] = useState<VeicoloBollettino[]>([]);
   const [materialiDisponibili, setMaterialiDisponibili] = useState<VoceBollettino[]>([]);
   const [trasportiDisponibili, setTrasportiDisponibili] = useState<VoceBollettino[]>([]);
 
@@ -51,12 +68,12 @@ export function BollettinoFormPage() {
     new Date().toISOString().split('T')[0] || ''
   );
   const [clienteId, setClienteId] = useState<number | null>(null);
-  const [cantiereId, setCantiereId] = useState<number | null>(null);
+  const [cantieriIds, setCantieriIds] = useState<number[]>([]);
+  const [collaboratoriIds, setCollaboratoriIds] = useState<number[]>([]);
   const [attivita, setAttivita] = useState('');
-  const [mezzi, setMezzi] = useState<VoceSelezionata[]>([]);
+  const [mezzi, setMezzi] = useState<MezzoSelezionato[]>([]);
   const [materiali, setMateriali] = useState<VoceSelezionata[]>([]);
   const [trasporti, setTrasporti] = useState<VoceSelezionata[]>([]);
-  const [numeroOperai, setNumeroOperai] = useState('1');
   const [ore, setOre] = useState('');
 
   const [email, setEmail] = useState('');
@@ -72,14 +89,20 @@ export function BollettinoFormPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [clientiRes, mezziRes, materialiRes, trasportiRes] = await Promise.all([
+        const [clientiRes, utentiRes, veicoliRes, materialiRes, trasportiRes] = await Promise.all([
           clientiApi.getAll(),
-          vociBollettinoApi.getAll('mezzi'),
+          utentiApi.getAll(),
+          bollettiniApi.getVeicoli(),
           vociBollettinoApi.getAll('materiali'),
           vociBollettinoApi.getAll('trasporti'),
         ]);
         setClienti(clientiRes.data);
-        setMezziDisponibili(mezziRes.data);
+        setUtenti(
+          [...(utentiRes.data as User[])].sort((a, b) =>
+            nomeUtente(a).localeCompare(nomeUtente(b), 'it')
+          )
+        );
+        setVeicoli(veicoliRes.data);
         setMaterialiDisponibili(materialiRes.data);
         setTrasportiDisponibili(trasportiRes.data);
       } catch {
@@ -100,10 +123,17 @@ export function BollettinoFormPage() {
     }
   }, [user]);
 
+  // Chi compila e' quasi sempre anche sul lavoro: parte gia' selezionato
+  useEffect(() => {
+    if (user) {
+      setCollaboratoriIds((prev) => (prev.length === 0 ? [user.id] : prev));
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!clienteId) {
       setCantieri([]);
-      setCantiereId(null);
+      setCantieriIds([]);
       return;
     }
 
@@ -115,9 +145,9 @@ export function BollettinoFormPage() {
 
         // Con un solo cantiere la scelta è obbligata: selezionarlo da soli
         if (response.data.length === 1) {
-          setCantiereId(response.data[0].id);
+          setCantieriIds([response.data[0].id]);
         } else {
-          setCantiereId(null);
+          setCantieriIds([]);
         }
       } catch {
         setError('Errore nel caricamento dei cantieri');
@@ -153,7 +183,7 @@ export function BollettinoFormPage() {
   const puoSalvare =
     Boolean(clienteId) &&
     // Il cantiere e' obbligatorio solo quando il cliente ne ha
-    (cantieri.length === 0 || Boolean(cantiereId)) &&
+    (cantieri.length === 0 || cantieriIds.length > 0) &&
     attivita.trim().length > 0 &&
     firmaOperatoreNome.trim().length > 0 &&
     firmaCommittenteNome.trim().length > 0 &&
@@ -174,12 +204,12 @@ export function BollettinoFormPage() {
     try {
       const { data } = await bollettiniApi.create({
         clienteId,
-        cantiereId: cantiereId ?? null,
+        cantieriIds,
+        collaboratoriIds,
         dataRiferimento,
         attivita: attivita.trim(),
-        numeroOperai: parseInt(numeroOperai, 10) || 0,
         ore: parseFloat(ore) || 0,
-        mezzi: toRighe(mezzi),
+        mezzi: mezzi.map(({ veicoloId, quantita }) => ({ veicoloId, quantita })),
         materiali: toRighe(materiali),
         trasporti: toRighe(trasporti),
         firmaOperatoreNome: firmaOperatoreNome.trim(),
@@ -276,18 +306,14 @@ export function BollettinoFormPage() {
               parte dei clienti sarebbe una tendina vuota e obbligatoria */}
           {cantieri.length > 0 && (
             <div>
-              <label htmlFor="cantiere" className="label">Cantiere</label>
-              <select
-                id="cantiere"
-                className="input"
-                value={cantiereId ?? ''}
-                onChange={(e) => setCantiereId(e.target.value ? parseInt(e.target.value, 10) : null)}
-              >
-                <option value="">Seleziona...</option>
-                {cantieri.map((cantiere) => (
-                  <option key={cantiere.id} value={cantiere.id}>{cantiere.nome}</option>
-                ))}
-              </select>
+              <span className="label">Cantieri</span>
+              <MultiSelect
+                options={cantieri.map((c) => ({ id: c.id, label: c.nome }))}
+                value={cantieriIds}
+                onChange={setCantieriIds}
+                placeholder="Seleziona uno o più cantieri..."
+                disabled={isSaving}
+              />
             </div>
           )}
 
@@ -303,14 +329,10 @@ export function BollettinoFormPage() {
             />
           </div>
 
-          <VociSelector
-            titolo="Mezzi"
-            labelQuantita="Ore"
-            tipo="mezzi"
-            voci={mezziDisponibili}
+          <MezziSelector
+            veicoli={veicoli}
             value={mezzi}
             onChange={setMezzi}
-            onVoceCreata={inserisciOrdinata(setMezziDisponibili)}
             disabled={isSaving}
           />
 
@@ -338,17 +360,17 @@ export function BollettinoFormPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="operai" className="label">Numero operai</label>
-              <input
-                type="number"
-                id="operai"
-                inputMode="numeric"
-                min="0"
-                max="999"
-                className="input"
-                value={numeroOperai}
-                onChange={(e) => setNumeroOperai(e.target.value)}
+              <span className="label">Collaboratori</span>
+              <MultiSelect
+                options={utenti.map((u) => ({ id: u.id, label: nomeUtente(u) }))}
+                value={collaboratoriIds}
+                onChange={setCollaboratoriIds}
+                placeholder="Seleziona i collaboratori..."
+                disabled={isSaving}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Numero operai: {collaboratoriIds.length}
+              </p>
             </div>
             <div>
               <label htmlFor="ore" className="label">Ore (per operaio)</label>

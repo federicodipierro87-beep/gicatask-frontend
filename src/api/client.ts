@@ -12,6 +12,7 @@ import type {
   GicaNoleggio,
   GicaNoleggioInput,
   TipoVoceSlug,
+  VeicoloBollettino,
   VoceBollettino,
 } from '../types';
 
@@ -301,6 +302,12 @@ export interface RigaBollettinoInput {
   quantita: number;
 }
 
+// Mezzi: il nome lo copia il server dall'anagrafica veicoli
+export interface RigaMezzoInput {
+  veicoloId: number;
+  quantita: number;
+}
+
 /**
  * NON_CONFIGURATA e' lo stato normale finche' RESEND_API_KEY non e' impostata
  * su Railway: il bollettino e' salvato, semplicemente non e' partito nulla.
@@ -322,12 +329,14 @@ export interface EsitoEmailBollettino {
 // quando il cliente ne ha almeno uno attivo.
 export interface CreateBollettinoInput {
   clienteId: number;
-  cantiereId?: number | null;
+  // Tutti dello stesso cliente
+  cantieriIds: number[];
+  // Il numero operai lo calcola il server dal loro conteggio
+  collaboratoriIds: number[];
   dataRiferimento: string;
   attivita: string;
-  numeroOperai: number;
   ore: number;
-  mezzi: RigaBollettinoInput[];
+  mezzi: RigaMezzoInput[];
   materiali: RigaBollettinoInput[];
   trasporti: RigaBollettinoInput[];
   firmaOperatoreNome: string;
@@ -378,6 +387,9 @@ export const bollettiniApi = {
     apiClient.get<Bollettino[]>(`/bollettini${bollettinoParams(filters)}`),
   getById: (id: number) =>
     apiClient.get<Bollettino>(`/bollettini/${id}`),
+  // Anagrafica veicoli Gica Noleggi, solo attivi
+  getVeicoli: () =>
+    apiClient.get<VeicoloBollettino[]>('/bollettini/veicoli'),
   // `email` e' assente quando il campo del form era vuoto
   create: (data: CreateBollettinoInput) =>
     apiClient.post<{ id: number; email?: EsitoEmailBollettino }>('/bollettini', data),

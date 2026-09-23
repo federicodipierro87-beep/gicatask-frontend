@@ -14,6 +14,10 @@ interface Props {
   disabled?: boolean;
 }
 
+// Oltre questa soglia compare la casella di ricerca: su elenchi lunghi come
+// utenti o mezzi scorrere a mano da telefono e' scomodo
+const SOGLIA_RICERCA = 8;
+
 // `input` e non `select`: la classe `select` disegna già una freccia come
 // immagine di sfondo, e qui la freccia è un elemento vero accanto al riassunto
 const PULSANTE_CLASS = 'input bg-white text-left flex items-center justify-between gap-2';
@@ -28,12 +32,16 @@ const PULSANTE_CLASS = 'input bg-white text-left flex items-center justify-betwe
  */
 export function MultiSelect({ options, value, onChange, placeholder, disabled }: Props) {
   const [isOpen, setIsOpen] = useState(false);
+  const [ricerca, setRicerca] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Nel progetto non c'è un pattern di popover da riusare, quindi la chiusura
   // al click fuori e con Escape sta tutta qui
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setRicerca('');
+      return;
+    }
 
     const handleMouseDown = (e: MouseEvent) => {
       if (!containerRef.current?.contains(e.target as Node)) setIsOpen(false);
@@ -56,6 +64,11 @@ export function MultiSelect({ options, value, onChange, placeholder, disabled }:
   };
 
   const tutti = options.length > 0 && value.length === options.length;
+
+  const filtro = ricerca.trim().toLocaleLowerCase('it');
+  const visibili = filtro
+    ? options.filter((o) => o.label.toLocaleLowerCase('it').includes(filtro))
+    : options;
 
   const riassunto =
     value.length === 0
@@ -82,17 +95,32 @@ export function MultiSelect({ options, value, onChange, placeholder, disabled }:
 
       {isOpen && (
         <div className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg">
-          <button
-            type="button"
-            className="w-full text-left px-3 py-2 text-sm font-medium text-primary-600 hover:bg-gray-50 border-b border-gray-100"
-            onClick={() => onChange(tutti ? [] : options.map((o) => o.id))}
-          >
-            {tutti ? 'Deseleziona' : 'Seleziona tutti'}
-          </button>
-          {options.length === 0 ? (
+          {options.length > SOGLIA_RICERCA && (
+            <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
+              <input
+                type="search"
+                className="input py-1.5 text-sm"
+                placeholder="Cerca..."
+                aria-label="Cerca"
+                value={ricerca}
+                onChange={(e) => setRicerca(e.target.value)}
+                autoFocus
+              />
+            </div>
+          )}
+          {!filtro && (
+            <button
+              type="button"
+              className="w-full text-left px-3 py-2 text-sm font-medium text-primary-600 hover:bg-gray-50 border-b border-gray-100"
+              onClick={() => onChange(tutti ? [] : options.map((o) => o.id))}
+            >
+              {tutti ? 'Deseleziona' : 'Seleziona tutti'}
+            </button>
+          )}
+          {visibili.length === 0 ? (
             <p className="px-3 py-2 text-sm text-gray-500">Nessuna voce</p>
           ) : (
-            options.map((option) => (
+            visibili.map((option) => (
               <label
                 key={option.id}
                 className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"

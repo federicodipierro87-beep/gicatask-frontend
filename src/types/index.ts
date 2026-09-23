@@ -181,8 +181,16 @@ export interface RigaBollettino {
   id: number;
   tipo: TipoVoce;
   voceId: number | null;
+  // Mezzi dall'anagrafica veicoli Gica; nullo nelle righe precedenti
+  veicoloId?: number | null;
   descrizione: string;
   quantita: number;
+}
+
+/** Veicolo dell'anagrafica Gica Noleggi, selezionabile come mezzo. */
+export interface VeicoloBollettino {
+  id: number;
+  nome: string;
 }
 
 /**
@@ -224,6 +232,10 @@ export interface Bollettino {
   createdAt: string;
   utente: { id: number; nome: string; cognome: string };
   righe?: RigaBollettino[];
+  // Vuoti nei bollettini precedenti alla selezione multipla: per quelli
+  // valgono `cantiereNome` e `numeroOperai`
+  cantieri?: { cantiereId: number | null; nome: string }[];
+  collaboratori?: { utenteId: number | null; nome: string }[];
   // Assente nei bollettini creati prima degli allegati
   allegati?: AllegatoBollettino[];
 }

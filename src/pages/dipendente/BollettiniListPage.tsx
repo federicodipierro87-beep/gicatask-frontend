@@ -105,6 +105,11 @@ export function BollettiniListPage() {
                       </span>
                     )}
                   </p>
+                  {bollettino.collaboratori && bollettino.collaboratori.length > 0 && (
+                    <p className="text-sm text-gray-500">
+                      {bollettino.collaboratori.map((c) => c.nome).join(', ')}
+                    </p>
+                  )}
                   <p className="text-sm text-gray-500 mt-1 line-clamp-2">{bollettino.attivita}</p>
                 </div>
                 <button

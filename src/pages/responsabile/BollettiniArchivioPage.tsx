@@ -440,7 +440,12 @@ export function BollettiniArchivioPage() {
                     <td className="py-3 px-2">{nomeUtente(bollettino.utente)}</td>
                     <td className="py-3 px-2">{bollettino.clienteNome}</td>
                     <td className="py-3 px-2">{bollettino.cantiereNome ?? '—'}</td>
-                    <td className="py-3 px-2 text-right">{bollettino.numeroOperai}</td>
+                    <td
+                      className="py-3 px-2 text-right"
+                      title={bollettino.collaboratori?.map((c) => c.nome).join(', ') || undefined}
+                    >
+                      {bollettino.numeroOperai}
+                    </td>
                     <td className="py-3 px-2 text-right">{bollettino.ore}</td>
                     <td className="py-3 px-2 whitespace-nowrap">
                       <CellaMail bollettino={bollettino} />
