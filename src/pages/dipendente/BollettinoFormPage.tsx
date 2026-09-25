@@ -5,6 +5,13 @@ import { SignaturePad } from '../../components/SignaturePad';
 import { AllegatiUploader } from '../../components/AllegatiUploader';
 import { BancaDatiSelector, type VoceScelta } from '../../components/BancaDatiSelector';
 import { MultiSelect } from '../../components/MultiSelect';
+import {
+  CollaboratoriSelector,
+  nuovaRigaCollaboratore,
+  oreRiga,
+  rigaIncompleta,
+  type RigaCollaboratore,
+} from '../../components/CollaboratoriSelector';
 import { useAuth } from '../../context/AuthContext';
 import {
   bollettiniApi,
@@ -69,12 +76,13 @@ export function BollettinoFormPage() {
   );
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [cantieriIds, setCantieriIds] = useState<number[]>([]);
-  const [collaboratoriIds, setCollaboratoriIds] = useState<number[]>([]);
+  const [collaboratori, setCollaboratori] = useState<RigaCollaboratore[]>([
+    nuovaRigaCollaboratore(),
+  ]);
   const [attivita, setAttivita] = useState('');
   const [mezzi, setMezzi] = useState<VoceScelta[]>([]);
   const [materiali, setMateriali] = useState<VoceScelta[]>([]);
   const [trasporti, setTrasporti] = useState<VoceScelta[]>([]);
-  const [ore, setOre] = useState('');
 
   const [email, setEmail] = useState('');
   // Gia' caricati sul server: qui restano i soli metadati, e nella POST solo
@@ -123,10 +131,14 @@ export function BollettinoFormPage() {
     }
   }, [user]);
 
-  // Chi compila e' quasi sempre anche sul lavoro: parte gia' selezionato
+  // Chi compila e' quasi sempre anche sul lavoro: la prima riga parte con lui
   useEffect(() => {
     if (user) {
-      setCollaboratoriIds((prev) => (prev.length === 0 ? [user.id] : prev));
+      setCollaboratori((prev) =>
+        prev.length === 1 && prev[0]?.utenteId === null && !prev[0].ore
+          ? [{ ...prev[0], utenteId: user.id }]
+          : prev
+      );
     }
   }, [user]);
 
@@ -186,6 +198,8 @@ export function BollettinoFormPage() {
     // Il cantiere e' obbligatorio solo quando il cliente ne ha
     (cantieri.length === 0 || cantieriIds.length > 0) &&
     attivita.trim().length > 0 &&
+    // Ore scritte senza aver scelto la persona: andrebbero perse in silenzio
+    !collaboratori.some(rigaIncompleta) &&
     firmaOperatoreNome.trim().length > 0 &&
     firmaCommittenteNome.trim().length > 0 &&
     Boolean(firmaOperatoreImg) &&
@@ -206,10 +220,12 @@ export function BollettinoFormPage() {
       const { data } = await bollettiniApi.create({
         clienteId,
         cantieriIds,
-        collaboratoriIds,
+        // Le righe lasciate vuote non contano
+        collaboratori: collaboratori
+          .filter((r): r is RigaCollaboratore & { utenteId: number } => r.utenteId !== null)
+          .map((r) => ({ utenteId: r.utenteId, ore: oreRiga(r) })),
         dataRiferimento,
         attivita: attivita.trim(),
-        ore: parseFloat(ore) || 0,
         mezzi: mezzi.map(({ id, quantita }) => ({ veicoloId: id, quantita })),
         materiali: toRighe(materiali),
         trasporti: toRighe(trasporti),
@@ -361,35 +377,12 @@ export function BollettinoFormPage() {
             disabled={isSaving}
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <span className="label">Collaboratori</span>
-              <MultiSelect
-                options={utenti.map((u) => ({ id: u.id, label: nomeUtente(u) }))}
-                value={collaboratoriIds}
-                onChange={setCollaboratoriIds}
-                placeholder="Seleziona i collaboratori..."
-                disabled={isSaving}
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Numero operai: {collaboratoriIds.length}
-              </p>
-            </div>
-            <div>
-              <label htmlFor="ore" className="label">Ore (per operaio)</label>
-              <input
-                type="number"
-                id="ore"
-                inputMode="decimal"
-                min="0"
-                max="24"
-                step="0.5"
-                className="input"
-                value={ore}
-                onChange={(e) => setOre(e.target.value)}
-              />
-            </div>
-          </div>
+          <CollaboratoriSelector
+            utenti={utenti}
+            value={collaboratori}
+            onChange={setCollaboratori}
+            disabled={isSaving}
+          />
 
           <div>
             <label htmlFor="email" className="label">

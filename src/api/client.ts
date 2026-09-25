@@ -336,11 +336,10 @@ export interface CreateBollettinoInput {
   clienteId: number;
   // Tutti dello stesso cliente
   cantieriIds: number[];
-  // Il numero operai lo calcola il server dal loro conteggio
-  collaboratoriIds: number[];
+  // Il server ne ricava numero operai (conteggio) e totale ore (somma)
+  collaboratori: { utenteId: number; ore: number }[];
   dataRiferimento: string;
   attivita: string;
-  ore: number;
   mezzi: RigaMezzoInput[];
   materiali: RigaBollettinoInput[];
   trasporti: RigaBollettinoInput[];

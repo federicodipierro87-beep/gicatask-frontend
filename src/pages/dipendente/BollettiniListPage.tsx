@@ -4,6 +4,7 @@ import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { MonthNavigator, currentMonth, monthRange } from '../../components/MonthNavigator';
 import { bollettiniApi } from '../../api/client';
 import type { Bollettino } from '../../types';
+import { oreComplessive } from '../../utils/oreBollettino';
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('it-IT', {
@@ -98,7 +99,9 @@ export function BollettiniListPage() {
                   </p>
                   <p className="text-sm text-gray-600">{bollettino.clienteNome}</p>
                   <p className="text-sm text-gray-600 mt-1">
-                    {bollettino.numeroOperai} operai × {bollettino.ore} ore
+                    {bollettino.oreTotali != null
+                      ? `${bollettino.numeroOperai} operai · ${oreComplessive(bollettino).toLocaleString('it-IT')} ore totali`
+                      : `${bollettino.numeroOperai} operai × ${bollettino.ore} ore`}
                     {bollettino.allegati && bollettino.allegati.length > 0 && (
                       <span className="text-gray-500 ml-2">
                         📎 {bollettino.allegati.length}
@@ -107,7 +110,9 @@ export function BollettiniListPage() {
                   </p>
                   {bollettino.collaboratori && bollettino.collaboratori.length > 0 && (
                     <p className="text-sm text-gray-500">
-                      {bollettino.collaboratori.map((c) => c.nome).join(', ')}
+                      {bollettino.collaboratori
+                        .map((c) => (c.ore != null ? `${c.nome} (${c.ore.toLocaleString('it-IT')} h)` : c.nome))
+                        .join(', ')}
                     </p>
                   )}
                   <p className="text-sm text-gray-500 mt-1 line-clamp-2">{bollettino.attivita}</p>

@@ -218,7 +218,10 @@ export interface Bollettino {
   dataRiferimento: string;
   attivita: string;
   numeroOperai: number;
+  // Ore per operaio nei bollettini precedenti; 0 in quelli con le ore per
+  // collaboratore, dove il totale sta in `oreTotali`
   ore: number;
+  oreTotali?: number | null;
   clienteNome: string;
   cantiereNome: string | null;
   firmaOperatoreNome: string;
@@ -235,7 +238,7 @@ export interface Bollettino {
   // Vuoti nei bollettini precedenti alla selezione multipla: per quelli
   // valgono `cantiereNome` e `numeroOperai`
   cantieri?: { cantiereId: number | null; nome: string }[];
-  collaboratori?: { utenteId: number | null; nome: string }[];
+  collaboratori?: { utenteId: number | null; nome: string; ore?: number | null }[];
   // Assente nei bollettini creati prima degli allegati
   allegati?: AllegatoBollettino[];
 }

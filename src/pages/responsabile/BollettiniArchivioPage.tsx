@@ -13,6 +13,7 @@ import {
 import type { MonthKey } from '../../components/MonthNavigator';
 import type { Bollettino } from '../../types';
 import { nomeUtente } from '../../utils/nomeUtente';
+import { oreComplessive } from '../../utils/oreBollettino';
 
 interface Cliente {
   id: number;
@@ -203,7 +204,7 @@ export function BollettiniArchivioPage() {
     };
   }, [clienteId, cantiereId, utenteId, startDate, endDate, refreshToken]);
 
-  const totaleOreUomo = bollettini.reduce((sum, b) => sum + b.ore * b.numeroOperai, 0);
+  const totaleOreUomo = bollettini.reduce((sum, b) => sum + oreComplessive(b), 0);
 
   const handleDownload = async (id: number) => {
     setDownloadId(id);
@@ -305,7 +306,7 @@ export function BollettiniArchivioPage() {
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Archivio Bollettini</h2>
         <p className="text-sm text-gray-600 mt-1">
-          {bollettini.length} bollettini — {totaleOreUomo.toLocaleString('it-IT')} ore-uomo totali
+          {bollettini.length} bollettini — {totaleOreUomo.toLocaleString('it-IT')} ore totali
         </p>
       </div>
 
@@ -425,7 +426,7 @@ export function BollettiniArchivioPage() {
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cliente</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cantiere</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Operai</th>
-                  <th className="text-right py-3 px-2 font-medium text-gray-600">Ore</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-600">Ore totali</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Mail</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Allegati</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Azioni</th>
@@ -442,11 +443,17 @@ export function BollettiniArchivioPage() {
                     <td className="py-3 px-2">{bollettino.cantiereNome ?? '—'}</td>
                     <td
                       className="py-3 px-2 text-right"
-                      title={bollettino.collaboratori?.map((c) => c.nome).join(', ') || undefined}
+                      title={
+                        bollettino.collaboratori
+                          ?.map((c) => (c.ore != null ? `${c.nome}: ${c.ore} h` : c.nome))
+                          .join(', ') || undefined
+                      }
                     >
                       {bollettino.numeroOperai}
                     </td>
-                    <td className="py-3 px-2 text-right">{bollettino.ore}</td>
+                    <td className="py-3 px-2 text-right">
+                      {oreComplessive(bollettino).toLocaleString('it-IT')}
+                    </td>
                     <td className="py-3 px-2 whitespace-nowrap">
                       <CellaMail bollettino={bollettino} />
                     </td>
