@@ -13,8 +13,9 @@ interface Props {
 /**
  * Anagrafica delle voci selezionabili nei bollettini.
  *
- * Mezzi, materiali e trasporti condividono questa pagina: cambiano solo il
- * tipo passato all'API e le etichette.
+ * Banca dati materiali e banca dati trasporti condividono questa pagina:
+ * cambiano solo il tipo passato all'API e le etichette. I mezzi non passano
+ * piu' di qui: vengono dalla Banca dati veicoli, condivisa con Gica e Dream.
  */
 export function VociBollettinoPage({ tipo, titolo, singolare }: Props) {
   const [voci, setVoci] = useState<VoceBollettino[]>([]);
@@ -105,7 +106,7 @@ export function VociBollettinoPage({ tipo, titolo, singolare }: Props) {
     <ResponsabileLayout>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Gestione {titolo}</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{titolo}</h2>
           <p className="text-sm text-gray-600 mt-1">{voci.length} voci totali</p>
         </div>
         <button onClick={() => setShowCreateModal(true)} className="btn-primary">
@@ -122,7 +123,7 @@ export function VociBollettinoPage({ tipo, titolo, singolare }: Props) {
 
       <div className="card">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium text-gray-900">Elenco {titolo}</h3>
+          <h3 className="font-medium text-gray-900">Elenco</h3>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"

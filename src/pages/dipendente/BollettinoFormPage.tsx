@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { SignaturePad } from '../../components/SignaturePad';
 import { AllegatiUploader } from '../../components/AllegatiUploader';
-import { VociSelector, type VoceSelezionata } from '../../components/VociSelector';
-import { MezziSelector, type MezzoSelezionato } from '../../components/MezziSelector';
+import { BancaDatiSelector, type VoceScelta } from '../../components/BancaDatiSelector';
 import { MultiSelect } from '../../components/MultiSelect';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -19,6 +18,7 @@ import type {
   AllegatoBollettino,
   Cliente,
   Cantiere,
+  TipoVoceSlug,
   User,
   VeicoloBollettino,
   VoceBollettino,
@@ -71,9 +71,9 @@ export function BollettinoFormPage() {
   const [cantieriIds, setCantieriIds] = useState<number[]>([]);
   const [collaboratoriIds, setCollaboratoriIds] = useState<number[]>([]);
   const [attivita, setAttivita] = useState('');
-  const [mezzi, setMezzi] = useState<MezzoSelezionato[]>([]);
-  const [materiali, setMateriali] = useState<VoceSelezionata[]>([]);
-  const [trasporti, setTrasporti] = useState<VoceSelezionata[]>([]);
+  const [mezzi, setMezzi] = useState<VoceScelta[]>([]);
+  const [materiali, setMateriali] = useState<VoceScelta[]>([]);
+  const [trasporti, setTrasporti] = useState<VoceScelta[]>([]);
   const [ore, setOre] = useState('');
 
   const [email, setEmail] = useState('');
@@ -157,24 +157,25 @@ export function BollettinoFormPage() {
     loadCantieri();
   }, [clienteId]);
 
-  // L'elenco arriva ordinato dal server: un append metterebbe la voce appena
-  // creata in fondo alla tendina fino al ricaricamento della pagina.
-  const inserisciOrdinata = (
+  // Aggiunge la voce alla banca dati e all'elenco della tendina. L'elenco
+  // arriva ordinato dal server: un append metterebbe la voce appena creata in
+  // fondo fino al ricaricamento della pagina. `riusa`: se esiste gia' una voce
+  // con quel nome, anche disattivata, il server restituisce quella.
+  const creaVoce = (
+    tipo: TipoVoceSlug,
     setter: React.Dispatch<React.SetStateAction<VoceBollettino[]>>
-  ) => (voce: VoceBollettino) => {
+  ) => async (nome: string): Promise<VoceBollettino> => {
+    const { data: voce } = await vociBollettinoApi.create(tipo, nome, true);
     setter((prev) =>
-      [...prev, voce].sort((a, b) => a.nome.localeCompare(b.nome, 'it'))
+      prev.some((v) => v.id === voce.id)
+        ? prev
+        : [...prev, voce].sort((a, b) => a.nome.localeCompare(b.nome, 'it'))
     );
+    return voce;
   };
 
-  // L'uid serve solo a dare un'identità alle righe lato client: il backend non
-  // lo conosce e lo schema della POST rifiuta le proprietà in più.
-  const toRighe = (righe: VoceSelezionata[]) =>
-    righe.map(({ voceId, descrizione, quantita }) => ({
-      voceId,
-      descrizione,
-      quantita,
-    }));
+  const toRighe = (righe: VoceScelta[]) =>
+    righe.map(({ id, nome, quantita }) => ({ voceId: id, descrizione: nome, quantita }));
 
   const emailNonValida = email.trim().length > 0 && !EMAIL_RE.test(email.trim());
 
@@ -209,7 +210,7 @@ export function BollettinoFormPage() {
         dataRiferimento,
         attivita: attivita.trim(),
         ore: parseFloat(ore) || 0,
-        mezzi: mezzi.map(({ veicoloId, quantita }) => ({ veicoloId, quantita })),
+        mezzi: mezzi.map(({ id, quantita }) => ({ veicoloId: id, quantita })),
         materiali: toRighe(materiali),
         trasporti: toRighe(trasporti),
         firmaOperatoreNome: firmaOperatoreNome.trim(),
@@ -329,32 +330,34 @@ export function BollettinoFormPage() {
             />
           </div>
 
-          <MezziSelector
-            veicoli={veicoli}
+          {/* I mezzi si aggiungono solo dalla Banca dati veicoli, condivisa
+              con i noleggi Gica e Dream: niente onCrea */}
+          <BancaDatiSelector
+            titolo="Mezzi"
+            labelQuantita="Ore"
+            voci={veicoli}
             value={mezzi}
             onChange={setMezzi}
             disabled={isSaving}
           />
 
-          <VociSelector
+          <BancaDatiSelector
             titolo="Materiali"
             labelQuantita="Quantità"
-            tipo="materiali"
             voci={materialiDisponibili}
             value={materiali}
             onChange={setMateriali}
-            onVoceCreata={inserisciOrdinata(setMaterialiDisponibili)}
+            onCrea={creaVoce('materiali', setMaterialiDisponibili)}
             disabled={isSaving}
           />
 
-          <VociSelector
+          <BancaDatiSelector
             titolo="Trasporti"
             labelQuantita="Viaggi"
-            tipo="trasporti"
             voci={trasportiDisponibili}
             value={trasporti}
             onChange={setTrasporti}
-            onVoceCreata={inserisciOrdinata(setTrasportiDisponibili)}
+            onCrea={creaVoce('trasporti', setTrasportiDisponibili)}
             disabled={isSaving}
           />
 

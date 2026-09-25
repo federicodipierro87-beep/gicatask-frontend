@@ -19,13 +19,17 @@ const mainNavItems = [
 
 // Anagrafiche e manutenzione: stanno in una tendina, su desktop come su mobile.
 // Sparse in barra la riempivano da sole
-const settingsNavItems = [
+// `soloBollettini`: le banche dati di materiali e trasporti servono solo a chi
+// e' abilitato ai bollettini, e l'API le nega agli altri
+const settingsNavItems: { path: string; label: string; soloBollettini?: boolean }[] = [
   { path: '/responsabile/clienti', label: 'Clienti' },
   { path: '/responsabile/cantieri', label: 'Cantieri' },
   { path: '/responsabile/tipi-attivita', label: 'Tipi Attività' },
   { path: '/responsabile/utenti', label: 'Utenti' },
   { path: '/responsabile/dream-veicoli', label: 'Banca dati veicoli' },
   { path: '/responsabile/dream-clienti', label: 'Banca dati clienti' },
+  { path: '/responsabile/materiali', label: 'Banca dati materiali', soloBollettini: true },
+  { path: '/responsabile/trasporti', label: 'Banca dati trasporti', soloBollettini: true },
   { path: '/responsabile/import', label: 'Import' },
   { path: '/responsabile/backup', label: 'Backup' },
 ];
@@ -34,9 +38,6 @@ const settingsNavItems = [
 // piu' su una riga gia' lunga, e nulla direbbe che appartengono alla stessa cosa
 const bollettinoNavItems = [
   { path: '/responsabile/bollettini', label: 'Archivio' },
-  { path: '/responsabile/mezzi', label: 'Mezzi' },
-  { path: '/responsabile/materiali', label: 'Materiali' },
-  { path: '/responsabile/trasporti', label: 'Trasporti' },
 ];
 
 export function ResponsabileLayout({ children }: Props) {
@@ -55,7 +56,11 @@ export function ResponsabileLayout({ children }: Props) {
 
   const isBollettinoActive = bollettinoNavItems.some(item => isActive(item.path));
 
-  const isSettingsActive = settingsNavItems.some(item => isActive(item.path));
+  const settingsVisibili = settingsNavItems.filter(
+    (item) => !item.soloBollettini || vedeBollettini
+  );
+
+  const isSettingsActive = settingsVisibili.some(item => isActive(item.path));
 
   // Su mobile il gruppo Bollettino vive dentro la rotella, quindi deve
   // accenderla anche lui. Su desktop ha un pulsante suo e resta fuori
@@ -103,7 +108,7 @@ export function ResponsabileLayout({ children }: Props) {
                       <div className="px-4 py-2 border-b border-gray-100">
                         <p className="text-xs text-gray-500 uppercase tracking-wide">Impostazioni</p>
                       </div>
-                      {settingsNavItems.map((item) => (
+                      {settingsVisibili.map((item) => (
                         <Link
                           key={item.path}
                           to={item.path}
@@ -244,7 +249,7 @@ export function ResponsabileLayout({ children }: Props) {
                     onClick={() => setShowSettings(false)}
                   />
                   <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg z-20 py-2">
-                    {settingsNavItems.map((item) => (
+                    {settingsVisibili.map((item) => (
                       <Link
                         key={item.path}
                         to={item.path}

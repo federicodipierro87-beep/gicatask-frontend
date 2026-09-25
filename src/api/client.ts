@@ -276,8 +276,13 @@ export const vociBollettinoApi = {
     apiClient.get<VoceBollettino[]>(
       `/voci-bollettino/${tipo}${includeInactive ? '?includeInactive=true' : ''}`
     ),
-  create: (tipo: TipoVoceSlug, nome: string) =>
-    apiClient.post<VoceBollettino>(`/voci-bollettino/${tipo}`, { nome }),
+  // `riusa`: dal form del bollettino una voce omonima (anche disattivata) si
+  // riusa invece di dare errore
+  create: (tipo: TipoVoceSlug, nome: string, riusa = false) =>
+    apiClient.post<VoceBollettino>(
+      `/voci-bollettino/${tipo}`,
+      riusa ? { nome, riusa } : { nome }
+    ),
   update: (id: number, nome: string) =>
     apiClient.put<VoceBollettino>(`/voci-bollettino/${id}`, { nome }),
   delete: (id: number) =>

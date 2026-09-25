@@ -272,18 +272,10 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/responsabile/mezzi"
-        element={
-          <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>
-            <VociBollettinoPage tipo="mezzi" titolo="Mezzi" singolare="Mezzo" />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/responsabile/materiali"
         element={
           <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>
-            <VociBollettinoPage tipo="materiali" titolo="Materiali" singolare="Materiale" />
+            <VociBollettinoPage tipo="materiali" titolo="Banca dati materiali" singolare="Materiale" />
           </ProtectedRoute>
         }
       />
@@ -291,7 +283,7 @@ function AppRoutes() {
         path="/responsabile/trasporti"
         element={
           <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>
-            <VociBollettinoPage tipo="trasporti" titolo="Trasporti" singolare="Trasporto" />
+            <VociBollettinoPage tipo="trasporti" titolo="Banca dati trasporti" singolare="Trasporto" />
           </ProtectedRoute>
         }
       />
