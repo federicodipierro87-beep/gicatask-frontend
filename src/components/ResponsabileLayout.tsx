@@ -19,8 +19,8 @@ const mainNavItems = [
 
 // Anagrafiche e manutenzione: stanno in una tendina, su desktop come su mobile.
 // Sparse in barra la riempivano da sole
-// `soloBollettini`: le banche dati di materiali e trasporti servono solo a chi
-// e' abilitato ai bollettini, e l'API le nega agli altri
+// `soloBollettini`: la banca dati trasporti serve solo a chi
+// e' abilitato ai bollettini, e l'API la nega agli altri
 const settingsNavItems: { path: string; label: string; soloBollettini?: boolean }[] = [
   { path: '/responsabile/clienti', label: 'Clienti' },
   { path: '/responsabile/cantieri', label: 'Cantieri' },
@@ -28,7 +28,6 @@ const settingsNavItems: { path: string; label: string; soloBollettini?: boolean 
   { path: '/responsabile/utenti', label: 'Utenti' },
   { path: '/responsabile/dream-veicoli', label: 'Banca dati veicoli' },
   { path: '/responsabile/dream-clienti', label: 'Banca dati clienti' },
-  { path: '/responsabile/materiali', label: 'Banca dati materiali', soloBollettini: true },
   { path: '/responsabile/trasporti', label: 'Banca dati trasporti', soloBollettini: true },
   { path: '/responsabile/import', label: 'Import' },
   { path: '/responsabile/backup', label: 'Backup' },

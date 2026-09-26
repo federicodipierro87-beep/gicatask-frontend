@@ -272,14 +272,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/responsabile/materiali"
-        element={
-          <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>
-            <VociBollettinoPage tipo="materiali" titolo="Banca dati materiali" singolare="Materiale" />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/responsabile/trasporti"
         element={
           <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>

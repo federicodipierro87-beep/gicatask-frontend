@@ -5,19 +5,20 @@ import { SignaturePad } from '../../components/SignaturePad';
 import { AllegatiUploader } from '../../components/AllegatiUploader';
 import { BancaDatiSelector, type VoceScelta } from '../../components/BancaDatiSelector';
 import { MultiSelect } from '../../components/MultiSelect';
+import { DateTimeInput } from '../../components/DateTimeInput';
+import { FasceOrarieInput } from '../../components/FasceOrarieInput';
 import {
-  CollaboratoriSelector,
-  nuovaRigaCollaboratore,
-  oreRiga,
-  rigaIncompleta,
-  type RigaCollaboratore,
-} from '../../components/CollaboratoriSelector';
+  SquadreSelector,
+  nuovaRigaSquadra,
+  operaiRiga,
+  problemaRiga,
+  type RigaSquadra,
+} from '../../components/SquadreSelector';
 import { useAuth } from '../../context/AuthContext';
 import {
   bollettiniApi,
   cantieriApi,
   clientiApi,
-  utentiApi,
   vociBollettinoApi,
 } from '../../api/client';
 import type { EsitoEmailBollettino } from '../../api/client';
@@ -26,11 +27,16 @@ import type {
   Cliente,
   Cantiere,
   TipoVoceSlug,
-  User,
   VeicoloBollettino,
   VoceBollettino,
 } from '../../types';
-import { nomeUtente } from '../../utils/nomeUtente';
+import {
+  FASCE_VUOTE,
+  fasceIncomplete,
+  fascePerApi,
+  minutiFasce,
+  type Fasce,
+} from '../../utils/oreBollettino';
 
 // Stessa regola del backend: piu' severa di RFC 5322 perche' l'indirizzo
 // finisce nel campo `to` dell'API, dove una virgola varrebbe piu' destinatari.
@@ -66,9 +72,7 @@ export function BollettinoFormPage() {
 
   const [clienti, setClienti] = useState<Cliente[]>([]);
   const [cantieri, setCantieri] = useState<Cantiere[]>([]);
-  const [utenti, setUtenti] = useState<User[]>([]);
   const [veicoli, setVeicoli] = useState<VeicoloBollettino[]>([]);
-  const [materialiDisponibili, setMaterialiDisponibili] = useState<VoceBollettino[]>([]);
   const [trasportiDisponibili, setTrasportiDisponibili] = useState<VoceBollettino[]>([]);
 
   const [dataRiferimento, setDataRiferimento] = useState(
@@ -76,12 +80,13 @@ export function BollettinoFormPage() {
   );
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [cantieriIds, setCantieriIds] = useState<number[]>([]);
-  const [collaboratori, setCollaboratori] = useState<RigaCollaboratore[]>([
-    nuovaRigaCollaboratore(),
+  const [fasce, setFasce] = useState<Fasce>(FASCE_VUOTE);
+  const [squadre, setSquadre] = useState<RigaSquadra[]>(() => [
+    nuovaRigaSquadra(FASCE_VUOTE, true),
   ]);
   const [attivita, setAttivita] = useState('');
   const [mezzi, setMezzi] = useState<VoceScelta[]>([]);
-  const [materiali, setMateriali] = useState<VoceScelta[]>([]);
+  const [materiali, setMateriali] = useState('');
   const [trasporti, setTrasporti] = useState<VoceScelta[]>([]);
 
   const [email, setEmail] = useState('');
@@ -97,21 +102,13 @@ export function BollettinoFormPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [clientiRes, utentiRes, veicoliRes, materialiRes, trasportiRes] = await Promise.all([
+        const [clientiRes, veicoliRes, trasportiRes] = await Promise.all([
           clientiApi.getAll(),
-          utentiApi.getAll(),
           bollettiniApi.getVeicoli(),
-          vociBollettinoApi.getAll('materiali'),
           vociBollettinoApi.getAll('trasporti'),
         ]);
         setClienti(clientiRes.data);
-        setUtenti(
-          [...(utentiRes.data as User[])].sort((a, b) =>
-            nomeUtente(a).localeCompare(nomeUtente(b), 'it')
-          )
-        );
         setVeicoli(veicoliRes.data);
-        setMaterialiDisponibili(materialiRes.data);
         setTrasportiDisponibili(trasportiRes.data);
       } catch {
         setError('Errore nel caricamento dei dati');
@@ -131,16 +128,12 @@ export function BollettinoFormPage() {
     }
   }, [user]);
 
-  // Chi compila e' quasi sempre anche sul lavoro: la prima riga parte con lui
+  // Le righe degli operai non ancora toccate seguono gli orari dell'intestazione
   useEffect(() => {
-    if (user) {
-      setCollaboratori((prev) =>
-        prev.length === 1 && prev[0]?.utenteId === null && !prev[0].ore
-          ? [{ ...prev[0], utenteId: user.id }]
-          : prev
-      );
-    }
-  }, [user]);
+    setSquadre((prev) =>
+      prev.map((r) => (r.segueIntestazione ? { ...r, ...fasce } : r))
+    );
+  }, [fasce]);
 
   useEffect(() => {
     if (!clienteId) {
@@ -197,9 +190,11 @@ export function BollettinoFormPage() {
     Boolean(clienteId) &&
     // Il cantiere e' obbligatorio solo quando il cliente ne ha
     (cantieri.length === 0 || cantieriIds.length > 0) &&
+    // Come nelle attivita': almeno una fascia, e nessuna lasciata a meta'
+    minutiFasce(fasce) > 0 &&
+    !fasceIncomplete(fasce) &&
     attivita.trim().length > 0 &&
-    // Ore scritte senza aver scelto la persona: andrebbero perse in silenzio
-    !collaboratori.some(rigaIncompleta) &&
+    squadre.every((r) => problemaRiga(r) === null) &&
     firmaOperatoreNome.trim().length > 0 &&
     firmaCommittenteNome.trim().length > 0 &&
     Boolean(firmaOperatoreImg) &&
@@ -220,14 +215,13 @@ export function BollettinoFormPage() {
       const { data } = await bollettiniApi.create({
         clienteId,
         cantieriIds,
-        // Le righe lasciate vuote non contano
-        collaboratori: collaboratori
-          .filter((r): r is RigaCollaboratore & { utenteId: number } => r.utenteId !== null)
-          .map((r) => ({ utenteId: r.utenteId, ore: oreRiga(r) })),
+        fasce: fascePerApi(fasce),
+        // Le ore le calcola il server dagli orari
+        squadre: squadre.map((r) => ({ numeroOperai: operaiRiga(r), ...fascePerApi(r) })),
         dataRiferimento,
         attivita: attivita.trim(),
         mezzi: mezzi.map(({ id, quantita }) => ({ veicoloId: id, quantita })),
-        materiali: toRighe(materiali),
+        materialiTesto: materiali.trim(),
         trasporti: toRighe(trasporti),
         firmaOperatoreNome: firmaOperatoreNome.trim(),
         firmaOperatoreImg,
@@ -294,15 +288,27 @@ export function BollettinoFormPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label htmlFor="data" className="label">Data</label>
-            <input
+            <DateTimeInput
               type="date"
               id="data"
               className="input"
               value={dataRiferimento}
-              onChange={(e) => setDataRiferimento(e.target.value)}
+              onChange={setDataRiferimento}
               required
             />
           </div>
+
+          <FasceOrarieInput
+            idPrefix="bollettino"
+            value={fasce}
+            onChange={setFasce}
+            disabled={isSaving}
+          />
+          {fasceIncomplete(fasce) && (
+            <p className="-mt-3 text-xs text-red-600">
+              Completa inizio e fine della fascia (con orari diversi).
+            </p>
+          )}
 
           <div>
             <label htmlFor="cliente" className="label">Cliente</label>
@@ -350,22 +356,25 @@ export function BollettinoFormPage() {
               con i noleggi Gica e Dream: niente onCrea */}
           <BancaDatiSelector
             titolo="Mezzi"
-            labelQuantita="Ore"
+            labelQuantita="Valore"
             voci={veicoli}
             value={mezzi}
             onChange={setMezzi}
             disabled={isSaving}
           />
 
-          <BancaDatiSelector
-            titolo="Materiali"
-            labelQuantita="Quantità"
-            voci={materialiDisponibili}
-            value={materiali}
-            onChange={setMateriali}
-            onCrea={creaVoce('materiali', setMaterialiDisponibili)}
-            disabled={isSaving}
-          />
+          <div>
+            <label htmlFor="materiali" className="label">Materiali</label>
+            <textarea
+              id="materiali"
+              className="input min-h-[6rem]"
+              value={materiali}
+              onChange={(e) => setMateriali(e.target.value)}
+              maxLength={5000}
+              placeholder="Descrivi i materiali utilizzati"
+              disabled={isSaving}
+            />
+          </div>
 
           <BancaDatiSelector
             titolo="Trasporti"
@@ -377,10 +386,10 @@ export function BollettinoFormPage() {
             disabled={isSaving}
           />
 
-          <CollaboratoriSelector
-            utenti={utenti}
-            value={collaboratori}
-            onChange={setCollaboratori}
+          <SquadreSelector
+            value={squadre}
+            onChange={setSquadre}
+            fasceIntestazione={fasce}
             disabled={isSaving}
           />
 
@@ -476,7 +485,7 @@ export function BollettinoFormPage() {
               className="btn-primary"
               disabled={isSaving || !puoSalvare || salvato}
             >
-              {isSaving ? 'Salvataggio...' : 'Firma e salva'}
+              {isSaving ? 'Invio...' : 'Firma e Invia'}
             </button>
           </div>
         </form>

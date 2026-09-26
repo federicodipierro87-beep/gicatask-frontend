@@ -13,9 +13,9 @@ interface Props {
 /**
  * Anagrafica delle voci selezionabili nei bollettini.
  *
- * Banca dati materiali e banca dati trasporti condividono questa pagina:
- * cambiano solo il tipo passato all'API e le etichette. I mezzi non passano
- * piu' di qui: vengono dalla Banca dati veicoli, condivisa con Gica e Dream.
+ * Oggi la usa la sola banca dati trasporti; resta parametrica sul tipo. I
+ * mezzi vengono dalla Banca dati veicoli, condivisa con Gica e Dream, e i
+ * materiali sono testo libero nel bollettino.
  */
 export function VociBollettinoPage({ tipo, titolo, singolare }: Props) {
   const [voci, setVoci] = useState<VoceBollettino[]>([]);

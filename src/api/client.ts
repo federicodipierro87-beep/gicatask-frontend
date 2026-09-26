@@ -307,6 +307,13 @@ export interface RigaBollettinoInput {
   quantita: number;
 }
 
+export interface FasceBollettinoInput {
+  oraInizioMattino: string | null;
+  oraFineMattino: string | null;
+  oraInizioPomeriggio: string | null;
+  oraFinePomeriggio: string | null;
+}
+
 // Mezzi: il nome lo copia il server dall'anagrafica veicoli
 export interface RigaMezzoInput {
   veicoloId: number;
@@ -336,12 +343,15 @@ export interface CreateBollettinoInput {
   clienteId: number;
   // Tutti dello stesso cliente
   cantieriIds: number[];
-  // Il server ne ricava numero operai (conteggio) e totale ore (somma)
-  collaboratori: { utenteId: number; ore: number }[];
+  // Fasce della giornata, come nelle attivita'
+  fasce: FasceBollettinoInput;
+  // Operai a gruppi con i propri orari: il server ne calcola le ore e ne
+  // ricava numero operai (somma) e totale ore
+  squadre: (FasceBollettinoInput & { numeroOperai: number })[];
+  materialiTesto: string;
   dataRiferimento: string;
   attivita: string;
   mezzi: RigaMezzoInput[];
-  materiali: RigaBollettinoInput[];
   trasporti: RigaBollettinoInput[];
   firmaOperatoreNome: string;
   firmaOperatoreImg: string;

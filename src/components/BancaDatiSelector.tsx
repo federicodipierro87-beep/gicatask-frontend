@@ -9,7 +9,7 @@ export interface VoceBancaDati {
 export interface VoceScelta {
   id: number;
   nome: string;
-  /** Ore per i mezzi, quantità per i materiali, viaggi per i trasporti. */
+  /** Valore per i mezzi, viaggi per i trasporti. */
   quantita: number;
 }
 
@@ -22,7 +22,7 @@ const MAX_CARATTERI = 100;
 
 interface Props {
   titolo: string;
-  labelQuantita: 'Ore' | 'Quantità' | 'Viaggi';
+  labelQuantita: 'Valore' | 'Quantità' | 'Viaggi';
   voci: VoceBancaDati[];
   value: VoceScelta[];
   onChange: (value: VoceScelta[]) => void;
@@ -36,7 +36,7 @@ interface Props {
 }
 
 /**
- * Sezione mezzi / materiali / trasporti del bollettino: scelta multipla dalla
+ * Sezione mezzi / trasporti del bollettino: scelta multipla dalla
  * banca dati e, per ogni voce scelta, la quantità. Niente testo libero: una
  * voce che manca si aggiunge alla banca dati da qui e resta per tutti.
  */

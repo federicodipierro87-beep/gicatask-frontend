@@ -222,6 +222,12 @@ export interface Bollettino {
   // collaboratore, dove il totale sta in `oreTotali`
   ore: number;
   oreTotali?: number | null;
+  // Assenti nei bollettini precedenti alle fasce orarie
+  oraInizioMattino?: string | null;
+  oraFineMattino?: string | null;
+  oraInizioPomeriggio?: string | null;
+  oraFinePomeriggio?: string | null;
+  materialiTesto?: string | null;
   clienteNome: string;
   cantiereNome: string | null;
   firmaOperatoreNome: string;
