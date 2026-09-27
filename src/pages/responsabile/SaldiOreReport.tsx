@@ -14,9 +14,24 @@ interface RigaSaldoOre {
   saldoCumulativoMinuti: number;
   /** Differenza di ogni mese da gennaio a quello scelto: sommate fanno il saldo. */
   differenzeMensili: number[];
+  /** Dettaglio di ogni mese da gennaio a quello scelto. */
+  mensili: MeseSaldoOre[];
 }
 
-type Vista = 'mese' | 'prospetto';
+interface MeseSaldoOre {
+  mese: number;
+  percentuale: number;
+  dovutiMinuti: number;
+  effettuatiMinuti: number;
+  differenzaMinuti: number;
+}
+
+type Vista = 'mese' | 'prospetto' | 'dipendente';
+
+const NOMI_MESI_TITOLO = [
+  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
+];
 
 const NOMI_MESI = [
   'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno',
@@ -44,6 +59,8 @@ export function SaldiOreReport() {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null);
   const [vista, setVista] = useState<Vista>('mese');
+  // Per id e non per indice: cambiando mese si resta sullo stesso dipendente
+  const [dipendenteId, setDipendenteId] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,6 +111,29 @@ export function SaldiOreReport() {
     { dovute: 0, effettuate: 0, differenza: 0, saldo: 0 }
   );
 
+  // Il dipendente scelto, o il primo se non c'e' (piu') nell'elenco del mese
+  const dipendente = righe.find((r) => r.utenteId === dipendenteId) ?? righe[0] ?? null;
+
+  const apriDettaglio = (utenteId: number) => {
+    setDipendenteId(utenteId);
+    setVista('dipendente');
+  };
+
+  // Il nome nelle viste Mese e Prospetto porta al dettaglio del dipendente
+  const nomeCliccabile = (r: RigaSaldoOre) => (
+    <button
+      type="button"
+      onClick={() => apriDettaglio(r.utenteId)}
+      className="text-left font-medium text-gray-900 hover:text-primary-600 hover:underline"
+      title="Dettaglio mese per mese"
+    >
+      {r.utenteNome}
+      {r.percentualeLavoro !== 100 && (
+        <span className="ml-2 text-xs font-normal text-gray-500">{r.percentualeLavoro}%</span>
+      )}
+    </button>
+  );
+
   // Il prospetto va da gennaio al mese scelto
   const mesiProspetto = MESI_BREVI.slice(0, Number(mese.slice(5, 7)));
   const totaliMensili = mesiProspetto.map((_, i) =>
@@ -107,8 +147,10 @@ export function SaldiOreReport() {
           <h3 className="font-medium text-gray-900">Saldi Ore</h3>
           <p className="text-xs text-gray-500 mt-1">
             {vista === 'mese'
-              ? 'Ore dovute = ore del mese a tempo pieno × percentuale di lavoro. Ore effettuate senza assenze. Il saldo cumulativo parte da gennaio.'
-              : 'Differenza di ogni mese (ore effettuate − ore dovute) da gennaio al mese scelto; l\'ultima colonna è il saldo cumulativo.'}
+              ? 'Ore dovute = ore del mese a tempo pieno × percentuale di lavoro. Ore effettuate senza assenze. Il saldo cumulativo parte da gennaio. Clicca un nome per il dettaglio.'
+              : vista === 'prospetto'
+                ? 'Differenza di ogni mese (ore effettuate − ore dovute) da gennaio al mese scelto; l\'ultima colonna è il saldo cumulativo.'
+                : 'Un dipendente mese per mese, da gennaio al mese scelto, con la percentuale in vigore in ciascun mese.'}
           </p>
         </div>
         <MonthNavigator month={mese} onChange={setMese} className="sm:w-64" />
@@ -119,6 +161,7 @@ export function SaldiOreReport() {
           {([
             ['mese', 'Mese'],
             ['prospetto', `Prospetto gen–${MESI_BREVI[Number(mese.slice(5, 7)) - 1]?.toLowerCase()}`],
+            ['dipendente', 'Dipendente'],
           ] as [Vista, string][]).map(([id, etichetta]) => (
             <button
               key={id}
@@ -183,6 +226,86 @@ export function SaldiOreReport() {
         </div>
       ) : righe.length === 0 ? (
         <p className="text-center text-gray-500 py-8">Nessun dipendente da mostrare</p>
+      ) : vista === 'dipendente' && dipendente ? (
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+            <label htmlFor="dipendente-saldi" className="text-sm text-gray-700">
+              Dipendente
+            </label>
+            <select
+              id="dipendente-saldi"
+              className="select sm:w-72"
+              value={dipendente.utenteId}
+              onChange={(e) => setDipendenteId(Number(e.target.value))}
+            >
+              {righe.map((r) => (
+                <option key={r.utenteId} value={r.utenteId}>
+                  {r.utenteNome}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-gray-50">
+                  <th className="text-left py-3 px-2 font-medium text-gray-600">Mese</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-600 whitespace-nowrap">% lavoro</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-600 whitespace-nowrap">Ore dovute</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-600 whitespace-nowrap">Ore effettuate</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-600">Differenza</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-600 whitespace-nowrap">Saldo progressivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(dipendente.mensili ?? []).map((m, i, tutti) => {
+                  // Somma delle differenze fino a questo mese: l'ultima e' il saldo
+                  const saldo = tutti.slice(0, i + 1).reduce((t, x) => t + x.differenzaMinuti, 0);
+                  const senzaDovute = mesiSenzaOreDovute.includes(m.mese);
+                  return (
+                    <tr key={m.mese} className="border-b">
+                      <td
+                        className={`py-3 px-2 ${senzaDovute ? 'text-amber-700' : 'text-gray-900'}`}
+                        title={senzaDovute ? 'Ore dovute non impostate: in questo mese valgono zero' : undefined}
+                      >
+                        {NOMI_MESI_TITOLO[m.mese - 1]}
+                        {senzaDovute && '*'}
+                      </td>
+                      <td className="py-3 px-2 text-right">{m.percentuale}%</td>
+                      <td className="py-3 px-2 text-right whitespace-nowrap">{formatDuration(m.dovutiMinuti)}</td>
+                      <td className="py-3 px-2 text-right whitespace-nowrap">{formatDuration(m.effettuatiMinuti)}</td>
+                      <td className={`py-3 px-2 text-right whitespace-nowrap ${coloreSaldo(m.differenzaMinuti)}`}>
+                        {formatSaldo(m.differenzaMinuti)}
+                      </td>
+                      <td className={`py-3 px-2 text-right whitespace-nowrap font-medium ${coloreSaldo(saldo)}`}>
+                        {formatSaldo(saldo)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="bg-gray-50 font-medium">
+                  <td className="py-3 px-2 text-gray-900">Totale</td>
+                  <td className="py-3 px-2"></td>
+                  <td className="py-3 px-2 text-right whitespace-nowrap">
+                    {formatDuration((dipendente.mensili ?? []).reduce((t, m) => t + m.dovutiMinuti, 0))}
+                  </td>
+                  <td className="py-3 px-2 text-right whitespace-nowrap">
+                    {formatDuration((dipendente.mensili ?? []).reduce((t, m) => t + m.effettuatiMinuti, 0))}
+                  </td>
+                  <td className={`py-3 px-2 text-right whitespace-nowrap ${coloreSaldo(dipendente.saldoCumulativoMinuti)}`}>
+                    {formatSaldo(dipendente.saldoCumulativoMinuti)}
+                  </td>
+                  <td className={`py-3 px-2 text-right whitespace-nowrap ${coloreSaldo(dipendente.saldoCumulativoMinuti)}`}>
+                    {formatSaldo(dipendente.saldoCumulativoMinuti)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
       ) : vista === 'prospetto' ? (
         // Nome fisso a sinistra: con dodici mesi la tabella scorre in orizzontale
         <div className="overflow-x-auto">
@@ -213,11 +336,8 @@ export function SaldiOreReport() {
             <tbody>
               {righe.map((r) => (
                 <tr key={r.utenteId} className="border-b">
-                  <td className="sticky left-0 z-10 bg-white py-3 px-2 font-medium text-gray-900 whitespace-nowrap">
-                    {r.utenteNome}
-                    {r.percentualeLavoro !== 100 && (
-                      <span className="ml-2 text-xs font-normal text-gray-500">{r.percentualeLavoro}%</span>
-                    )}
+                  <td className="sticky left-0 z-10 bg-white py-3 px-2 whitespace-nowrap">
+                    {nomeCliccabile(r)}
                   </td>
                   {mesiProspetto.map((m, i) => {
                     const d = r.differenzeMensili?.[i] ?? 0;
@@ -263,12 +383,7 @@ export function SaldiOreReport() {
             <tbody>
               {righe.map((r) => (
                 <tr key={r.utenteId} className="border-b">
-                  <td className="py-3 px-2 font-medium text-gray-900">
-                    {r.utenteNome}
-                    {r.percentualeLavoro !== 100 && (
-                      <span className="ml-2 text-xs font-normal text-gray-500">{r.percentualeLavoro}%</span>
-                    )}
-                  </td>
+                  <td className="py-3 px-2">{nomeCliccabile(r)}</td>
                   <td className="py-3 px-2 text-right whitespace-nowrap">{formatDuration(r.oreDovuteMinuti)}</td>
                   <td className="py-3 px-2 text-right whitespace-nowrap">{formatDuration(r.oreEffettuateMinuti)}</td>
                   <td className={`py-3 px-2 text-right whitespace-nowrap ${coloreSaldo(r.differenzaMinuti)}`}>
