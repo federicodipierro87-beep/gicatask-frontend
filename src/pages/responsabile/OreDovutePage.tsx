@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { oreDovuteApi } from '../../api/client';
-import type { MeseOreDovute } from '../../api/client';
+import type { OreDovuteAnno } from '../../api/client';
 
 const NOMI_MESI = [
   'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
@@ -21,26 +21,31 @@ function parseOre(testo: string): number | null | undefined {
   const t = testo.trim();
   if (t === '') return null;
 
-  const hhmm = /^(\d{1,3}):([0-5]\d)$/.exec(t);
+  const hhmm = /^(\d{1,4}):([0-5]\d)$/.exec(t);
   if (hhmm) return Number(hhmm[1]) * 60 + Number(hhmm[2]);
 
-  const decimale = /^(\d{1,3})(?:[.,](\d{1,2}))?$/.exec(t);
+  const decimale = /^(\d{1,4})(?:[.,](\d{1,2}))?$/.exec(t);
   if (decimale) return Math.round(Number(`${decimale[1]}.${decimale[2] ?? 0}`) * 60);
 
   return undefined;
 }
 
-function testiDaMesi(mesi: MeseOreDovute[]): string[] {
-  return NOMI_MESI.map((_, i) => {
-    const minuti = mesi.find((m) => m.mese === i + 1)?.minuti;
+/** I testi dei campi: i dodici mesi e, in fondo, le ore annue. */
+function testiDaAnno(dati: OreDovuteAnno): string[] {
+  const mesi = NOMI_MESI.map((_, i) => {
+    const minuti = dati.mesi.find((m) => m.mese === i + 1)?.minuti;
     return minuti == null ? '' : formatOre(minuti);
   });
+  return [...mesi, dati.minutiAnnui == null ? '' : formatOre(dati.minutiAnnui)];
 }
+
+// Indice del campo ore annue in `testi`, dopo i dodici mesi
+const ANNUE = 12;
 
 export function OreDovutePage() {
   const [anno, setAnno] = useState(() => new Date().getFullYear());
-  const [testi, setTesti] = useState<string[]>(() => NOMI_MESI.map(() => ''));
-  const [salvati, setSalvati] = useState<string[]>(() => NOMI_MESI.map(() => ''));
+  const [testi, setTesti] = useState<string[]>(() => Array(13).fill(''));
+  const [salvati, setSalvati] = useState<string[]>(() => Array(13).fill(''));
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +60,7 @@ export function OreDovutePage() {
       try {
         const response = await oreDovuteApi.getAnno(anno);
         if (cancelled) return;
-        const valori = testiDaMesi(response.data);
+        const valori = testiDaAnno(response.data);
         setTesti(valori);
         setSalvati(valori);
       } catch (err) {
@@ -70,11 +75,20 @@ export function OreDovutePage() {
     };
   }, [anno]);
 
-  const minuti = testi.map(parseOre);
-  const nonValidi = minuti.some((m) => m === undefined);
+  const valori = testi.map(parseOre);
+  const minuti = valori.slice(0, ANNUE);
+  const minutiAnnui = valori[ANNUE];
+  const nonValidi = valori.some((m) => m === undefined);
   const modificato = testi.some((t, i) => t.trim() !== salvati[i]);
   const totaleAnno = minuti.reduce<number>((tot, m) => tot + (m ?? 0), 0);
   const mesiImpostati = minuti.filter((m) => m != null).length;
+  // Positiva se i mesi non arrivano ancora alle ore annue
+  const scarto = minutiAnnui != null ? minutiAnnui - totaleAnno : null;
+
+  const aggiornaTesto = (indice: number, valore: string) => {
+    setMessaggio(null);
+    setTesti((prev) => prev.map((t, j) => (j === indice ? valore : t)));
+  };
 
   const handleSave = async () => {
     if (nonValidi) return;
@@ -85,9 +99,10 @@ export function OreDovutePage() {
     try {
       const response = await oreDovuteApi.salvaAnno(
         anno,
-        minuti.map((m, i) => ({ mese: i + 1, minuti: m ?? null }))
+        minuti.map((m, i) => ({ mese: i + 1, minuti: m ?? null })),
+        minutiAnnui ?? null
       );
-      const valori = testiDaMesi(response.data);
+      const valori = testiDaAnno(response.data);
       setTesti(valori);
       setSalvati(valori);
       setMessaggio('Ore dovute salvate');
@@ -135,7 +150,8 @@ export function OreDovutePage() {
         <p className="text-sm text-gray-600 mb-6">
           Ore dovute di ogni mese per un <strong>tempo pieno (100%)</strong>, nel formato ore:minuti
           (es. 172:12). Per ciascun dipendente il Report Saldi Ore le moltiplica per la sua
-          percentuale di lavoro, impostata in Utenti.
+          percentuale di lavoro, impostata in Utenti. Le <strong>ore annue</strong> servono da
+          controllo: la somma dei mesi deve tornare con quelle.
         </p>
 
         {error && (
@@ -155,6 +171,26 @@ export function OreDovutePage() {
           </div>
         ) : (
           <>
+            {/* Stessa griglia dei mesi, cosi' il campo si allinea alla prima colonna */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 mb-6 pb-6 border-b">
+              <div className="flex items-center gap-3">
+                <label htmlFor="ore-annue" className="w-24 text-sm font-medium text-gray-900">
+                  Ore annue
+                </label>
+                <input
+                  id="ore-annue"
+                  type="text"
+                  inputMode="decimal"
+                  className={`input text-right ${
+                    minutiAnnui === undefined ? 'border-red-400 focus:ring-red-500' : ''
+                  }`}
+                  value={testi[ANNUE]}
+                  onChange={(e) => aggiornaTesto(ANNUE, e.target.value)}
+                  placeholder="non impostate"
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
               {NOMI_MESI.map((nome, i) => (
                 <div key={nome} className="flex items-center gap-3">
@@ -169,11 +205,7 @@ export function OreDovutePage() {
                       minuti[i] === undefined ? 'border-red-400 focus:ring-red-500' : ''
                     }`}
                     value={testi[i]}
-                    onChange={(e) => {
-                      const valore = e.target.value;
-                      setMessaggio(null);
-                      setTesti((prev) => prev.map((t, j) => (j === i ? valore : t)));
-                    }}
+                    onChange={(e) => aggiornaTesto(i, e.target.value)}
                     placeholder="non impostato"
                   />
                 </div>
@@ -181,12 +213,25 @@ export function OreDovutePage() {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 pt-4 border-t">
-              <div className="text-sm text-gray-700">
-                <span className="font-medium">Totale anno: {formatOre(totaleAnno)}</span>
-                {mesiImpostati < 12 && (
-                  <span className="ml-2 text-amber-700">
-                    ({12 - mesiImpostati} {12 - mesiImpostati === 1 ? 'mese' : 'mesi'} non impostati)
-                  </span>
+              <div className="text-sm text-gray-700 space-y-1">
+                <p>
+                  <span className="font-medium">Somma dei mesi: {formatOre(totaleAnno)}</span>
+                  {mesiImpostati < 12 && (
+                    <span className="ml-2 text-amber-700">
+                      ({12 - mesiImpostati} {12 - mesiImpostati === 1 ? 'mese' : 'mesi'} non impostati)
+                    </span>
+                  )}
+                </p>
+                {scarto === null ? (
+                  <p className="text-gray-500">Inserisci le ore annue per il controllo incrociato.</p>
+                ) : scarto === 0 ? (
+                  <p className="text-green-700">✓ La somma dei mesi corrisponde alle ore annue.</p>
+                ) : (
+                  <p className="text-amber-700">
+                    {scarto > 0
+                      ? `Mancano ${formatOre(scarto)} per arrivare alle ore annue (${formatOre(minutiAnnui!)}).`
+                      : `La somma dei mesi supera le ore annue (${formatOre(minutiAnnui!)}) di ${formatOre(-scarto)}.`}
+                  </p>
                 )}
                 {nonValidi && (
                   <p className="text-red-600 mt-1">Correggi i campi in rosso: usa ore:minuti, es. 172:12</p>

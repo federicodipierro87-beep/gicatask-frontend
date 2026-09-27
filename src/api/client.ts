@@ -259,11 +259,17 @@ export interface MeseOreDovute {
   minuti: number | null;
 }
 
+// `minutiAnnui` sono le ore annue a tempo pieno inserite a mano: solo controllo
+export interface OreDovuteAnno {
+  mesi: MeseOreDovute[];
+  minutiAnnui: number | null;
+}
+
 export const oreDovuteApi = {
   getAnno: (anno: number) =>
-    apiClient.get<MeseOreDovute[]>(`/ore-dovute/${anno}`),
-  salvaAnno: (anno: number, mesi: MeseOreDovute[]) =>
-    apiClient.put<MeseOreDovute[]>(`/ore-dovute/${anno}`, { mesi }),
+    apiClient.get<OreDovuteAnno>(`/ore-dovute/${anno}`),
+  salvaAnno: (anno: number, mesi: MeseOreDovute[], minutiAnnui: number | null) =>
+    apiClient.put<OreDovuteAnno>(`/ore-dovute/${anno}`, { mesi, minutiAnnui }),
 };
 
 // Utenti API
