@@ -297,6 +297,11 @@ export const utentiApi = {
       percentualeLavoro?: number;
     }
   ) => apiClient.put(`/utenti/${id}`, data),
+  /** Percentuale di lavoro dal mese `decorrenza` (YYYY-MM) in poi. */
+  setPercentuale: (id: number, decorrenza: string, percentuale: number) =>
+    apiClient.post(`/utenti/${id}/percentuali`, { decorrenza, percentuale }),
+  deletePercentuale: (id: number, variazioneId: number) =>
+    apiClient.delete(`/utenti/${id}/percentuali/${variazioneId}`),
   setPassword: (id: number, password: string | null) =>
     apiClient.post(`/utenti/${id}/password`, { password }),
   delete: (id: number) =>
