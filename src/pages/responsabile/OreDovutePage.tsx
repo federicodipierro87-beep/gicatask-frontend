@@ -79,6 +79,9 @@ export function OreDovutePage() {
   const [erroreProspetto, setErroreProspetto] = useState(false);
   // Incrementato dopo ogni salvataggio: il prospetto si calcola dai dati salvati
   const [versione, setVersione] = useState(0);
+  const [vistaProspetto, setVistaProspetto] = useState<'tutti' | 'dipendente'>('tutti');
+  // Per id: cambiando anno si resta sullo stesso dipendente, se c'e'
+  const [dipendenteId, setDipendenteId] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -183,6 +186,14 @@ export function OreDovutePage() {
 
   // Mesi non impostati secondo i dati salvati, quelli da cui viene il prospetto
   const mesiSalvatiVuoti = salvati.slice(0, ANNUE).map((t) => t === '');
+  // Ore a tempo pieno salvate, la base del prospetto e del dettaglio
+  const tempoPienoSalvato = salvati.slice(0, ANNUE).map((t) => parseOre(t) ?? null);
+  const dipendente = prospetto.find((r) => r.utenteId === dipendenteId) ?? prospetto[0] ?? null;
+
+  const apriDettaglio = (utenteId: number) => {
+    setDipendenteId(utenteId);
+    setVistaProspetto('dipendente');
+  };
   const totaliProspetto = MESI_BREVI.map((_, i) =>
     mesiSalvatiVuoti[i] ? null : prospetto.reduce((tot, r) => tot + (r.minuti[i] ?? 0), 0)
   );
@@ -365,7 +376,27 @@ export function OreDovutePage() {
       {/* Prospetto per dipendente: a tutta larghezza, i dodici mesi non
           starebbero nella card del modulo */}
       <div className="card mt-6">
-        <h3 className="font-medium text-gray-900">Prospetto per dipendente {anno}</h3>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <h3 className="font-medium text-gray-900">Prospetto per dipendente {anno}</h3>
+          <div className="inline-flex self-start rounded-lg border border-gray-300 p-0.5" role="group" aria-label="Vista">
+            {([
+              ['tutti', 'Prospetto'],
+              ['dipendente', 'Dipendente'],
+            ] as ['tutti' | 'dipendente', string][]).map(([id, etichetta]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setVistaProspetto(id)}
+                aria-pressed={vistaProspetto === id}
+                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  vistaProspetto === id ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {etichetta}
+              </button>
+            ))}
+          </div>
+        </div>
         <p className="text-xs text-gray-500 mt-1 mb-4">
           Ore a tempo pieno del mese × percentuale di lavoro in vigore in quel mese, come nel Report
           Saldi Ore. Calcolato dai dati salvati
@@ -382,6 +413,68 @@ export function OreDovutePage() {
           </div>
         ) : prospetto.length === 0 ? (
           <p className="text-center text-gray-500 py-8">Nessun dipendente da mostrare</p>
+        ) : vistaProspetto === 'dipendente' && dipendente ? (
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+              <label htmlFor="dipendente-ore-dovute" className="text-sm text-gray-700">
+                Dipendente
+              </label>
+              <select
+                id="dipendente-ore-dovute"
+                className="select sm:w-72"
+                value={dipendente.utenteId}
+                onChange={(e) => setDipendenteId(Number(e.target.value))}
+              >
+                {prospetto.map((r) => (
+                  <option key={r.utenteId} value={r.utenteId}>
+                    {r.utenteNome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="overflow-x-auto max-w-2xl">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left py-3 px-2 font-medium text-gray-600">Mese</th>
+                    <th className="text-right py-3 px-2 font-medium text-gray-600 whitespace-nowrap">Ore a tempo pieno</th>
+                    <th className="text-right py-3 px-2 font-medium text-gray-600 whitespace-nowrap">% lavoro</th>
+                    <th className="text-right py-3 px-2 font-medium text-gray-600 whitespace-nowrap">Ore dovute</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {NOMI_MESI.map((nome, i) => {
+                    const tempoPieno = tempoPienoSalvato[i];
+                    const dovuti = dipendente.minuti[i];
+                    const vuoto = mesiSalvatiVuoti[i];
+                    return (
+                      <tr key={nome} className="border-b">
+                        <td className={`py-2 px-2 ${vuoto ? 'text-amber-700' : 'text-gray-900'}`}>{nome}</td>
+                        <td className={`py-2 px-2 text-right whitespace-nowrap ${vuoto ? 'text-amber-700' : ''}`}>
+                          {tempoPieno == null ? 'non impostato' : formatOre(tempoPieno)}
+                        </td>
+                        <td className="py-2 px-2 text-right">{dipendente.percentuali[i] ?? 100}%</td>
+                        <td className="py-2 px-2 text-right whitespace-nowrap">
+                          {dovuti == null ? <span className="text-gray-400">–</span> : formatOre(dovuti)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-gray-50 font-medium">
+                    <td className="py-3 px-2 text-gray-900">Totale</td>
+                    <td className="py-3 px-2 text-right whitespace-nowrap">
+                      {formatOre(tempoPienoSalvato.reduce<number>((t, m) => t + (m ?? 0), 0))}
+                    </td>
+                    <td className="py-3 px-2"></td>
+                    <td className="py-3 px-2 text-right whitespace-nowrap">{formatOre(dipendente.totale)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -410,7 +503,14 @@ export function OreDovutePage() {
                   return (
                     <tr key={r.utenteId} className="border-b">
                       <td className="sticky left-0 z-10 bg-white py-2 px-2 whitespace-nowrap">
-                        <span className="font-medium text-gray-900">{r.utenteNome}</span>
+                        <button
+                          type="button"
+                          onClick={() => apriDettaglio(r.utenteId)}
+                          className="font-medium text-gray-900 hover:text-primary-600 hover:underline"
+                          title="Dettaglio mese per mese"
+                        >
+                          {r.utenteNome}
+                        </button>
                         {nota && <span className="block text-xs text-gray-500">{nota}</span>}
                       </td>
                       {r.minuti.map((m, i) => (
