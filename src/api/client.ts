@@ -183,6 +183,9 @@ export const attivitaApi = {
     apiClient.get(`/attivita${attivitaParams(filters)}`),
   exportReport: (format: 'pdf' | 'excel', filters: AttivitaFilters, filename: string) =>
     downloadFile(`/attivita/export/${format}${attivitaParams(filters)}`, filename),
+  /** Report Saldi Ore: una riga per dipendente, mese nel formato YYYY-MM. */
+  getSaldiOre: (mese: string) =>
+    apiClient.get(`/attivita/saldi-ore?mese=${encodeURIComponent(mese)}`),
   getMine: (startDate?: string, endDate?: string) => {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);

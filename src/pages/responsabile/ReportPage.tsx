@@ -14,6 +14,7 @@ import {
 } from '../../components/MonthNavigator';
 import type { MonthKey } from '../../components/MonthNavigator';
 import { formatDuration } from '../../utils/durata';
+import { SaldiOreReport } from './SaldiOreReport';
 
 interface Attivita {
   id: number;
@@ -73,7 +74,7 @@ function formatDateFull(dateStr: string): string {
   });
 }
 
-export function ReportPage() {
+function ReportAttivita() {
   const [attivita, setAttivita] = useState<Attivita[]>([]);
   const [clienti, setClienti] = useState<Cliente[]>([]);
   const [cantieri, setCantieri] = useState<Cantiere[]>([]);
@@ -244,14 +245,7 @@ export function ReportPage() {
   }, {} as Record<string, { count: number; minutes: number }>);
 
   return (
-    <ResponsabileLayout>
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Report Attività</h2>
-        <p className="text-sm text-gray-600 mt-1">
-          Visualizza, filtra ed esporta le attività registrate
-        </p>
-      </div>
-
+    <>
       {/* Filters */}
       <div className="card mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
@@ -616,6 +610,60 @@ export function ReportPage() {
           </button>
         </div>
       </Modal>
+    </>
+  );
+}
+
+const REPORTS = [
+  {
+    id: 'attivita',
+    titolo: 'Report Attività',
+    descrizione: 'Visualizza, filtra ed esporta le attività registrate',
+  },
+  {
+    id: 'saldi-ore',
+    titolo: 'Report Saldi Ore',
+    descrizione: 'Ore dovute ed effettuate da ciascun dipendente, mese per mese',
+  },
+] as const;
+
+type ReportId = (typeof REPORTS)[number]['id'];
+
+export function ReportPage() {
+  const [reportId, setReportId] = useState<ReportId>('attivita');
+  const report = REPORTS.find((r) => r.id === reportId) ?? REPORTS[0];
+
+  return (
+    <ResponsabileLayout>
+      <div className="flex gap-1 border-b border-gray-200 mb-6 overflow-x-auto">
+        {REPORTS.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            onClick={() => setReportId(r.id)}
+            className={`px-4 py-2 -mb-px border-b-2 text-sm font-medium whitespace-nowrap transition-colors ${
+              r.id === reportId
+                ? 'border-primary-600 text-primary-700'
+                : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+            }`}
+          >
+            {r.titolo}
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-900">{report.titolo}</h2>
+        <p className="text-sm text-gray-600 mt-1">{report.descrizione}</p>
+      </div>
+
+      {/* Entrambi restano montati: cambiando scheda i filtri non si perdono */}
+      <div hidden={reportId !== 'attivita'}>
+        <ReportAttivita />
+      </div>
+      <div hidden={reportId !== 'saldi-ore'}>
+        <SaldiOreReport />
+      </div>
     </ResponsabileLayout>
   );
 }
