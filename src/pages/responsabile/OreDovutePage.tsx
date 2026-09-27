@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { oreDovuteApi } from '../../api/client';
-import type { OreDovuteAnno } from '../../api/client';
+import type { OreDovuteAnno, RigaProspettoOreDovute } from '../../api/client';
 
 const NOMI_MESI = [
   'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
@@ -42,6 +42,29 @@ function testiDaAnno(dati: OreDovuteAnno): string[] {
 // Indice del campo ore annue in `testi`, dopo i dodici mesi
 const ANNUE = 12;
 
+const MESI_BREVI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+
+/**
+ * Le percentuali dell'anno in breve, come negli export: "80%" se costanti,
+ * "gen-giu 80%, lug-dic 60%" se cambiano, niente per un tempo pieno fisso.
+ */
+function descriviPercentuali(percentuali: number[]): string {
+  const tratti: { da: number; a: number; percentuale: number }[] = [];
+  percentuali.forEach((p, i) => {
+    const ultimo = tratti[tratti.length - 1];
+    if (ultimo && ultimo.percentuale === p) ultimo.a = i;
+    else tratti.push({ da: i, a: i, percentuale: p });
+  });
+
+  const primo = tratti[0];
+  if (tratti.length === 1 && primo) return primo.percentuale === 100 ? '' : `${primo.percentuale}%`;
+
+  const mese = (i: number) => MESI_BREVI[i]?.toLowerCase();
+  return tratti
+    .map((t) => (t.da === t.a ? `${mese(t.da)} ${t.percentuale}%` : `${mese(t.da)}-${mese(t.a)} ${t.percentuale}%`))
+    .join(', ');
+}
+
 export function OreDovutePage() {
   const [anno, setAnno] = useState(() => new Date().getFullYear());
   const [testi, setTesti] = useState<string[]>(() => Array(13).fill(''));
@@ -51,6 +74,11 @@ export function OreDovutePage() {
   const [error, setError] = useState<string | null>(null);
   const [messaggio, setMessaggio] = useState<string | null>(null);
   const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null);
+  const [prospetto, setProspetto] = useState<RigaProspettoOreDovute[]>([]);
+  const [isLoadingProspetto, setIsLoadingProspetto] = useState(true);
+  const [erroreProspetto, setErroreProspetto] = useState(false);
+  // Incrementato dopo ogni salvataggio: il prospetto si calcola dai dati salvati
+  const [versione, setVersione] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,6 +103,28 @@ export function OreDovutePage() {
       cancelled = true;
     };
   }, [anno]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoadingProspetto(true);
+    setErroreProspetto(false);
+    (async () => {
+      try {
+        const response = await oreDovuteApi.getProspetto(anno);
+        if (cancelled) return;
+        setProspetto(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        if (cancelled) return;
+        setProspetto([]);
+        setErroreProspetto(true);
+      } finally {
+        if (!cancelled) setIsLoadingProspetto(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [anno, versione]);
 
   const valori = testi.map(parseOre);
   const minuti = valori.slice(0, ANNUE);
@@ -106,6 +156,7 @@ export function OreDovutePage() {
       const valori = testiDaAnno(response.data);
       setTesti(valori);
       setSalvati(valori);
+      setVersione((v) => v + 1);
       setMessaggio('Ore dovute salvate');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Errore durante il salvataggio');
@@ -129,6 +180,12 @@ export function OreDovutePage() {
       setExporting(null);
     }
   };
+
+  // Mesi non impostati secondo i dati salvati, quelli da cui viene il prospetto
+  const mesiSalvatiVuoti = salvati.slice(0, ANNUE).map((t) => t === '');
+  const totaliProspetto = MESI_BREVI.map((_, i) =>
+    mesiSalvatiVuoti[i] ? null : prospetto.reduce((tot, r) => tot + (r.minuti[i] ?? 0), 0)
+  );
 
   const cambiaAnno = (delta: number) => {
     if (modificato && !window.confirm('Ci sono modifiche non salvate. Cambiare anno?')) return;
@@ -302,6 +359,87 @@ export function OreDovutePage() {
               )}
             </div>
           </>
+        )}
+      </div>
+
+      {/* Prospetto per dipendente: a tutta larghezza, i dodici mesi non
+          starebbero nella card del modulo */}
+      <div className="card mt-6">
+        <h3 className="font-medium text-gray-900">Prospetto per dipendente {anno}</h3>
+        <p className="text-xs text-gray-500 mt-1 mb-4">
+          Ore a tempo pieno del mese × percentuale di lavoro in vigore in quel mese, come nel Report
+          Saldi Ore. Calcolato dai dati salvati
+          {modificato && <span className="text-amber-700"> — salva per aggiornarlo</span>}.
+        </p>
+
+        {isLoadingProspetto ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          </div>
+        ) : erroreProspetto ? (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            Errore nel caricamento del prospetto
+          </div>
+        ) : prospetto.length === 0 ? (
+          <p className="text-center text-gray-500 py-8">Nessun dipendente da mostrare</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-gray-50">
+                  <th className="sticky left-0 z-10 bg-gray-50 text-left py-3 px-2 font-medium text-gray-600">
+                    Dipendente
+                  </th>
+                  {MESI_BREVI.map((m, i) => (
+                    <th
+                      key={m}
+                      className={`text-right py-3 px-2 font-medium whitespace-nowrap ${
+                        mesiSalvatiVuoti[i] ? 'text-amber-700' : 'text-gray-600'
+                      }`}
+                      title={mesiSalvatiVuoti[i] ? 'Mese non impostato' : undefined}
+                    >
+                      {m}
+                    </th>
+                  ))}
+                  <th className="text-right py-3 px-2 font-medium text-gray-600">Totale</th>
+                </tr>
+              </thead>
+              <tbody>
+                {prospetto.map((r) => {
+                  const nota = descriviPercentuali(r.percentuali);
+                  return (
+                    <tr key={r.utenteId} className="border-b">
+                      <td className="sticky left-0 z-10 bg-white py-2 px-2 whitespace-nowrap">
+                        <span className="font-medium text-gray-900">{r.utenteNome}</span>
+                        {nota && <span className="block text-xs text-gray-500">{nota}</span>}
+                      </td>
+                      {r.minuti.map((m, i) => (
+                        <td key={i} className="py-2 px-2 text-right whitespace-nowrap">
+                          {m === null ? <span className="text-gray-400">–</span> : formatOre(m)}
+                        </td>
+                      ))}
+                      <td className="py-2 px-2 text-right whitespace-nowrap font-medium">
+                        {formatOre(r.totale)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="bg-gray-50 font-medium">
+                  <td className="sticky left-0 z-10 bg-gray-50 py-3 px-2 text-gray-900">Totale</td>
+                  {totaliProspetto.map((m, i) => (
+                    <td key={i} className="py-3 px-2 text-right whitespace-nowrap">
+                      {m === null ? <span className="text-gray-400">–</span> : formatOre(m)}
+                    </td>
+                  ))}
+                  <td className="py-3 px-2 text-right whitespace-nowrap">
+                    {formatOre(prospetto.reduce((tot, r) => tot + r.totale, 0))}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         )}
       </div>
     </ResponsabileLayout>

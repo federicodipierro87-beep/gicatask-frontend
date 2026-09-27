@@ -267,9 +267,22 @@ export interface OreDovuteAnno {
   minutiAnnui: number | null;
 }
 
+// Ore dovute di un dipendente mese per mese, con la percentuale in vigore
+export interface RigaProspettoOreDovute {
+  utenteId: number;
+  utenteNome: string;
+  /** Gennaio in posizione 0. */
+  percentuali: number[];
+  /** `null` dove il mese non e' impostato. */
+  minuti: (number | null)[];
+  totale: number;
+}
+
 export const oreDovuteApi = {
   getAnno: (anno: number) =>
     apiClient.get<OreDovuteAnno>(`/ore-dovute/${anno}`),
+  getProspetto: (anno: number) =>
+    apiClient.get<RigaProspettoOreDovute[]>(`/ore-dovute/${anno}/prospetto`),
   salvaAnno: (anno: number, mesi: MeseOreDovute[], minutiAnnui: number | null) =>
     apiClient.put<OreDovuteAnno>(`/ore-dovute/${anno}`, { mesi, minutiAnnui }),
   /** Esporta i dati salvati, non le modifiche ancora nei campi. */
