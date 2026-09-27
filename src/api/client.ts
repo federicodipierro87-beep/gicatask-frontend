@@ -186,6 +186,8 @@ export const attivitaApi = {
   /** Report Saldi Ore: una riga per dipendente, mese nel formato YYYY-MM. */
   getSaldiOre: (mese: string) =>
     apiClient.get(`/attivita/saldi-ore?mese=${encodeURIComponent(mese)}`),
+  exportSaldiOre: (format: 'pdf' | 'excel', mese: string, filename: string) =>
+    downloadFile(`/attivita/saldi-ore/export/${format}?mese=${encodeURIComponent(mese)}`, filename),
   getMine: (startDate?: string, endDate?: string) => {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);

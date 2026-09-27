@@ -36,6 +36,7 @@ export function SaldiOreReport() {
   const [mesiSenzaOreDovute, setMesiSenzaOreDovute] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +62,21 @@ export function SaldiOreReport() {
     };
   }, [mese]);
 
+  const handleExport = async (format: 'pdf' | 'excel') => {
+    setExporting(format);
+    try {
+      await attivitaApi.exportSaldiOre(
+        format,
+        mese,
+        `saldi-ore-${mese}.${format === 'pdf' ? 'pdf' : 'xlsx'}`
+      );
+    } catch (err) {
+      setError(`Errore durante l'esportazione ${format.toUpperCase()}`);
+    } finally {
+      setExporting(null);
+    }
+  };
+
   const totali = righe.reduce(
     (acc, r) => ({
       dovute: acc.dovute + r.oreDovuteMinuti,
@@ -82,6 +98,37 @@ export function SaldiOreReport() {
           </p>
         </div>
         <MonthNavigator month={mese} onChange={setMese} className="sm:w-64" />
+      </div>
+
+      <div className="flex flex-wrap gap-3 mb-4 pb-4 border-b">
+        <button
+          onClick={() => handleExport('excel')}
+          disabled={exporting !== null || isLoading}
+          className="btn-primary flex items-center gap-2"
+        >
+          {exporting === 'excel' ? (
+            <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          )}
+          Esporta Excel
+        </button>
+        <button
+          onClick={() => handleExport('pdf')}
+          disabled={exporting !== null || isLoading}
+          className="btn-secondary flex items-center gap-2"
+        >
+          {exporting === 'pdf' ? (
+            <span className="animate-spin h-4 w-4 border-2 border-gray-600 border-t-transparent rounded-full"></span>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          )}
+          Esporta PDF
+        </button>
       </div>
 
       {error && (
