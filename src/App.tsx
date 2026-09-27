@@ -23,6 +23,7 @@ import { BollettinoFormPage } from './pages/dipendente/BollettinoFormPage';
 import { BollettiniArchivioPage } from './pages/responsabile/BollettiniArchivioPage';
 import { VociBollettinoPage } from './pages/responsabile/VociBollettinoPage';
 import { CalendarioEventiPage } from './pages/responsabile/CalendarioEventiPage';
+import { OreDovutePage } from './pages/responsabile/OreDovutePage';
 import { DreamNoleggiPage } from './pages/responsabile/DreamNoleggiPage';
 import { DreamVeicoliPage } from './pages/responsabile/DreamVeicoliPage';
 import { DreamClientiPage } from './pages/responsabile/DreamClientiPage';
@@ -155,6 +156,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <UtentiPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/ore-dovute"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <OreDovutePage />
           </ProtectedRoute>
         }
       />

@@ -253,17 +253,41 @@ export const backupApi = {
     apiClient.delete(`/backup/${id}`),
 };
 
+// Ore dovute a tempo pieno, mese per mese. `minuti` null = mese non impostato
+export interface MeseOreDovute {
+  mese: number;
+  minuti: number | null;
+}
+
+export const oreDovuteApi = {
+  getAnno: (anno: number) =>
+    apiClient.get<MeseOreDovute[]>(`/ore-dovute/${anno}`),
+  salvaAnno: (anno: number, mesi: MeseOreDovute[]) =>
+    apiClient.put<MeseOreDovute[]>(`/ore-dovute/${anno}`, { mesi }),
+};
+
 // Utenti API
 export const utentiApi = {
   getAll: (includeInactive = false) =>
     apiClient.get(`/utenti${includeInactive ? '?includeInactive=true' : ''}`),
   getById: (id: number) =>
     apiClient.get(`/utenti/${id}`),
-  create: (data: { nome: string; cognome: string; ruolo: string; password?: string }) =>
-    apiClient.post('/utenti', data),
+  create: (data: {
+    nome: string;
+    cognome: string;
+    ruolo: string;
+    password?: string;
+    percentualeLavoro?: number;
+  }) => apiClient.post('/utenti', data),
   update: (
     id: number,
-    data: { nome?: string; cognome?: string; ruolo?: string; abilitatoBollettini?: boolean }
+    data: {
+      nome?: string;
+      cognome?: string;
+      ruolo?: string;
+      abilitatoBollettini?: boolean;
+      percentualeLavoro?: number;
+    }
   ) => apiClient.put(`/utenti/${id}`, data),
   setPassword: (id: number, password: string | null) =>
     apiClient.post(`/utenti/${id}/password`, { password }),

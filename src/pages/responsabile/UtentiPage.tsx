@@ -12,6 +12,7 @@ interface Utente {
   ruolo: 'DIPENDENTE' | 'RESPONSABILE';
   attivo: boolean;
   abilitatoBollettini: boolean;
+  percentualeLavoro: number;
 }
 
 export function UtentiPage() {
@@ -29,6 +30,7 @@ export function UtentiPage() {
   const [formRuolo, setFormRuolo] = useState<'DIPENDENTE' | 'RESPONSABILE'>('DIPENDENTE');
   const [formPassword, setFormPassword] = useState('');
   const [formAbilitatoBollettini, setFormAbilitatoBollettini] = useState(false);
+  const [formPercentuale, setFormPercentuale] = useState('100');
   const [newPassword, setNewPassword] = useState('');
 
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +58,7 @@ export function UtentiPage() {
     setFormRuolo('DIPENDENTE');
     setFormPassword('');
     setFormAbilitatoBollettini(false);
+    setFormPercentuale('100');
     setError(null);
     setIsModalOpen(true);
   };
@@ -67,6 +70,7 @@ export function UtentiPage() {
     setFormRuolo(utente.ruolo);
     setFormPassword('');
     setFormAbilitatoBollettini(utente.abilitatoBollettini);
+    setFormPercentuale(String(utente.percentualeLavoro));
     setError(null);
     setIsModalOpen(true);
   };
@@ -84,11 +88,15 @@ export function UtentiPage() {
     setError(null);
   };
 
+  const percentuale = Number(formPercentuale);
+  const percentualeValida =
+    formPercentuale.trim() !== '' && Number.isInteger(percentuale) && percentuale >= 0 && percentuale <= 100;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Il solo cognome basta: l'account amministratore non è una persona e non
     // ha un nome di battesimo
-    if (!formCognome.trim()) return;
+    if (!formCognome.trim() || !percentualeValida) return;
 
     setIsSaving(true);
     setError(null);
@@ -100,6 +108,7 @@ export function UtentiPage() {
           cognome: formCognome.trim(),
           ruolo: formRuolo,
           abilitatoBollettini: formAbilitatoBollettini,
+          percentualeLavoro: percentuale,
         });
 
         // Chi modifica i permessi di se stesso vedrebbe altrimenti il menu
@@ -113,6 +122,7 @@ export function UtentiPage() {
           cognome: formCognome.trim(),
           ruolo: formRuolo,
           password: formPassword || undefined,
+          percentualeLavoro: percentuale,
         });
       }
       closeModal();
@@ -196,6 +206,7 @@ export function UtentiPage() {
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-3 px-4 font-medium text-gray-600">Nome</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-600">Ruolo</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-600 whitespace-nowrap">% lavoro</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-600">Stato</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-600">Azioni</th>
                 </tr>
@@ -216,6 +227,9 @@ export function UtentiPage() {
                       >
                         {utente.ruolo === 'RESPONSABILE' ? 'Responsabile' : 'Dipendente'}
                       </span>
+                    </td>
+                    <td className="py-3 px-4 text-right text-gray-700">
+                      {utente.percentualeLavoro}%
                     </td>
                     <td className="py-3 px-4">
                       <span
@@ -307,6 +321,24 @@ export function UtentiPage() {
                 <option value="RESPONSABILE">Responsabile</option>
               </select>
             </div>
+            <div>
+              <label htmlFor="percentualeLavoro" className="label">Percentuale di lavoro (%)</label>
+              <input
+                type="number"
+                id="percentualeLavoro"
+                className="input"
+                min={0}
+                max={100}
+                step={1}
+                value={formPercentuale}
+                onChange={(e) => setFormPercentuale(e.target.value)}
+              />
+              <p className={`text-sm mt-1 ${percentualeValida ? 'text-gray-500' : 'text-red-600'}`}>
+                {percentualeValida
+                  ? '100 = tempo pieno. Scala le ore dovute nel Report Saldi Ore.'
+                  : 'Inserisci un numero intero da 0 a 100.'}
+              </p>
+            </div>
             {editingUtente && (
               <div>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -346,7 +378,7 @@ export function UtentiPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSaving || !formCognome.trim()}
+              disabled={isSaving || !formCognome.trim() || !percentualeValida}
             >
               {isSaving ? 'Salvataggio...' : 'Salva'}
             </button>

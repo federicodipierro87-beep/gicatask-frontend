@@ -7,11 +7,17 @@ import { formatDuration } from '../../utils/durata';
 interface RigaSaldoOre {
   utenteId: number;
   utenteNome: string;
+  percentualeLavoro: number;
   oreDovuteMinuti: number;
   oreEffettuateMinuti: number;
   differenzaMinuti: number;
   saldoCumulativoMinuti: number;
 }
+
+const NOMI_MESI = [
+  'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno',
+  'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre',
+];
 
 // Verde il credito del dipendente, rosso il debito
 function coloreSaldo(minuti: number): string {
@@ -27,6 +33,7 @@ function formatSaldo(minuti: number): string {
 export function SaldiOreReport() {
   const [mese, setMese] = useState<MonthKey>(currentMonth());
   const [righe, setRighe] = useState<RigaSaldoOre[]>([]);
+  const [mesiSenzaOreDovute, setMesiSenzaOreDovute] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,10 +45,12 @@ export function SaldiOreReport() {
       try {
         const response = await attivitaApi.getSaldiOre(mese);
         if (cancelled) return;
-        setRighe(Array.isArray(response.data) ? response.data : []);
+        setRighe(Array.isArray(response.data?.righe) ? response.data.righe : []);
+        setMesiSenzaOreDovute(response.data?.mesiSenzaOreDovute ?? []);
       } catch (err) {
         if (cancelled) return;
         setRighe([]);
+        setMesiSenzaOreDovute([]);
         setError('Errore nel caricamento dei saldi ore');
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -68,7 +77,8 @@ export function SaldiOreReport() {
         <div>
           <h3 className="font-medium text-gray-900">Saldi Ore</h3>
           <p className="text-xs text-gray-500 mt-1">
-            Ore effettuate senza assenze. Il saldo cumulativo parte da gennaio.
+            Ore dovute = ore del mese a tempo pieno × percentuale di lavoro. Ore effettuate
+            senza assenze. Il saldo cumulativo parte da gennaio.
           </p>
         </div>
         <MonthNavigator month={mese} onChange={setMese} className="sm:w-64" />
@@ -77,6 +87,13 @@ export function SaldiOreReport() {
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
           {error}
+        </div>
+      )}
+
+      {!isLoading && mesiSenzaOreDovute.length > 0 && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+          Ore dovute non impostate per {mesiSenzaOreDovute.map((m) => NOMI_MESI[m - 1]).join(', ')}{' '}
+          {mese.slice(0, 4)}: in quei mesi valgono zero. Impostale in Impostazioni → Ore dovute.
         </div>
       )}
 
@@ -101,7 +118,12 @@ export function SaldiOreReport() {
             <tbody>
               {righe.map((r) => (
                 <tr key={r.utenteId} className="border-b">
-                  <td className="py-3 px-2 font-medium text-gray-900">{r.utenteNome}</td>
+                  <td className="py-3 px-2 font-medium text-gray-900">
+                    {r.utenteNome}
+                    {r.percentualeLavoro !== 100 && (
+                      <span className="ml-2 text-xs font-normal text-gray-500">{r.percentualeLavoro}%</span>
+                    )}
+                  </td>
                   <td className="py-3 px-2 text-right whitespace-nowrap">{formatDuration(r.oreDovuteMinuti)}</td>
                   <td className="py-3 px-2 text-right whitespace-nowrap">{formatDuration(r.oreEffettuateMinuti)}</td>
                   <td className={`py-3 px-2 text-right whitespace-nowrap ${coloreSaldo(r.differenzaMinuti)}`}>

@@ -26,6 +26,7 @@ const settingsNavItems: { path: string; label: string; soloBollettini?: boolean 
   { path: '/responsabile/cantieri', label: 'Cantieri' },
   { path: '/responsabile/tipi-attivita', label: 'Tipi Attività' },
   { path: '/responsabile/utenti', label: 'Utenti' },
+  { path: '/responsabile/ore-dovute', label: 'Ore dovute' },
   { path: '/responsabile/dream-veicoli', label: 'Banca dati veicoli' },
   { path: '/responsabile/dream-clienti', label: 'Banca dati clienti' },
   { path: '/responsabile/trasporti', label: 'Banca dati trasporti', soloBollettini: true },
