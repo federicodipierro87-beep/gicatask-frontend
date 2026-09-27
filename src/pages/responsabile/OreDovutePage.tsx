@@ -50,6 +50,7 @@ export function OreDovutePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [messaggio, setMessaggio] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<'pdf' | 'excel' | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,6 +111,22 @@ export function OreDovutePage() {
       setError(err.response?.data?.error || 'Errore durante il salvataggio');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleExport = async (format: 'pdf' | 'excel') => {
+    setExporting(format);
+    setError(null);
+    try {
+      await oreDovuteApi.exportAnno(
+        format,
+        anno,
+        `ore-dovute-${anno}.${format === 'pdf' ? 'pdf' : 'xlsx'}`
+      );
+    } catch (err) {
+      setError(`Errore durante l'esportazione ${format.toUpperCase()}`);
+    } finally {
+      setExporting(null);
     }
   };
 
@@ -245,6 +262,44 @@ export function OreDovutePage() {
               >
                 {isSaving ? 'Salvataggio...' : 'Salva'}
               </button>
+            </div>
+
+            {/* L'export legge i dati salvati: con modifiche in sospeso il file non
+                corrisponderebbe a quello che si vede */}
+            <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t">
+              <button
+                type="button"
+                onClick={() => handleExport('excel')}
+                disabled={exporting !== null || modificato}
+                className="btn-secondary flex items-center gap-2"
+              >
+                {exporting === 'excel' ? (
+                  <span className="animate-spin h-4 w-4 border-2 border-gray-600 border-t-transparent rounded-full"></span>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )}
+                Esporta Excel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExport('pdf')}
+                disabled={exporting !== null || modificato}
+                className="btn-secondary flex items-center gap-2"
+              >
+                {exporting === 'pdf' ? (
+                  <span className="animate-spin h-4 w-4 border-2 border-gray-600 border-t-transparent rounded-full"></span>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                )}
+                Esporta PDF
+              </button>
+              {modificato && (
+                <span className="text-sm text-gray-500">Salva le modifiche per esportare</span>
+              )}
             </div>
           </>
         )}

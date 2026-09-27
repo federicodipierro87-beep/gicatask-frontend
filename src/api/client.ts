@@ -272,6 +272,9 @@ export const oreDovuteApi = {
     apiClient.get<OreDovuteAnno>(`/ore-dovute/${anno}`),
   salvaAnno: (anno: number, mesi: MeseOreDovute[], minutiAnnui: number | null) =>
     apiClient.put<OreDovuteAnno>(`/ore-dovute/${anno}`, { mesi, minutiAnnui }),
+  /** Esporta i dati salvati, non le modifiche ancora nei campi. */
+  exportAnno: (format: 'pdf' | 'excel', anno: number, filename: string) =>
+    downloadFile(`/ore-dovute/${anno}/export/${format}`, filename),
 };
 
 // Utenti API
