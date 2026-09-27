@@ -22,8 +22,11 @@ interface MeseSaldoOre {
   mese: number;
   percentuale: number;
   dovutiMinuti: number;
+  /** Solo ore di lavoro: e' la base del saldo. */
   effettuatiMinuti: number;
   differenzaMinuti: number;
+  /** Anche le assenze: il "Totale ore mese" del Report Attivita'. */
+  totaleMinuti: number;
 }
 
 type Vista = 'mese' | 'prospetto' | 'dipendente';
@@ -305,6 +308,44 @@ export function SaldiOreReport() {
               </tfoot>
             </table>
           </div>
+
+          {/* Riepilogo del mese scelto, con le righe del Report Attivita':
+              il totale comprende le assenze, il saldo no */}
+          {(() => {
+            const ultimo = dipendente.mensili?.[dipendente.mensili.length - 1];
+            if (!ultimo) return null;
+            const righeRiepilogo: { etichetta: string; minuti: number; saldo?: boolean }[] = [
+              { etichetta: 'Totale ore mese', minuti: ultimo.totaleMinuti ?? ultimo.effettuatiMinuti },
+              { etichetta: 'Totale ore dovute', minuti: ultimo.dovutiMinuti },
+              ...(ultimo.totaleMinuti !== undefined && ultimo.totaleMinuti !== ultimo.effettuatiMinuti
+                ? [{ etichetta: 'Ore di lavoro (senza assenze)', minuti: ultimo.effettuatiMinuti }]
+                : []),
+              { etichetta: 'Saldo ore', minuti: ultimo.differenzaMinuti, saldo: true },
+            ];
+            return (
+              <div className="mt-6 max-w-md">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">
+                  Riepilogo di {NOMI_MESI[ultimo.mese - 1]} {mese.slice(0, 4)}
+                </h4>
+                <table className="w-full text-sm border">
+                  <tbody>
+                    {righeRiepilogo.map(({ etichetta, minuti, saldo }) => (
+                      <tr key={etichetta} className="border-b last:border-0">
+                        <td className="py-2 px-3 font-medium text-gray-900">{etichetta}</td>
+                        <td
+                          className={`py-2 px-3 text-right whitespace-nowrap font-medium ${
+                            saldo ? coloreSaldo(minuti) : ''
+                          }`}
+                        >
+                          {saldo ? formatSaldo(minuti) : formatDuration(minuti)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
         </div>
       ) : vista === 'prospetto' ? (
         // Nome fisso a sinistra: con dodici mesi la tabella scorre in orizzontale
