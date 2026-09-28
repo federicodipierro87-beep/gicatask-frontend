@@ -248,3 +248,76 @@ export interface Bollettino {
   // Assente nei bollettini creati prima degli allegati
   allegati?: AllegatoBollettino[];
 }
+
+// --- HR ---------------------------------------------------------------------
+
+export type StatoCivile = 'CELIBE' | 'NUBILE' | 'CONIUGATO' | 'SEPARATO' | 'DIVORZIATO';
+
+export interface AllegatoHr {
+  id: number;
+  nomeFile: string;
+  mimeType: string;
+  dimensione: number;
+}
+
+export interface FiglioHr {
+  id?: number;
+  cognomeNome: string;
+  // YYYY-MM-DD nel form; dal server arriva come ISO completo
+  dataNascita: string | null;
+}
+
+export interface FormazioneHr {
+  id?: number;
+  nome: string;
+  foto: AllegatoHr[];
+}
+
+/** Le date sono stringhe: ISO dal server, YYYY-MM-DD verso il server. */
+export interface SchedaHr {
+  id: number;
+  numeroPersonale: string | null;
+  cognomeNome: string;
+  indirizzo: string | null;
+  luogo: string | null;
+  dataNascita: string | null;
+  luogoNascita: string | null;
+  telefono: string | null;
+  numeroAvs: string | null;
+  impostaFonte: boolean | null;
+  tipoPermesso: string | null;
+  scadenzaPermesso: string | null;
+  codiceFiscale: string | null;
+  numeroSimic: string | null;
+  cassaMalati: string | null;
+  statoCivile: StatoCivile | null;
+  nazionalita: string | null;
+  coniugatoDal: string | null;
+  coniugeCognomeNome: string | null;
+  coniugeDataNascita: string | null;
+  assegnoFigli: string | null;
+  padreCognomeNome: string | null;
+  madreCognomeNome: string | null;
+  dataAssunzione: string | null;
+  tipoSalario: string | null;
+  salario: string | null;
+  gradoOccupazione: string | null;
+  iban: string | null;
+  email: string | null;
+  emergenzaNome: string | null;
+  emergenzaTelefono: string | null;
+  dataCessazione: string | null;
+  figli: FiglioHr[];
+  formazioni: FormazioneHr[];
+}
+
+export type SchedaHrInput = Omit<SchedaHr, 'id' | 'figli' | 'formazioni'> & {
+  figli: { cognomeNome: string; dataNascita: string | null }[];
+  formazioni: { id?: number; nome: string; allegatiIds: number[] }[];
+};
+
+export interface CampoHr {
+  chiave: string;
+  etichetta: string;
+  sezione: string;
+}

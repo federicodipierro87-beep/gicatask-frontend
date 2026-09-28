@@ -15,6 +15,7 @@ const mainNavItems = [
   { path: '/responsabile/tipi-assenza', label: 'Assenze' },
   { path: '/responsabile/gica-noleggio', label: 'Gica' },
   { path: '/responsabile/dream-noleggio', label: 'Dream' },
+  { path: '/responsabile/hr', label: 'HR' },
 ];
 
 // Anagrafiche e manutenzione: stanno in una tendina, su desktop come su mobile.

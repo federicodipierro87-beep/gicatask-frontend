@@ -6,6 +6,19 @@ interface Props {
   value: AllegatoBollettino[];
   onChange: (allegati: AllegatoBollettino[]) => void;
   disabled?: boolean;
+  /** Di default gli allegati del bollettino; la scheda HR passa i suoi. */
+  carica?: (file: File) => Promise<{ data: AllegatoBollettino }>;
+  /**
+   * Chiamata prima di togliere il file dalla lista. Assente, il file si toglie
+   * e basta: il server lo scollega al salvataggio e la pulizia notturna lo
+   * cancella.
+   */
+  rimuovi?: ((id: number) => Promise<unknown>) | null;
+  /** Rende il nome del file cliccabile. */
+  apri?: (allegato: AllegatoBollettino) => void;
+  etichetta?: string;
+  aiuto?: string;
+  maxFile?: number;
 }
 
 /** Stessa allowlist del server: qui serve solo a dare un errore più leggibile. */
@@ -18,7 +31,7 @@ const MIME_AMMESSI = [
   'application/pdf',
 ];
 
-const MAX_FILE = 10;
+const MAX_FILE_DEFAULT = 10;
 const LATO_MAX = 1600;
 
 /** Riga in corso di caricamento: vive solo finché l'upload non è concluso. */
@@ -87,7 +100,17 @@ async function ridimensiona(file: File): Promise<File> {
  * rifirmare. È il motivo per cui il box sta sotto il campo e-mail e non dentro
  * il blocco delle firme.
  */
-export function AllegatiUploader({ value, onChange, disabled = false }: Props) {
+export function AllegatiUploader({
+  value,
+  onChange,
+  disabled = false,
+  carica = bollettiniApi.uploadAllegato,
+  rimuovi = bollettiniApi.deleteAllegato,
+  apri,
+  etichetta = 'Allegati',
+  aiuto,
+  maxFile: MAX_FILE = MAX_FILE_DEFAULT,
+}: Props) {
   const [inCorso, setInCorso] = useState<InCorso[]>([]);
   const [errore, setErrore] = useState<string | null>(null);
   const [rimuovendo, setRimuovendo] = useState<number | null>(null);
@@ -120,7 +143,7 @@ export function AllegatiUploader({ value, onChange, disabled = false }: Props) {
 
     try {
       const pronto = await ridimensiona(file);
-      const { data } = await bollettiniApi.uploadAllegato(pronto);
+      const { data } = await carica(pronto);
 
       onChange([...valueRef.current, data]);
       setInCorso((prev) => prev.filter((r) => r.uid !== uid));
@@ -156,7 +179,7 @@ export function AllegatiUploader({ value, onChange, disabled = false }: Props) {
   const handleRimuovi = async (id: number) => {
     setRimuovendo(id);
     try {
-      await bollettiniApi.deleteAllegato(id);
+      if (rimuovi) await rimuovi(id);
       onChange(valueRef.current.filter((a) => a.id !== id));
       setErrore(null);
     } catch {
@@ -169,7 +192,7 @@ export function AllegatiUploader({ value, onChange, disabled = false }: Props) {
   return (
     <div>
       <span className="label">
-        Allegati <span className="text-gray-400 font-normal">(facoltativi)</span>
+        {etichetta} <span className="text-gray-400 font-normal">(facoltativi)</span>
       </span>
 
       <div className="flex flex-wrap gap-3 mt-1">
@@ -213,7 +236,7 @@ export function AllegatiUploader({ value, onChange, disabled = false }: Props) {
       </div>
 
       <p className="mt-1 text-xs text-gray-500">
-        Immagini o PDF, fino a {MAX_FILE} file. Vengono inviati insieme al bollettino.
+        {aiuto ?? `Immagini o PDF, fino a ${MAX_FILE} file. Vengono inviati insieme al bollettino.`}
       </p>
 
       {errore && <p className="mt-1 text-xs text-amber-700">{errore}</p>}
@@ -227,7 +250,17 @@ export function AllegatiUploader({ value, onChange, disabled = false }: Props) {
             >
               <span className="min-w-0 text-sm text-gray-700 truncate">
                 <span className="text-green-600 mr-2">✓</span>
-                {allegato.nomeFile}
+                {apri ? (
+                  <button
+                    type="button"
+                    onClick={() => apri(allegato)}
+                    className="text-primary-600 hover:text-primary-700 underline"
+                  >
+                    {allegato.nomeFile}
+                  </button>
+                ) : (
+                  allegato.nomeFile
+                )}
                 <span className="text-gray-400 ml-2">{formatPeso(allegato.dimensione)}</span>
               </span>
               <button

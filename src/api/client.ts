@@ -1,7 +1,9 @@
 import axios, { AxiosError } from 'axios';
 import type {
   AllegatoBollettino,
+  AllegatoHr,
   ApiError,
+  CampoHr,
   Bollettino,
   CalendarioEvento,
   CalendarioEventoInput,
@@ -11,6 +13,8 @@ import type {
   DreamCliente,
   GicaNoleggio,
   GicaNoleggioInput,
+  SchedaHr,
+  SchedaHrInput,
   TipoVoceSlug,
   VeicoloBollettino,
   VoceBollettino,
@@ -609,4 +613,31 @@ export const gicaNoleggiApi = {
       `/gica-noleggi/export/excel${periodoParams(startDate, endDate)}`,
       `gica-${startDate}_${endDate}.xlsx`
     ),
+};
+
+// Anagrafica HR, solo responsabile
+export const hrApi = {
+  getCampi: () => apiClient.get<CampoHr[]>('/hr/campi'),
+  getAll: () => apiClient.get<SchedaHr[]>('/hr'),
+  getById: (id: number) => apiClient.get<SchedaHr>(`/hr/${id}`),
+  create: (data: SchedaHrInput) => apiClient.post<SchedaHr>('/hr', data),
+  update: (id: number, data: SchedaHrInput) => apiClient.put<SchedaHr>(`/hr/${id}`, data),
+  delete: (id: number) => apiClient.delete(`/hr/${id}`),
+  // Content-Type tolto per la FormData: vedi bollettiniApi.uploadAllegato
+  uploadFoto: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return apiClient.post<AllegatoHr>('/hr/allegati', form, {
+      headers: { 'Content-Type': undefined },
+    });
+  },
+  getFotoBlob: (id: number) =>
+    apiClient.get<Blob>(`/hr/allegati/${id}/file`, { responseType: 'blob' }),
+  stampaSchede: (ids: number[]) =>
+    downloadFile(`/hr/stampa/schede?ids=${ids.join(',')}`, 'schede-dipendenti.pdf'),
+  stampaRiepilogo: (ids: number[], campi: string[], titolo: string) => {
+    const params = new URLSearchParams({ ids: ids.join(','), campi: campi.join(',') });
+    if (titolo.trim()) params.append('titolo', titolo.trim());
+    return downloadFile(`/hr/stampa/riepilogo?${params.toString()}`, 'riepilogo-dipendenti.pdf');
+  },
 };

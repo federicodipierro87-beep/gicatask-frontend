@@ -28,6 +28,8 @@ import { DreamNoleggiPage } from './pages/responsabile/DreamNoleggiPage';
 import { DreamVeicoliPage } from './pages/responsabile/DreamVeicoliPage';
 import { DreamClientiPage } from './pages/responsabile/DreamClientiPage';
 import { GicaNoleggiPage } from './pages/responsabile/GicaNoleggiPage';
+import { HrPage } from './pages/responsabile/HrPage';
+import { HrSchedaPage } from './pages/responsabile/HrSchedaPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -268,6 +270,30 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <DreamClientiPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/hr"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <HrPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/hr/nuova"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <HrSchedaPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/hr/:id"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <HrSchedaPage />
           </ProtectedRoute>
         }
       />
