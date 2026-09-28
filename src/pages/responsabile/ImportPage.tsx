@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { apiClient } from '../../api/client';
+import { ImportVecchiLavori } from './ImportVecchiLavori';
 
 interface ImportResult {
   success: boolean;
@@ -221,6 +222,8 @@ export function ImportPage() {
           </div>
         </div>
       )}
+
+      <ImportVecchiLavori />
     </ResponsabileLayout>
   );
 }
