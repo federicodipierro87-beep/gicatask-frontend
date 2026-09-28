@@ -15,6 +15,9 @@ import {
 import type { MonthKey } from '../../components/MonthNavigator';
 import { formatDuration } from '../../utils/durata';
 import { SaldiOreReport } from './SaldiOreReport';
+import { Pagination, usePagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 30;
 
 interface Attivita {
   id: number;
@@ -178,6 +181,13 @@ function ReportAttivita() {
       cancelled = true;
     };
   }, [startDate, endDate, clientiIds, cantiereId, utentiIds, refreshToken]);
+
+  // Si torna alla prima pagina quando cambiano i filtri, non dopo un'eliminazione
+  const { page, setPage, totalPages, pageItems } = usePagination(
+    attivita,
+    PAGE_SIZE,
+    JSON.stringify([startDate, endDate, clientiIds, cantiereId, utentiIds])
+  );
 
   // Con due o più dipendenti il report è spezzato in una sezione per ciascuno;
   // con zero o uno è quello di sempre
@@ -450,6 +460,7 @@ function ReportAttivita() {
             Nessuna attività trovata per i filtri selezionati
           </p>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -468,7 +479,7 @@ function ReportAttivita() {
                 </tr>
               </thead>
               <tbody>
-                {attivita.map((att) => (
+                {pageItems.map((att) => (
                   <tr
                     key={att.id}
                     className="border-b hover:bg-gray-100 cursor-pointer transition-colors"
@@ -505,6 +516,15 @@ function ReportAttivita() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={attivita.length}
+            pageSize={PAGE_SIZE}
+            onChange={setPage}
+            className="mt-4"
+          />
+          </>
         )}
       </div>
 

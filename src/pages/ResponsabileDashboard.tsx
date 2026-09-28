@@ -6,6 +6,9 @@ import { attivitaApi } from '../api/client';
 import { MonthNavigator, currentMonth, monthRange } from '../components/MonthNavigator';
 import { formatDuration } from '../utils/durata';
 import { nomeUtente } from '../utils/nomeUtente';
+import { Pagination, usePagination } from '../components/Pagination';
+
+const PAGE_SIZE = 30;
 
 interface Attivita {
   id: number;
@@ -59,6 +62,7 @@ export function ResponsabileDashboard() {
   const [refreshToken, setRefreshToken] = useState(0);
 
   const { startDate, endDate } = monthRange(mese);
+  const { page, setPage, totalPages, pageItems } = usePagination(attivita, PAGE_SIZE, mese);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +129,7 @@ export function ResponsabileDashboard() {
             Nessuna attività registrata in questo mese
           </p>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -143,7 +148,7 @@ export function ResponsabileDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {attivita.map((att) => (
+                {pageItems.map((att) => (
                   <tr
                     key={att.id}
                     className="border-b hover:bg-gray-100 cursor-pointer transition-colors"
@@ -192,6 +197,15 @@ export function ResponsabileDashboard() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            totalItems={attivita.length}
+            pageSize={PAGE_SIZE}
+            onChange={setPage}
+            className="mt-4"
+          />
+          </>
         )}
       </div>
 
