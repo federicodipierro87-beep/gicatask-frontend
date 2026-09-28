@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { oreDovuteApi } from '../../api/client';
-import type { OreDovuteAnno, RigaProspettoOreDovute } from '../../api/client';
+import type { OreDovuteAnno, RiepilogoOreDovute, RigaProspettoOreDovute } from '../../api/client';
 
 const NOMI_MESI = [
   'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
@@ -10,7 +10,11 @@ const NOMI_MESI = [
 
 /** Minuti come "172:12", il formato in cui si scrivono nei campi. */
 function formatOre(minuti: number): string {
-  return `${Math.floor(minuti / 60)}:${String(minuti % 60).padStart(2, '0')}`;
+  // Il segno davanti a tutto: Math.floor su un negativo darebbe "-9:-12".
+  // Un totale con le assenze puo' essere negativo, per via dei Recupero ore
+  const assoluti = Math.abs(minuti);
+  const testo = `${Math.floor(assoluti / 60)}:${String(assoluti % 60).padStart(2, '0')}`;
+  return minuti < 0 ? `-${testo}` : testo;
 }
 
 /**
@@ -77,6 +81,7 @@ export function OreDovutePage() {
   const [prospetto, setProspetto] = useState<RigaProspettoOreDovute[]>([]);
   const [isLoadingProspetto, setIsLoadingProspetto] = useState(true);
   const [erroreProspetto, setErroreProspetto] = useState(false);
+  const [riepilogo, setRiepilogo] = useState<RiepilogoOreDovute | null>(null);
   // Incrementato dopo ogni salvataggio: il prospetto si calcola dai dati salvati
   const [versione, setVersione] = useState(0);
   const [vistaProspetto, setVistaProspetto] = useState<'tutti' | 'dipendente'>('tutti');
@@ -122,6 +127,24 @@ export function OreDovutePage() {
         setErroreProspetto(true);
       } finally {
         if (!cancelled) setIsLoadingProspetto(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [anno, versione]);
+
+  // A parte dal prospetto: se manca, la vista Dipendente resta usabile senza
+  // il riepilogo in fondo
+  useEffect(() => {
+    let cancelled = false;
+    setRiepilogo(null);
+    (async () => {
+      try {
+        const response = await oreDovuteApi.getRiepilogo(anno);
+        if (!cancelled) setRiepilogo(response.data ?? null);
+      } catch (err) {
+        if (!cancelled) setRiepilogo(null);
       }
     })();
     return () => {
@@ -474,6 +497,46 @@ export function OreDovutePage() {
                 </tfoot>
               </table>
             </div>
+
+            {/* Riepilogo del periodo trascorso, come in fondo agli export: il
+                totale comprende le assenze, il saldo no */}
+            {(() => {
+              const ore = riepilogo?.righe.find((r) => r.utenteId === dipendente.utenteId);
+              if (!riepilogo || !ore) return null;
+              const saldo = ore.lavoroMinuti - ore.dovutiMinuti;
+              const righeRiepilogo: { etichetta: string; testo: string; colore?: string }[] = [
+                { etichetta: 'Totale ore', testo: formatOre(ore.totaleMinuti) },
+                { etichetta: 'Totale ore dovute', testo: formatOre(ore.dovutiMinuti) },
+                ...(ore.lavoroMinuti !== ore.totaleMinuti
+                  ? [{ etichetta: 'Ore di lavoro (senza assenze)', testo: formatOre(ore.lavoroMinuti) }]
+                  : []),
+                {
+                  etichetta: 'Saldo ore',
+                  testo: saldo > 0 ? `+${formatOre(saldo)}` : formatOre(saldo),
+                  colore: saldo > 0 ? 'text-green-700' : saldo < 0 ? 'text-red-600' : 'text-gray-500',
+                },
+              ];
+              return (
+                <div className="mt-6 max-w-md">
+                  <h4 className="text-sm font-medium text-gray-900 mb-2">Riepilogo {riepilogo.etichetta}</h4>
+                  <table className="w-full text-sm border">
+                    <tbody>
+                      {righeRiepilogo.map(({ etichetta, testo, colore }) => (
+                        <tr key={etichetta} className="border-b last:border-0">
+                          <td className="py-2 px-3 font-medium text-gray-900">{etichetta}</td>
+                          <td className={`py-2 px-3 text-right whitespace-nowrap font-medium ${colore ?? ''}`}>
+                            {testo}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Il saldo coincide con il saldo cumulativo del Report Saldi Ore.
+                  </p>
+                </div>
+              );
+            })()}
           </div>
         ) : (
           <div className="overflow-x-auto">

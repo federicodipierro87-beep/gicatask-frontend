@@ -278,11 +278,28 @@ export interface RigaProspettoOreDovute {
   totale: number;
 }
 
+// Ore del periodo trascorso dell'anno per dipendente, le stesse del riepilogo
+// degli export. `null` per un anno futuro
+export interface RiepilogoOreDovute {
+  /** Il periodo, come "gennaio-settembre 2026". */
+  etichetta: string;
+  righe: {
+    utenteId: number;
+    /** Assenze comprese. */
+    totaleMinuti: number;
+    dovutiMinuti: number;
+    /** Solo ore di lavoro: la base del saldo. */
+    lavoroMinuti: number;
+  }[];
+}
+
 export const oreDovuteApi = {
   getAnno: (anno: number) =>
     apiClient.get<OreDovuteAnno>(`/ore-dovute/${anno}`),
   getProspetto: (anno: number) =>
     apiClient.get<RigaProspettoOreDovute[]>(`/ore-dovute/${anno}/prospetto`),
+  getRiepilogo: (anno: number) =>
+    apiClient.get<RiepilogoOreDovute | null>(`/ore-dovute/${anno}/riepilogo`),
   salvaAnno: (anno: number, mesi: MeseOreDovute[], minutiAnnui: number | null) =>
     apiClient.put<OreDovuteAnno>(`/ore-dovute/${anno}`, { mesi, minutiAnnui }),
   /** Esporta i dati salvati, non le modifiche ancora nei campi. */
