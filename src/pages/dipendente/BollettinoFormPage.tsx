@@ -6,7 +6,6 @@ import { AllegatiUploader } from '../../components/AllegatiUploader';
 import { BancaDatiSelector, type VoceScelta } from '../../components/BancaDatiSelector';
 import { MultiSelect } from '../../components/MultiSelect';
 import { DateTimeInput } from '../../components/DateTimeInput';
-import { FasceOrarieInput } from '../../components/FasceOrarieInput';
 import {
   SquadreSelector,
   nuovaRigaSquadra,
@@ -30,13 +29,7 @@ import type {
   VeicoloBollettino,
   VoceBollettino,
 } from '../../types';
-import {
-  FASCE_VUOTE,
-  fasceIncomplete,
-  fascePerApi,
-  minutiFasce,
-  type Fasce,
-} from '../../utils/oreBollettino';
+import { fascePerApi } from '../../utils/oreBollettino';
 
 // Stessa regola del backend: piu' severa di RFC 5322 perche' l'indirizzo
 // finisce nel campo `to` dell'API, dove una virgola varrebbe piu' destinatari.
@@ -80,10 +73,7 @@ export function BollettinoFormPage() {
   );
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [cantieriIds, setCantieriIds] = useState<number[]>([]);
-  const [fasce, setFasce] = useState<Fasce>(FASCE_VUOTE);
-  const [squadre, setSquadre] = useState<RigaSquadra[]>(() => [
-    nuovaRigaSquadra(FASCE_VUOTE, true),
-  ]);
+  const [squadre, setSquadre] = useState<RigaSquadra[]>(() => [nuovaRigaSquadra()]);
   const [attivita, setAttivita] = useState('');
   const [mezzi, setMezzi] = useState<VoceScelta[]>([]);
   const [materiali, setMateriali] = useState('');
@@ -127,13 +117,6 @@ export function BollettinoFormPage() {
       setFirmaOperatoreNome(`${user.nome} ${user.cognome}`);
     }
   }, [user]);
-
-  // Le righe degli operai non ancora toccate seguono gli orari dell'intestazione
-  useEffect(() => {
-    setSquadre((prev) =>
-      prev.map((r) => (r.segueIntestazione ? { ...r, ...fasce } : r))
-    );
-  }, [fasce]);
 
   useEffect(() => {
     if (!clienteId) {
@@ -190,9 +173,6 @@ export function BollettinoFormPage() {
     Boolean(clienteId) &&
     // Il cantiere e' obbligatorio solo quando il cliente ne ha
     (cantieri.length === 0 || cantieriIds.length > 0) &&
-    // Come nelle attivita': almeno una fascia, e nessuna lasciata a meta'
-    minutiFasce(fasce) > 0 &&
-    !fasceIncomplete(fasce) &&
     attivita.trim().length > 0 &&
     squadre.every((r) => problemaRiga(r) === null) &&
     firmaOperatoreNome.trim().length > 0 &&
@@ -215,8 +195,7 @@ export function BollettinoFormPage() {
       const { data } = await bollettiniApi.create({
         clienteId,
         cantieriIds,
-        fasce: fascePerApi(fasce),
-        // Le ore le calcola il server dagli orari
+        // Le ore le calcola il server dagli orari, se indicati
         squadre: squadre.map((r) => ({ numeroOperai: operaiRiga(r), ...fascePerApi(r) })),
         dataRiferimento,
         attivita: attivita.trim(),
@@ -298,18 +277,6 @@ export function BollettinoFormPage() {
             />
           </div>
 
-          <FasceOrarieInput
-            idPrefix="bollettino"
-            value={fasce}
-            onChange={setFasce}
-            disabled={isSaving}
-          />
-          {fasceIncomplete(fasce) && (
-            <p className="-mt-3 text-xs text-red-600">
-              Completa inizio e fine della fascia (con orari diversi).
-            </p>
-          )}
-
           <div>
             <label htmlFor="cliente" className="label">Cliente</label>
             <select
@@ -389,7 +356,6 @@ export function BollettinoFormPage() {
           <SquadreSelector
             value={squadre}
             onChange={setSquadre}
-            fasceIntestazione={fasce}
             disabled={isSaving}
           />
 

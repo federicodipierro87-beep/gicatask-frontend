@@ -416,8 +416,9 @@ export interface CreateBollettinoInput {
   clienteId: number;
   // Tutti dello stesso cliente
   cantieriIds: number[];
-  // Fasce della giornata, come nelle attivita'
-  fasce: FasceBollettinoInput;
+  // Fasce della giornata: il form non le chiede piu', gli orari stanno
+  // nelle righe degli operai
+  fasce?: FasceBollettinoInput;
   // Operai a gruppi con i propri orari: il server ne calcola le ore e ne
   // ricava numero operai (somma) e totale ore
   squadre: (FasceBollettinoInput & { numeroOperai: number })[];

@@ -29,7 +29,7 @@ export function FasceOrarieInput({ idPrefix, value, onChange, disabled, compatto
     <div className={compatto ? '' : 'border border-gray-200 rounded-lg p-4'}>
       <span className={compatto ? 'block text-sm font-medium text-gray-700 mb-1' : 'label mb-3'}>
         {titolo}
-        {!compatto && <span className="text-gray-400 font-normal"> (opzionale)</span>}
+        <span className="text-gray-400 font-normal"> (opzionale)</span>
       </span>
       <div className="grid grid-cols-2 gap-2 sm:gap-4">
         <div>
