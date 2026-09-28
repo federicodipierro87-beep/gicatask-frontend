@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { AllegatiUploader } from '../../components/AllegatiUploader';
 import { FotoDipendente } from '../../components/FotoDipendente';
+import { Modal } from '../../components/Modal';
 import { hrApi } from '../../api/client';
 import type { AllegatoHr, SchedaHr, SchedaHrInput, StatoCivile } from '../../types';
 
@@ -120,6 +121,8 @@ export function HrSchedaPage() {
   const [isLoading, setIsLoading] = useState(schedaId !== null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confermaElimina, setConfermaElimina] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const carica = (scheda: SchedaHr) => {
     setCampi(daScheda(scheda));
@@ -186,14 +189,20 @@ export function HrSchedaPage() {
     }
   };
 
+  // Conferma nella pagina e non con confirm(): se il browser blocca le
+  // finestre di dialogo, confirm() restituisce false senza mostrare nulla e il
+  // pulsante sembra non fare niente
   const handleElimina = async () => {
     if (schedaId === null) return;
-    if (!confirm(`Eliminare definitivamente la scheda di ${campi.cognomeNome}?`)) return;
+    setIsDeleting(true);
     try {
       await hrApi.delete(schedaId);
       navigate('/responsabile/hr');
-    } catch {
-      setError('Errore durante l\'eliminazione');
+    } catch (err: any) {
+      setConfermaElimina(false);
+      setError(err.response?.data?.error || 'Errore durante l\'eliminazione');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -231,7 +240,7 @@ export function HrSchedaPage() {
             <button type="button" className="btn-secondary" onClick={() => hrApi.stampaSchede([schedaId])}>
               Stampa scheda
             </button>
-            <button type="button" className="btn-danger" onClick={handleElimina}>
+            <button type="button" className="btn-danger" onClick={() => setConfermaElimina(true)}>
               Elimina
             </button>
           </div>
@@ -490,6 +499,36 @@ export function HrSchedaPage() {
           </button>
         </div>
       </form>
+
+      <Modal
+        isOpen={confermaElimina}
+        onClose={() => !isDeleting && setConfermaElimina(false)}
+        title="Elimina scheda"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700">
+            Eliminare definitivamente la scheda di <strong>{campi.cognomeNome}</strong>? Verranno
+            cancellati anche figli, formazioni e foto. L'operazione non si può annullare.
+          </p>
+          <p className="text-xs text-gray-500">
+            Se il dipendente ha solo lasciato l'azienda, inserisci la data di cessazione: la scheda
+            resta fra gli uscenti.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={isDeleting}
+              onClick={() => setConfermaElimina(false)}
+            >
+              Annulla
+            </button>
+            <button type="button" className="btn-danger" disabled={isDeleting} onClick={handleElimina}>
+              {isDeleting ? 'Eliminazione...' : 'Elimina'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </ResponsabileLayout>
   );
 }
