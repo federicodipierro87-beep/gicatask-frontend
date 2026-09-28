@@ -56,7 +56,7 @@ function formatPeso(bytes: number): string {
  * non lo decodifica — si carica l'originale: il MIME è comunque nell'allowlist
  * del server.
  */
-async function ridimensiona(file: File): Promise<File> {
+export async function ridimensiona(file: File): Promise<File> {
   if (!file.type.startsWith('image/')) return file;
 
   try {

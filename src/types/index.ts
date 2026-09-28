@@ -307,11 +307,13 @@ export interface SchedaHr {
   emergenzaNome: string | null;
   emergenzaTelefono: string | null;
   dataCessazione: string | null;
+  fotoId: number | null;
+  foto: AllegatoHr | null;
   figli: FiglioHr[];
   formazioni: FormazioneHr[];
 }
 
-export type SchedaHrInput = Omit<SchedaHr, 'id' | 'figli' | 'formazioni'> & {
+export type SchedaHrInput = Omit<SchedaHr, 'id' | 'foto' | 'figli' | 'formazioni'> & {
   figli: { cognomeNome: string; dataNascita: string | null }[];
   formazioni: { id?: number; nome: string; allegatiIds: number[] }[];
 };

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { AllegatiUploader } from '../../components/AllegatiUploader';
+import { FotoDipendente } from '../../components/FotoDipendente';
 import { hrApi } from '../../api/client';
 import type { AllegatoHr, SchedaHr, SchedaHrInput, StatoCivile } from '../../types';
 
@@ -64,7 +65,10 @@ const VUOTA: CampiScheda = {
   emergenzaNome: null,
   emergenzaTelefono: null,
   dataCessazione: null,
+  fotoId: null,
 };
+
+const GRADI_OCCUPAZIONE = ['10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'];
 
 const CAMPI_DATA: CampoTesto[] = [
   'dataNascita',
@@ -112,12 +116,14 @@ export function HrSchedaPage() {
   const [campi, setCampi] = useState<CampiScheda>(VUOTA);
   const [figli, setFigli] = useState<FiglioForm[]>([]);
   const [formazioni, setFormazioni] = useState<FormazioneForm[]>([]);
+  const [foto, setFoto] = useState<AllegatoHr | null>(null);
   const [isLoading, setIsLoading] = useState(schedaId !== null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const carica = (scheda: SchedaHr) => {
     setCampi(daScheda(scheda));
+    setFoto(scheda.foto);
     setFigli(
       scheda.figli.map((f) => ({ uid: uid(), cognomeNome: f.cognomeNome, dataNascita: soloData(f.dataNascita) ?? '' }))
     );
@@ -158,6 +164,7 @@ export function HrSchedaPage() {
 
     const input: SchedaHrInput = {
       ...campi,
+      fotoId: foto?.id ?? null,
       figli: figli
         .filter((f) => f.cognomeNome.trim())
         .map((f) => ({ cognomeNome: f.cognomeNome, dataNascita: f.dataNascita || null })),
@@ -241,6 +248,9 @@ export function HrSchedaPage() {
       <form onSubmit={handleSalva} className="space-y-6">
         <section className="card">
           <h3 className="font-medium text-gray-900 mb-4">Dati personali</h3>
+          <div className="mb-6">
+            <FotoDipendente value={foto} onChange={setFoto} />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {testo('numeroPersonale', 'Numero personale')}
             <div>
@@ -373,12 +383,48 @@ export function HrSchedaPage() {
             {testo('dataAssunzione', 'Data di assunzione', 'date')}
             {testo('tipoSalario', 'Tipo di salario')}
             {testo('salario', 'Salario')}
-            {testo('gradoOccupazione', 'Grado occupazione')}
+            <div>
+              <label htmlFor="gradoOccupazione" className="label">Grado occupazione</label>
+              <select
+                id="gradoOccupazione"
+                className="select"
+                value={campi.gradoOccupazione ?? ''}
+                onChange={(e) => set('gradoOccupazione', e.target.value || null)}
+              >
+                <option value="">—</option>
+                {GRADI_OCCUPAZIONE.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+                {/* Un valore scritto a mano prima che il campo diventasse una lista */}
+                {campi.gradoOccupazione && !GRADI_OCCUPAZIONE.includes(campi.gradoOccupazione) && (
+                  <option value={campi.gradoOccupazione}>{campi.gradoOccupazione}</option>
+                )}
+              </select>
+            </div>
             {testo('iban', 'Numero IBAN')}
             <div>
-              {testo('dataCessazione', 'Data di cessazione', 'date')}
+              <label htmlFor="dataCessazione" className="label">Data di cessazione</label>
+              <div className="flex gap-2">
+                <input
+                  id="dataCessazione"
+                  type="date"
+                  className="input"
+                  value={campi.dataCessazione ?? ''}
+                  onChange={(e) => set('dataCessazione', e.target.value || null)}
+                />
+                {campi.dataCessazione && (
+                  <button
+                    type="button"
+                    className="btn-secondary whitespace-nowrap"
+                    onClick={() => set('dataCessazione', null)}
+                  >
+                    Cancella data
+                  </button>
+                )}
+              </div>
               <p className="mt-1 text-xs text-gray-500">
-                Con la data di cessazione il dipendente passa fra gli uscenti.
+                Con la data di cessazione il dipendente passa fra gli uscenti; cancellandola
+                e salvando torna fra gli attivi.
               </p>
             </div>
           </div>
