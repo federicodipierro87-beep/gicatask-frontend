@@ -319,6 +319,12 @@ export function BollettinoFormPage() {
             />
           </div>
 
+          <SquadreSelector
+            value={squadre}
+            onChange={setSquadre}
+            disabled={isSaving}
+          />
+
           {/* I mezzi si aggiungono solo dalla Banca dati veicoli, condivisa
               con i noleggi Gica e Dream: niente onCrea */}
           <BancaDatiSelector
@@ -350,12 +356,6 @@ export function BollettinoFormPage() {
             value={trasporti}
             onChange={setTrasporti}
             onCrea={creaVoce('trasporti', setTrasportiDisponibili)}
-            disabled={isSaving}
-          />
-
-          <SquadreSelector
-            value={squadre}
-            onChange={setSquadre}
             disabled={isSaving}
           />
 
