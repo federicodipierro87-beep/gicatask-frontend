@@ -2,6 +2,14 @@
   command = "npm run build"
   publish = "dist"
 
+# Il vecchio indirizzo porta al dominio nuovo. Deve stare prima della regola
+# della SPA: Netlify applica la prima che corrisponde
+[[redirects]]
+  from = "https://gicatask.netlify.app/*"
+  to = "https://task.gica.ch/:splat"
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
