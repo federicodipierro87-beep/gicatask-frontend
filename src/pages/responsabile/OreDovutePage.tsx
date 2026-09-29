@@ -507,9 +507,6 @@ export function OreDovutePage() {
               const righeRiepilogo: { etichetta: string; testo: string; colore?: string }[] = [
                 { etichetta: 'Totale ore', testo: formatOre(ore.totaleMinuti) },
                 { etichetta: 'Totale ore dovute', testo: formatOre(ore.dovutiMinuti) },
-                ...(ore.lavoroMinuti !== ore.totaleMinuti
-                  ? [{ etichetta: 'Ore di lavoro (senza assenze)', testo: formatOre(ore.lavoroMinuti) }]
-                  : []),
                 {
                   etichetta: 'Saldo ore',
                   testo: saldo > 0 ? `+${formatOre(saldo)}` : formatOre(saldo),

@@ -317,9 +317,6 @@ export function SaldiOreReport() {
             const righeRiepilogo: { etichetta: string; minuti: number; saldo?: boolean }[] = [
               { etichetta: 'Totale ore mese', minuti: ultimo.totaleMinuti ?? ultimo.effettuatiMinuti },
               { etichetta: 'Totale ore dovute', minuti: ultimo.dovutiMinuti },
-              ...(ultimo.totaleMinuti !== undefined && ultimo.totaleMinuti !== ultimo.effettuatiMinuti
-                ? [{ etichetta: 'Ore di lavoro (senza assenze)', minuti: ultimo.effettuatiMinuti }]
-                : []),
               { etichetta: 'Saldo ore', minuti: ultimo.differenzaMinuti, saldo: true },
             ];
             return (
