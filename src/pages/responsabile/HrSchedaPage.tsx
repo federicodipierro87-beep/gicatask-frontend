@@ -7,7 +7,7 @@ import { Modal } from '../../components/Modal';
 import { hrApi } from '../../api/client';
 import type { AllegatoHr, SchedaHr, SchedaHrInput, StatoCivile } from '../../types';
 
-type CampiScheda = Omit<SchedaHrInput, 'figli' | 'formazioni'>;
+type CampiScheda = Omit<SchedaHrInput, 'statiCivili' | 'figli' | 'formazioni'>;
 type CampoTesto = {
   [K in keyof CampiScheda]: CampiScheda[K] extends string | null ? K : never;
 }[keyof CampiScheda];
@@ -18,6 +18,13 @@ interface FormazioneForm {
   id?: number;
   nome: string;
   foto: AllegatoHr[];
+}
+
+interface StatoCivileForm {
+  uid: string;
+  // '' finche' non si sceglie: la riga vuota non si salva
+  stato: StatoCivile | '';
+  dal: string;
 }
 
 interface FiglioForm {
@@ -49,9 +56,8 @@ const VUOTA: CampiScheda = {
   codiceFiscale: null,
   numeroSimic: null,
   cassaMalati: null,
-  statoCivile: null,
+  dataEntrata: null,
   nazionalita: null,
-  coniugatoDal: null,
   coniugeCognomeNome: null,
   coniugeDataNascita: null,
   assegnoFigli: null,
@@ -74,13 +80,15 @@ const GRADI_OCCUPAZIONE = ['10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%
 const CAMPI_DATA: CampoTesto[] = [
   'dataNascita',
   'scadenzaPermesso',
-  'coniugatoDal',
+  'dataEntrata',
   'coniugeDataNascita',
   'dataAssunzione',
   'dataCessazione',
 ];
 
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+const nuovoStatoCivile = (): StatoCivileForm => ({ uid: uid(), stato: '', dal: '' });
 
 /** Il server rimanda le date come ISO completo: l'input date vuole YYYY-MM-DD. */
 const soloData = (valore: string | null) => (valore ? valore.slice(0, 10) : null);
@@ -115,6 +123,8 @@ export function HrSchedaPage() {
   const schedaId = id ? parseInt(id, 10) : null;
 
   const [campi, setCampi] = useState<CampiScheda>(VUOTA);
+  // Sempre almeno una riga, come il campo singolo che sostituisce
+  const [statiCivili, setStatiCivili] = useState<StatoCivileForm[]>(() => [nuovoStatoCivile()]);
   const [figli, setFigli] = useState<FiglioForm[]>([]);
   const [formazioni, setFormazioni] = useState<FormazioneForm[]>([]);
   const [foto, setFoto] = useState<AllegatoHr | null>(null);
@@ -127,6 +137,11 @@ export function HrSchedaPage() {
   const carica = (scheda: SchedaHr) => {
     setCampi(daScheda(scheda));
     setFoto(scheda.foto);
+    setStatiCivili(
+      scheda.statiCivili.length > 0
+        ? scheda.statiCivili.map((s) => ({ uid: uid(), stato: s.stato, dal: soloData(s.dal) ?? '' }))
+        : [nuovoStatoCivile()]
+    );
     setFigli(
       scheda.figli.map((f) => ({ uid: uid(), cognomeNome: f.cognomeNome, dataNascita: soloData(f.dataNascita) ?? '' }))
     );
@@ -168,6 +183,7 @@ export function HrSchedaPage() {
     const input: SchedaHrInput = {
       ...campi,
       fotoId: foto?.id ?? null,
+      statiCivili: statiCivili.flatMap((s) => (s.stato ? [{ stato: s.stato, dal: s.dal || null }] : [])),
       figli: figli
         .filter((f) => f.cognomeNome.trim())
         .map((f) => ({ cognomeNome: f.cognomeNome, dataNascita: f.dataNascita || null })),
@@ -205,6 +221,9 @@ export function HrSchedaPage() {
       setIsDeleting(false);
     }
   };
+
+  const aggiornaStatoCivile = (u: string, modifica: Partial<StatoCivileForm>) =>
+    setStatiCivili((prev) => prev.map((s) => (s.uid === u ? { ...s, ...modifica } : s)));
 
   const aggiornaFormazione = (u: string, modifica: Partial<FormazioneForm>) =>
     setFormazioni((prev) => prev.map((f) => (f.uid === u ? { ...f, ...modifica } : f)));
@@ -261,7 +280,6 @@ export function HrSchedaPage() {
             <FotoDipendente value={foto} onChange={setFoto} />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {testo('numeroPersonale', 'Numero personale')}
             <div>
               <label htmlFor="cognomeNome" className="label">Cognome e nome *</label>
               <input
@@ -272,6 +290,7 @@ export function HrSchedaPage() {
                 onChange={(e) => set('cognomeNome', e.target.value)}
               />
             </div>
+            {testo('numeroPersonale', 'Numero personale')}
             {testo('indirizzo', 'Indirizzo')}
             {testo('luogo', 'Luogo')}
             {testo('dataNascita', 'Data di nascita', 'date')}
@@ -300,31 +319,68 @@ export function HrSchedaPage() {
               </select>
             </div>
             {testo('tipoPermesso', 'Tipo permesso')}
+            {testo('dataEntrata', 'Data di entrata', 'date')}
             {testo('scadenzaPermesso', 'Scadenza permesso', 'date')}
-            {testo('codiceFiscale', 'Codice fiscale')}
             {testo('numeroSimic', 'Numero SIMIC')}
+            {testo('codiceFiscale', 'Codice fiscale')}
             {testo('cassaMalati', 'Cassa malati')}
           </div>
         </section>
 
         <section className="card">
           <h3 className="font-medium text-gray-900 mb-4">Famiglia</h3>
+          {/* Piu' righe per chi si e' sposato, separato o divorziato piu' volte */}
+          <div className="space-y-3 mb-4">
+            {statiCivili.map((riga) => (
+              <div key={riga.uid} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor={`statoCivile-${riga.uid}`} className="label">Stato civile</label>
+                  <select
+                    id={`statoCivile-${riga.uid}`}
+                    className="select"
+                    value={riga.stato}
+                    onChange={(e) => aggiornaStatoCivile(riga.uid, { stato: e.target.value as StatoCivile | '' })}
+                  >
+                    <option value="">—</option>
+                    {STATI_CIVILI.map((s) => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor={`statoCivileDal-${riga.uid}`} className="label">Dal</label>
+                  <div className="flex gap-2">
+                    <input
+                      id={`statoCivileDal-${riga.uid}`}
+                      type="date"
+                      className="input"
+                      value={riga.dal}
+                      onChange={(e) => aggiornaStatoCivile(riga.uid, { dal: e.target.value })}
+                    />
+                    {statiCivili.length > 1 && (
+                      <button
+                        type="button"
+                        className="text-red-600 hover:text-red-700 text-sm whitespace-nowrap"
+                        onClick={() => setStatiCivili((prev) => prev.filter((s) => s.uid !== riga.uid))}
+                      >
+                        Rimuovi
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn-secondary"
+              title="Aggiungi stato civile"
+              aria-label="Aggiungi stato civile"
+              onClick={() => setStatiCivili((prev) => [...prev, nuovoStatoCivile()])}
+            >
+              +
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="statoCivile" className="label">Stato civile</label>
-              <select
-                id="statoCivile"
-                className="select"
-                value={campi.statoCivile ?? ''}
-                onChange={(e) => set('statoCivile', (e.target.value || null) as StatoCivile | null)}
-              >
-                <option value="">—</option>
-                {STATI_CIVILI.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
-            </div>
-            {testo('coniugatoDal', 'Coniugato dal', 'date')}
             {testo('coniugeCognomeNome', 'Cognome e nome coniuge')}
             {testo('coniugeDataNascita', 'Data di nascita coniuge', 'date')}
             {testo('assegnoFigli', 'Assegno figli')}

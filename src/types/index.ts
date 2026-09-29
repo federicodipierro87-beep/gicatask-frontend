@@ -260,6 +260,13 @@ export interface AllegatoHr {
   dimensione: number;
 }
 
+export interface StatoCivileHr {
+  id?: number;
+  stato: StatoCivile;
+  // YYYY-MM-DD nel form; dal server arriva come ISO completo
+  dal: string | null;
+}
+
 export interface FiglioHr {
   id?: number;
   cognomeNome: string;
@@ -290,9 +297,8 @@ export interface SchedaHr {
   codiceFiscale: string | null;
   numeroSimic: string | null;
   cassaMalati: string | null;
-  statoCivile: StatoCivile | null;
+  dataEntrata: string | null;
   nazionalita: string | null;
-  coniugatoDal: string | null;
   coniugeCognomeNome: string | null;
   coniugeDataNascita: string | null;
   assegnoFigli: string | null;
@@ -309,11 +315,13 @@ export interface SchedaHr {
   dataCessazione: string | null;
   fotoId: number | null;
   foto: AllegatoHr | null;
+  statiCivili: StatoCivileHr[];
   figli: FiglioHr[];
   formazioni: FormazioneHr[];
 }
 
-export type SchedaHrInput = Omit<SchedaHr, 'id' | 'foto' | 'figli' | 'formazioni'> & {
+export type SchedaHrInput = Omit<SchedaHr, 'id' | 'foto' | 'statiCivili' | 'figli' | 'formazioni'> & {
+  statiCivili: { stato: StatoCivile; dal: string | null }[];
   figli: { cognomeNome: string; dataNascita: string | null }[];
   formazioni: { id?: number; nome: string; allegatiIds: number[] }[];
 };
