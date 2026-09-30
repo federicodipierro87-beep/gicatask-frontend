@@ -267,6 +267,14 @@ export interface StatoCivileHr {
   dal: string | null;
 }
 
+export interface GradoOccupazioneHr {
+  id?: number;
+  // "80%": testo, come arriva dalla tendina
+  grado: string;
+  // YYYY-MM-DD nel form; dal server arriva come ISO completo
+  dal: string | null;
+}
+
 export interface FiglioHr {
   id?: number;
   cognomeNome: string;
@@ -307,7 +315,6 @@ export interface SchedaHr {
   dataAssunzione: string | null;
   tipoSalario: string | null;
   salario: string | null;
-  gradoOccupazione: string | null;
   iban: string | null;
   email: string | null;
   emergenzaNome: string | null;
@@ -316,12 +323,17 @@ export interface SchedaHr {
   fotoId: number | null;
   foto: AllegatoHr | null;
   statiCivili: StatoCivileHr[];
+  gradiOccupazione: GradoOccupazioneHr[];
   figli: FiglioHr[];
   formazioni: FormazioneHr[];
 }
 
-export type SchedaHrInput = Omit<SchedaHr, 'id' | 'foto' | 'statiCivili' | 'figli' | 'formazioni'> & {
+export type SchedaHrInput = Omit<
+  SchedaHr,
+  'id' | 'foto' | 'statiCivili' | 'gradiOccupazione' | 'figli' | 'formazioni'
+> & {
   statiCivili: { stato: StatoCivile; dal: string | null }[];
+  gradiOccupazione: { grado: string; dal: string | null }[];
   figli: { cognomeNome: string; dataNascita: string | null }[];
   formazioni: { id?: number; nome: string; allegatiIds: number[] }[];
 };

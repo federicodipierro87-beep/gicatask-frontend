@@ -7,7 +7,7 @@ import { Modal } from '../../components/Modal';
 import { hrApi } from '../../api/client';
 import type { AllegatoHr, SchedaHr, SchedaHrInput, StatoCivile } from '../../types';
 
-type CampiScheda = Omit<SchedaHrInput, 'statiCivili' | 'figli' | 'formazioni'>;
+type CampiScheda = Omit<SchedaHrInput, 'statiCivili' | 'gradiOccupazione' | 'figli' | 'formazioni'>;
 type CampoTesto = {
   [K in keyof CampiScheda]: CampiScheda[K] extends string | null ? K : never;
 }[keyof CampiScheda];
@@ -24,6 +24,13 @@ interface StatoCivileForm {
   uid: string;
   // '' finche' non si sceglie: la riga vuota non si salva
   stato: StatoCivile | '';
+  dal: string;
+}
+
+interface GradoOccupazioneForm {
+  uid: string;
+  // '' finche' non si sceglie: la riga vuota non si salva
+  grado: string;
   dal: string;
 }
 
@@ -66,7 +73,6 @@ const VUOTA: CampiScheda = {
   dataAssunzione: null,
   tipoSalario: null,
   salario: null,
-  gradoOccupazione: null,
   iban: null,
   email: null,
   emergenzaNome: null,
@@ -89,6 +95,7 @@ const CAMPI_DATA: CampoTesto[] = [
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 const nuovoStatoCivile = (): StatoCivileForm => ({ uid: uid(), stato: '', dal: '' });
+const nuovoGrado = (): GradoOccupazioneForm => ({ uid: uid(), grado: '', dal: '' });
 
 /** Il server rimanda le date come ISO completo: l'input date vuole YYYY-MM-DD. */
 const soloData = (valore: string | null) => (valore ? valore.slice(0, 10) : null);
@@ -125,6 +132,7 @@ export function HrSchedaPage() {
   const [campi, setCampi] = useState<CampiScheda>(VUOTA);
   // Sempre almeno una riga, come il campo singolo che sostituisce
   const [statiCivili, setStatiCivili] = useState<StatoCivileForm[]>(() => [nuovoStatoCivile()]);
+  const [gradi, setGradi] = useState<GradoOccupazioneForm[]>(() => [nuovoGrado()]);
   const [figli, setFigli] = useState<FiglioForm[]>([]);
   const [formazioni, setFormazioni] = useState<FormazioneForm[]>([]);
   const [foto, setFoto] = useState<AllegatoHr | null>(null);
@@ -141,6 +149,11 @@ export function HrSchedaPage() {
       scheda.statiCivili.length > 0
         ? scheda.statiCivili.map((s) => ({ uid: uid(), stato: s.stato, dal: soloData(s.dal) ?? '' }))
         : [nuovoStatoCivile()]
+    );
+    setGradi(
+      scheda.gradiOccupazione.length > 0
+        ? scheda.gradiOccupazione.map((g) => ({ uid: uid(), grado: g.grado, dal: soloData(g.dal) ?? '' }))
+        : [nuovoGrado()]
     );
     setFigli(
       scheda.figli.map((f) => ({ uid: uid(), cognomeNome: f.cognomeNome, dataNascita: soloData(f.dataNascita) ?? '' }))
@@ -184,6 +197,7 @@ export function HrSchedaPage() {
       ...campi,
       fotoId: foto?.id ?? null,
       statiCivili: statiCivili.flatMap((s) => (s.stato ? [{ stato: s.stato, dal: s.dal || null }] : [])),
+      gradiOccupazione: gradi.flatMap((g) => (g.grado ? [{ grado: g.grado, dal: g.dal || null }] : [])),
       figli: figli
         .filter((f) => f.cognomeNome.trim())
         .map((f) => ({ cognomeNome: f.cognomeNome, dataNascita: f.dataNascita || null })),
@@ -224,6 +238,9 @@ export function HrSchedaPage() {
 
   const aggiornaStatoCivile = (u: string, modifica: Partial<StatoCivileForm>) =>
     setStatiCivili((prev) => prev.map((s) => (s.uid === u ? { ...s, ...modifica } : s)));
+
+  const aggiornaGrado = (u: string, modifica: Partial<GradoOccupazioneForm>) =>
+    setGradi((prev) => prev.map((g) => (g.uid === u ? { ...g, ...modifica } : g)));
 
   const aggiornaFormazione = (u: string, modifica: Partial<FormazioneForm>) =>
     setFormazioni((prev) => prev.map((f) => (f.uid === u ? { ...f, ...modifica } : f)));
@@ -448,25 +465,66 @@ export function HrSchedaPage() {
             {testo('dataAssunzione', 'Data di assunzione', 'date')}
             {testo('tipoSalario', 'Tipo di salario')}
             {testo('salario', 'Salario')}
-            <div>
-              <label htmlFor="gradoOccupazione" className="label">Grado occupazione</label>
-              <select
-                id="gradoOccupazione"
-                className="select"
-                value={campi.gradoOccupazione ?? ''}
-                onChange={(e) => set('gradoOccupazione', e.target.value || null)}
-              >
-                <option value="">—</option>
-                {GRADI_OCCUPAZIONE.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-                {/* Un valore scritto a mano prima che il campo diventasse una lista */}
-                {campi.gradoOccupazione && !GRADI_OCCUPAZIONE.includes(campi.gradoOccupazione) && (
-                  <option value={campi.gradoOccupazione}>{campi.gradoOccupazione}</option>
-                )}
-              </select>
-            </div>
             {testo('iban', 'Numero IBAN')}
+          </div>
+
+          {/* Piu' righe quando la percentuale cambia nel tempo */}
+          <div className="space-y-3 my-4">
+            {gradi.map((riga) => (
+              <div key={riga.uid} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor={`gradoOccupazione-${riga.uid}`} className="label">Grado occupazione</label>
+                  <select
+                    id={`gradoOccupazione-${riga.uid}`}
+                    className="select"
+                    value={riga.grado}
+                    onChange={(e) => aggiornaGrado(riga.uid, { grado: e.target.value })}
+                  >
+                    <option value="">—</option>
+                    {GRADI_OCCUPAZIONE.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                    {/* Un valore scritto a mano prima che il campo diventasse una lista */}
+                    {riga.grado && !GRADI_OCCUPAZIONE.includes(riga.grado) && (
+                      <option value={riga.grado}>{riga.grado}</option>
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor={`gradoOccupazioneDal-${riga.uid}`} className="label">Dal</label>
+                  <div className="flex gap-2">
+                    <input
+                      id={`gradoOccupazioneDal-${riga.uid}`}
+                      type="date"
+                      className="input"
+                      value={riga.dal}
+                      onChange={(e) => aggiornaGrado(riga.uid, { dal: e.target.value })}
+                    />
+                    {gradi.length > 1 && (
+                      <button
+                        type="button"
+                        className="text-red-600 hover:text-red-700 text-sm whitespace-nowrap"
+                        onClick={() => setGradi((prev) => prev.filter((g) => g.uid !== riga.uid))}
+                      >
+                        Rimuovi
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn-secondary"
+              title="Aggiungi grado di occupazione"
+              aria-label="Aggiungi grado di occupazione"
+              onClick={() => setGradi((prev) => [...prev, nuovoGrado()])}
+            >
+              +
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="dataCessazione" className="label">Data di cessazione</label>
               <div className="flex gap-2">
