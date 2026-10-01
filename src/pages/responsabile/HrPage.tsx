@@ -10,10 +10,6 @@ type Sezione = 'attivi' | 'uscenti';
 const CAMPI_KEY = 'gicatask_hr_campi_riepilogo';
 const CAMPI_DEFAULT = ['numeroPersonale', 'cognomeNome', 'telefono', 'dataAssunzione'];
 
-function formatData(valore: string | null): string {
-  return valore ? new Date(valore).toLocaleDateString('it-IT', { timeZone: 'UTC' }) : '-';
-}
-
 function campiSalvati(): string[] {
   try {
     const salvati = JSON.parse(localStorage.getItem(CAMPI_KEY) ?? 'null');
@@ -205,13 +201,10 @@ export function HrPage() {
                       aria-label="Seleziona tutti"
                     />
                   </th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-600">N.</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cognome e nome</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-600">Telefono</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-600">Assunzione</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-600">
-                    {sezione === 'attivi' ? 'Scad. permesso' : 'Cessazione'}
-                  </th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600">Indirizzo</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600">Luogo</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600">Numero AVS</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Azioni</th>
                 </tr>
               </thead>
@@ -231,13 +224,10 @@ export function HrPage() {
                         aria-label={`Seleziona ${s.cognomeNome}`}
                       />
                     </td>
-                    <td className="py-3 px-2 text-gray-600">{s.numeroPersonale || '-'}</td>
                     <td className="py-3 px-2 font-medium">{s.cognomeNome}</td>
-                    <td className="py-3 px-2">{s.telefono || '-'}</td>
-                    <td className="py-3 px-2">{formatData(s.dataAssunzione)}</td>
-                    <td className="py-3 px-2">
-                      {formatData(sezione === 'attivi' ? s.scadenzaPermesso : s.dataCessazione)}
-                    </td>
+                    <td className="py-3 px-2">{s.indirizzo || '-'}</td>
+                    <td className="py-3 px-2">{s.luogo || '-'}</td>
+                    <td className="py-3 px-2">{s.numeroAvs || '-'}</td>
                     <td className="py-3 px-2 text-right">
                       <Link
                         to={`/responsabile/hr/${s.id}`}
