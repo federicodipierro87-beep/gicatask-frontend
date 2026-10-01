@@ -298,19 +298,12 @@ function AppRoutes() {
         }
       />
 
+      {/* `:stato` vuoto per gli attivi, "fatturati" per i fatturati */}
       <Route
-        path="/responsabile/bollettini"
+        path="/responsabile/bollettini/:stato?"
         element={
           <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>
-            <BollettiniArchivioPage key="attivi" fatturati={false} />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/responsabile/bollettini/fatturati"
-        element={
-          <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>
-            <BollettiniArchivioPage key="fatturati" fatturati />
+            <BollettiniArchivioPage />
           </ProtectedRoute>
         }
       />

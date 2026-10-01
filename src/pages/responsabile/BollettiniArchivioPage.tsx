@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { Modal } from '../../components/Modal';
 import { DateTimeInput } from '../../components/DateTimeInput';
@@ -107,12 +108,22 @@ function CellaAllegati({
   );
 }
 
+const TABS = [
+  { path: '/responsabile/bollettini', label: 'Bollettini attivi', fatturati: false },
+  { path: '/responsabile/bollettini/fatturati', label: 'Bollettini fatturati', fatturati: true },
+];
+
 /**
- * Archivio del responsabile, in due pagine sullo stesso componente: i
- * bollettini attivi e quelli gia' fatturati. La spunta "Fatturato" sposta il
- * bollettino dall'una all'altra, e togliendola torna fra gli attivi.
+ * Archivio del responsabile, in due tab sullo stesso componente: i bollettini
+ * attivi e quelli gia' fatturati. La spunta "Fatturato" sposta il bollettino
+ * dall'uno all'altro, e togliendola torna fra gli attivi.
+ *
+ * Una sola rotta col segmento facoltativo `:stato`, non due: cosi' cambiando
+ * tab il componente resta montato e mese e filtri non si perdono.
  */
-export function BollettiniArchivioPage({ fatturati }: { fatturati: boolean }) {
+export function BollettiniArchivioPage() {
+  const { stato } = useParams<{ stato?: string }>();
+  const fatturati = stato === 'fatturati';
   const [bollettini, setBollettini] = useState<Bollettino[]>([]);
   const [clienti, setClienti] = useState<Cliente[]>([]);
   const [cantieri, setCantieri] = useState<Cantiere[]>([]);
@@ -324,8 +335,29 @@ export function BollettiniArchivioPage({ fatturati }: { fatturati: boolean }) {
     }
   };
 
+  // Dopo gli hook, che non si possono saltare
+  if (stato !== undefined && !fatturati) {
+    return <Navigate to="/responsabile/bollettini" replace />;
+  }
+
   return (
     <ResponsabileLayout>
+      <div className="flex gap-1 border-b border-gray-200 mb-4">
+        {TABS.map((tab) => (
+          <Link
+            key={tab.path}
+            to={tab.path}
+            className={`-mb-px px-4 py-2 text-sm border-b-2 ${
+              tab.fatturati === fatturati
+                ? 'border-primary-600 text-primary-700 font-medium'
+                : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+            }`}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
+
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-900">
           {fatturati ? 'Bollettini fatturati' : 'Bollettini attivi'}
