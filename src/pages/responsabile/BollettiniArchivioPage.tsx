@@ -13,6 +13,7 @@ import {
 import type { MonthKey } from '../../components/MonthNavigator';
 import type { Bollettino } from '../../types';
 import { nomeUtente } from '../../utils/nomeUtente';
+import { numeroBollettino } from '../../utils/numeroBollettino';
 import { oreComplessive } from '../../utils/oreBollettino';
 
 interface Cliente {
@@ -213,10 +214,10 @@ export function BollettiniArchivioPage({ fatturati }: { fatturati: boolean }) {
 
   const totaleOreUomo = bollettini.reduce((sum, b) => sum + oreComplessive(b), 0);
 
-  const handleDownload = async (id: number) => {
-    setDownloadId(id);
+  const handleDownload = async (bollettino: Bollettino) => {
+    setDownloadId(bollettino.id);
     try {
-      await bollettiniApi.downloadPdf(id);
+      await bollettiniApi.downloadPdf(bollettino.id, numeroBollettino(bollettino));
       setError(null);
     } catch {
       setError('Errore durante il download del PDF');
@@ -487,8 +488,9 @@ export function BollettiniArchivioPage({ fatturati }: { fatturati: boolean }) {
                         onDownload={handleDownloadAllegato}
                       />
                     </td>
-                    {/* Il numero stampato sul PDF ("Bollettino n.") e' l'id */}
-                    <td className="py-3 px-2 text-right">{bollettino.id}</td>
+                    <td className="py-3 px-2 text-right whitespace-nowrap">
+                      {numeroBollettino(bollettino)}
+                    </td>
                     <td className="py-3 px-2 text-center">
                       <input
                         type="checkbox"
@@ -506,7 +508,7 @@ export function BollettiniArchivioPage({ fatturati }: { fatturati: boolean }) {
                     </td>
                     <td className="py-3 px-2 text-right space-x-3 whitespace-nowrap">
                       <button
-                        onClick={() => handleDownload(bollettino.id)}
+                        onClick={() => handleDownload(bollettino)}
                         disabled={downloadId === bollettino.id}
                         className="text-primary-600 hover:text-primary-700 text-sm"
                       >

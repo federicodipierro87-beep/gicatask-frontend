@@ -5,6 +5,7 @@ import { MonthNavigator, currentMonth, monthRange } from '../../components/Month
 import { bollettiniApi } from '../../api/client';
 import type { Bollettino } from '../../types';
 import { oreComplessive } from '../../utils/oreBollettino';
+import { numeroBollettino } from '../../utils/numeroBollettino';
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('it-IT', {
@@ -46,10 +47,10 @@ export function BollettiniListPage() {
     };
   }, [startDate, endDate]);
 
-  const handleDownload = async (id: number) => {
-    setDownloadId(id);
+  const handleDownload = async (bollettino: Bollettino) => {
+    setDownloadId(bollettino.id);
     try {
-      await bollettiniApi.downloadPdf(id);
+      await bollettiniApi.downloadPdf(bollettino.id, numeroBollettino(bollettino));
       setError(null);
     } catch {
       setError('Errore durante il download del PDF');
@@ -118,7 +119,7 @@ export function BollettiniListPage() {
                   <p className="text-sm text-gray-500 mt-1 line-clamp-2">{bollettino.attivita}</p>
                 </div>
                 <button
-                  onClick={() => handleDownload(bollettino.id)}
+                  onClick={() => handleDownload(bollettino)}
                   disabled={downloadId === bollettino.id}
                   className="btn-secondary whitespace-nowrap"
                 >

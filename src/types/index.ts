@@ -238,6 +238,9 @@ export interface Bollettino {
   emailStato?: string | null;
   emailInviataAt?: string | null;
   emailErrore?: string | null;
+  // Numero da documento "numero-anno": vedi utils/numeroBollettino
+  anno?: number | null;
+  numero?: number | null;
   fatturato?: boolean;
   fatturatoAt?: string | null;
   createdAt: string;

@@ -498,8 +498,9 @@ export const bollettiniApi = {
     apiClient.patch(`/bollettini/${id}/fatturato`, { fatturato }),
   delete: (id: number) =>
     apiClient.delete(`/bollettini/${id}`),
-  downloadPdf: (id: number) =>
-    downloadFile(`/bollettini/${id}/pdf`, `bollettino-${id}.pdf`),
+  // `numero` e' il numero da documento ("numero-anno"), per il nome del file
+  downloadPdf: (id: number, numero: string) =>
+    downloadFile(`/bollettini/${id}/pdf`, `bollettino-${numero}.pdf`),
   downloadCumulativo: (cantiereId: number, startDate?: string, endDate?: string) =>
     downloadFile(
       `/bollettini/cantiere/${cantiereId}/pdf${bollettinoParams({ startDate, endDate })}`,
