@@ -346,13 +346,17 @@ export function AssegnaAttivitaPage() {
     setError(null);
     setSuccess(null);
 
+    // In modifica un orario svuotato va mandato come stringa vuota: con
+    // undefined il backend lo ignora e resta salvato il valore precedente
+    const orario = (v: string) => v || (isEditing ? '' : undefined);
+
     const payload = {
       utenteId,
       dataRiferimento,
-      oraInizioMattino: oraInizioMattino || undefined,
-      oraFineMattino: oraFineMattino || undefined,
-      oraInizioPomeriggio: oraInizioPomeriggio || undefined,
-      oraFinePomeriggio: oraFinePomeriggio || undefined,
+      oraInizioMattino: orario(oraInizioMattino),
+      oraFineMattino: orario(oraFineMattino),
+      oraInizioPomeriggio: orario(oraInizioPomeriggio),
+      oraFinePomeriggio: orario(oraFinePomeriggio),
       clienteId: clienteId ?? null,
       cantiereId: cantiereId ?? null,
       tipoAttivitaId: tipoAttivitaId ?? null,
