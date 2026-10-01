@@ -13,6 +13,7 @@ import type {
   DreamCliente,
   GicaNoleggio,
   GicaNoleggioInput,
+  LogOperazione,
   SchedaHr,
   SchedaHrInput,
   TipoVoceSlug,
@@ -646,4 +647,30 @@ export const hrApi = {
     if (titolo.trim()) params.append('titolo', titolo.trim());
     return downloadFile(`/hr/stampa/riepilogo?${params.toString()}`, 'riepilogo-dipendenti.pdf');
   },
+};
+
+export interface FiltriLogParams {
+  dal?: string;
+  al?: string;
+  utenti?: number[];
+  aree?: string[];
+  azioni?: string[];
+  esito?: 'ok' | 'errore';
+  q?: string;
+  pagina: number;
+  perPagina: number;
+}
+
+export const logApi = {
+  getAll: ({ utenti, aree, azioni, ...resto }: FiltriLogParams) =>
+    apiClient.get<{ totale: number; righe: LogOperazione[]; pagina: number; perPagina: number }>('/log', {
+      params: {
+        ...resto,
+        utenti: utenti?.length ? utenti.join(',') : undefined,
+        aree: aree?.length ? aree.join(',') : undefined,
+        azioni: azioni?.length ? azioni.join(',') : undefined,
+      },
+    }),
+  getFiltri: () =>
+    apiClient.get<{ utenti: { id: number; nome: string }[]; aree: string[] }>('/log/filtri'),
 };

@@ -348,3 +348,44 @@ export interface CampoHr {
   etichetta: string;
   sezione: string;
 }
+
+export type AzioneLog =
+  | 'ACCESSO'
+  | 'USCITA'
+  | 'CREAZIONE'
+  | 'MODIFICA'
+  | 'ELIMINAZIONE'
+  | 'DISATTIVAZIONE'
+  | 'RIATTIVAZIONE'
+  | 'DOWNLOAD'
+  | 'ALTRO';
+
+export interface ModificaLog {
+  campo: string;
+  prima: unknown;
+  dopo: unknown;
+}
+
+/** Una riga del pannello Log. `dettaglio` dipende dal tipo di operazione. */
+export interface LogOperazione {
+  id: number;
+  createdAt: string;
+  utenteId: number | null;
+  utenteNome: string | null;
+  ruolo: string | null;
+  area: string;
+  azione: AzioneLog;
+  descrizione: string;
+  metodo: string;
+  percorso: string;
+  stato: number;
+  esito: boolean;
+  errore: string | null;
+  dettaglio: {
+    modifiche?: ModificaLog[];
+    valori?: Record<string, unknown>;
+    dati?: unknown;
+    parametri?: Record<string, unknown>;
+  } | null;
+  ip: string | null;
+}

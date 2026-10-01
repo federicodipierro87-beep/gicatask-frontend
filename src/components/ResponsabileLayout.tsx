@@ -33,6 +33,7 @@ const settingsNavItems: { path: string; label: string; soloBollettini?: boolean 
   { path: '/responsabile/trasporti', label: 'Banca dati trasporti', soloBollettini: true },
   { path: '/responsabile/import', label: 'Import' },
   { path: '/responsabile/backup', label: 'Backup' },
+  { path: '/responsabile/log', label: 'Log' },
 ];
 
 // Raggruppate sotto un'unica voce: sparse in barra sarebbero quattro tab in

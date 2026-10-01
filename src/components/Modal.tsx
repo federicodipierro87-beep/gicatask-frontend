@@ -5,9 +5,11 @@ interface Props {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  /** Larghezza massima, es. 'max-w-3xl' per contenuti tabellari. */
+  maxWidth?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children }: Props) {
+export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }: Props) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -33,7 +35,7 @@ export function Modal({ isOpen, onClose, title, children }: Props) {
           className="fixed inset-0 bg-black bg-opacity-25 transition-opacity"
           onClick={onClose}
         />
-        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 transform transition-all">
+        <div className={`relative bg-white rounded-xl shadow-xl w-full ${maxWidth} p-6 transform transition-all`}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
             <button

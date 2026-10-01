@@ -14,6 +14,7 @@ import { UtentiPage } from './pages/responsabile/UtentiPage';
 import { ReportPage } from './pages/responsabile/ReportPage';
 import { AssegnaAttivitaPage } from './pages/responsabile/AssegnaAttivitaPage';
 import { BackupPage } from './pages/responsabile/BackupPage';
+import { LogPage } from './pages/responsabile/LogPage';
 import { ImportPage } from './pages/responsabile/ImportPage';
 import { CantieriPage } from './pages/responsabile/CantieriPage';
 import { TipiAttivitaPage } from './pages/responsabile/TipiAttivitaPage';
@@ -206,6 +207,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE">
             <BackupPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/log"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE">
+            <LogPage />
           </ProtectedRoute>
         }
       />
