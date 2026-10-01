@@ -361,7 +361,7 @@ export function AssegnaAttivitaPage() {
       cantiereId: cantiereId ?? null,
       tipoAttivitaId: tipoAttivitaId ?? null,
       assenzaId: assenzaId ?? null,
-      note: note.trim() || undefined,
+      note: note.trim() || (isEditing ? '' : undefined),
     };
 
     try {

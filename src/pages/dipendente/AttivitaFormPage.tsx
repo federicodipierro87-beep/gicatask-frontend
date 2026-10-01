@@ -176,7 +176,7 @@ export function AttivitaFormPage() {
         clienteId: clienteId ?? null,
         cantiereId: cantiereId ?? null,
         tipoAttivitaId: tipoAttivitaId ?? null,
-        note: note.trim() || undefined,
+        note: note.trim() || (isEditing ? '' : undefined),
       };
 
       if (isEditing && id) {

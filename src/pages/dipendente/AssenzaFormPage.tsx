@@ -79,7 +79,7 @@ export function AssenzaFormPage() {
         await attivitaApi.update(parseInt(id), {
           dataRiferimento,
           assenzaId,
-          note: note.trim() || undefined,
+          note: note.trim(),
         });
       } else {
         await attivitaApi.create({
