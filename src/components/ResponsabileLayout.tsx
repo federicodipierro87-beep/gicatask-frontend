@@ -37,8 +37,11 @@ const settingsNavItems: { path: string; label: string; soloBollettini?: boolean 
 
 // Raggruppate sotto un'unica voce: sparse in barra sarebbero quattro tab in
 // piu' su una riga gia' lunga, e nulla direbbe che appartengono alla stessa cosa
+// `exact`: senza, "Bollettini attivi" resterebbe acceso anche sui fatturati,
+// il cui percorso comincia allo stesso modo
 const bollettinoNavItems = [
-  { path: '/responsabile/bollettini', label: 'Archivio' },
+  { path: '/responsabile/bollettini', label: 'Bollettini attivi', exact: true },
+  { path: '/responsabile/bollettini/fatturati', label: 'Bollettini fatturati', exact: true },
 ];
 
 export function ResponsabileLayout({ children }: Props) {
@@ -137,7 +140,7 @@ export function ResponsabileLayout({ children }: Props) {
                               to={item.path}
                               onClick={() => setShowSettings(false)}
                               className={`block px-4 py-2 text-sm ${
-                                isActive(item.path)
+                                isActive(item.path, item.exact)
                                   ? 'bg-primary-50 text-primary-700 font-medium'
                                   : 'text-gray-700 hover:bg-gray-50'
                               }`}
@@ -214,7 +217,7 @@ export function ResponsabileLayout({ children }: Props) {
                           to={item.path}
                           onClick={() => setShowBollettino(false)}
                           className={`block px-4 py-2 text-sm ${
-                            isActive(item.path)
+                            isActive(item.path, item.exact)
                               ? 'bg-primary-50 text-primary-700 font-medium'
                               : 'text-gray-700 hover:bg-gray-50'
                           }`}

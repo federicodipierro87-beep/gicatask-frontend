@@ -238,6 +238,8 @@ export interface Bollettino {
   emailStato?: string | null;
   emailInviataAt?: string | null;
   emailErrore?: string | null;
+  fatturato?: boolean;
+  fatturatoAt?: string | null;
   createdAt: string;
   utente: { id: number; nome: string; cognome: string };
   righe?: RigaBollettino[];

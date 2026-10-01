@@ -374,6 +374,8 @@ export interface BollettinoFilters {
   cantiereId?: number;
   startDate?: string;
   endDate?: string;
+  // Assente: tutti i bollettini
+  fatturato?: boolean;
 }
 
 // voceId nullo per le righe scritte a mano e non salvate in anagrafica:
@@ -448,6 +450,7 @@ function bollettinoParams(filters?: BollettinoFilters): string {
   if (filters?.cantiereId) params.append('cantiereId', String(filters.cantiereId));
   if (filters?.startDate) params.append('startDate', filters.startDate);
   if (filters?.endDate) params.append('endDate', filters.endDate);
+  if (filters?.fatturato !== undefined) params.append('fatturato', String(filters.fatturato));
   return params.toString() ? `?${params.toString()}` : '';
 }
 
@@ -491,6 +494,8 @@ export const bollettiniApi = {
       `/bollettini/${id}/invia-mail`,
       email ? { email } : {}
     ),
+  setFatturato: (id: number, fatturato: boolean) =>
+    apiClient.patch(`/bollettini/${id}/fatturato`, { fatturato }),
   delete: (id: number) =>
     apiClient.delete(`/bollettini/${id}`),
   downloadPdf: (id: number) =>

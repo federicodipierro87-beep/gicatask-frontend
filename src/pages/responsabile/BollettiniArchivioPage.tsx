@@ -106,7 +106,12 @@ function CellaAllegati({
   );
 }
 
-export function BollettiniArchivioPage() {
+/**
+ * Archivio del responsabile, in due pagine sullo stesso componente: i
+ * bollettini attivi e quelli gia' fatturati. La spunta "Fatturato" sposta il
+ * bollettino dall'una all'altra, e togliendola torna fra gli attivi.
+ */
+export function BollettiniArchivioPage({ fatturati }: { fatturati: boolean }) {
   const [bollettini, setBollettini] = useState<Bollettino[]>([]);
   const [clienti, setClienti] = useState<Cliente[]>([]);
   const [cantieri, setCantieri] = useState<Cantiere[]>([]);
@@ -125,6 +130,7 @@ export function BollettiniArchivioPage() {
   const [isDownloadingCumulativo, setIsDownloadingCumulativo] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [fatturatoId, setFatturatoId] = useState<number | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
 
   const [mailBollettino, setMailBollettino] = useState<Bollettino | null>(null);
@@ -188,6 +194,7 @@ export function BollettiniArchivioPage() {
           utenteId: utenteId ?? undefined,
           startDate,
           endDate,
+          fatturato: fatturati,
         });
         if (cancelled) return;
         setBollettini(Array.isArray(response.data) ? response.data : []);
@@ -202,7 +209,7 @@ export function BollettiniArchivioPage() {
     return () => {
       cancelled = true;
     };
-  }, [clienteId, cantiereId, utenteId, startDate, endDate, refreshToken]);
+  }, [clienteId, cantiereId, utenteId, startDate, endDate, fatturati, refreshToken]);
 
   const totaleOreUomo = bollettini.reduce((sum, b) => sum + oreComplessive(b), 0);
 
@@ -286,6 +293,21 @@ export function BollettiniArchivioPage() {
     }
   };
 
+  // Il bollettino passa all'altra pagina: qui basta toglierlo dall'elenco,
+  // senza ricaricare
+  const handleFatturato = async (bollettino: Bollettino) => {
+    setFatturatoId(bollettino.id);
+    try {
+      await bollettiniApi.setFatturato(bollettino.id, !fatturati);
+      setBollettini((prev) => prev.filter((b) => b.id !== bollettino.id));
+      setError(null);
+    } catch {
+      setError('Errore durante l\'aggiornamento del flag Fatturato');
+    } finally {
+      setFatturatoId(null);
+    }
+  };
+
   const handleDelete = async () => {
     if (deleteId === null) return;
 
@@ -304,7 +326,9 @@ export function BollettiniArchivioPage() {
   return (
     <ResponsabileLayout>
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Archivio Bollettini</h2>
+        <h2 className="text-xl font-semibold text-gray-900">
+          {fatturati ? 'Bollettini fatturati' : 'Bollettini attivi'}
+        </h2>
         <p className="text-sm text-gray-600 mt-1">
           {bollettini.length} bollettini — {totaleOreUomo.toLocaleString('it-IT')} ore totali
         </p>
@@ -424,11 +448,12 @@ export function BollettiniArchivioPage() {
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Data</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Dipendente</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cliente</th>
-                  <th className="text-left py-3 px-2 font-medium text-gray-600">Cantiere</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Operai</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Ore totali</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Mail</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Allegati</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-600">Num Bollettino</th>
+                  <th className="text-center py-3 px-2 font-medium text-gray-600">Fatturato</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Azioni</th>
                 </tr>
               </thead>
@@ -440,7 +465,6 @@ export function BollettiniArchivioPage() {
                     </td>
                     <td className="py-3 px-2">{nomeUtente(bollettino.utente)}</td>
                     <td className="py-3 px-2">{bollettino.clienteNome}</td>
-                    <td className="py-3 px-2">{bollettino.cantiereNome ?? '—'}</td>
                     <td
                       className="py-3 px-2 text-right"
                       title={
@@ -461,6 +485,23 @@ export function BollettiniArchivioPage() {
                       <CellaAllegati
                         bollettino={bollettino}
                         onDownload={handleDownloadAllegato}
+                      />
+                    </td>
+                    {/* Il numero stampato sul PDF ("Bollettino n.") e' l'id */}
+                    <td className="py-3 px-2 text-right">{bollettino.id}</td>
+                    <td className="py-3 px-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={fatturati}
+                        disabled={fatturatoId === bollettino.id}
+                        onChange={() => handleFatturato(bollettino)}
+                        className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        aria-label={`Fatturato, bollettino ${bollettino.id}`}
+                        title={
+                          fatturati && bollettino.fatturatoAt
+                            ? `Fatturato il ${formatDate(bollettino.fatturatoAt)}`
+                            : undefined
+                        }
                       />
                     </td>
                     <td className="py-3 px-2 text-right space-x-3 whitespace-nowrap">
