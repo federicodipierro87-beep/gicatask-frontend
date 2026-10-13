@@ -7,13 +7,17 @@ import { Modal } from '../../components/Modal';
 import { hrApi } from '../../api/client';
 import type { AllegatoHr, SchedaHr, SchedaHrInput, StatoCivile } from '../../types';
 
-type CampiScheda = Omit<SchedaHrInput, 'statiCivili' | 'gradiOccupazione' | 'lpp' | 'figli' | 'formazioni'>;
+type CampiScheda = Omit<
+  SchedaHrInput,
+  'statiCivili' | 'gradiOccupazione' | 'lpp' | 'figli' | 'documenti' | 'formazioni'
+>;
 type CampoTesto = {
   [K in keyof CampiScheda]: CampiScheda[K] extends string | null ? K : never;
 }[keyof CampiScheda];
 
+// Una formazione o un documento personale: hanno la stessa forma
 interface FormazioneForm {
-  // Chiave React stabile anche per le formazioni non ancora salvate
+  // Chiave React stabile anche per le voci non ancora salvate
   uid: string;
   id?: number;
   nome: string;
@@ -120,6 +124,14 @@ function daScheda(scheda: SchedaHr): CampiScheda {
   return campi;
 }
 
+const daElenco = (voci: SchedaHr['formazioni']): FormazioneForm[] =>
+  voci.map((v) => ({ uid: uid(), id: v.id, nome: v.nome, foto: v.foto }));
+
+const versoElenco = (voci: FormazioneForm[]) =>
+  voci
+    .filter((v) => v.nome.trim())
+    .map((v) => ({ id: v.id, nome: v.nome, allegatiIds: v.foto.map((a) => a.id) }));
+
 /** Apre il file in una scheda nuova. La finestra si apre subito, prima
  * dell'attesa, altrimenti il blocco popup la fermerebbe. */
 async function apriFoto(allegato: AllegatoHr) {
@@ -146,6 +158,7 @@ export function HrSchedaPage() {
   const [gradi, setGradi] = useState<GradoOccupazioneForm[]>(() => [nuovoGrado()]);
   const [lpp, setLpp] = useState<LppForm[]>(() => [nuovaLpp()]);
   const [figli, setFigli] = useState<FiglioForm[]>([]);
+  const [documenti, setDocumenti] = useState<FormazioneForm[]>([]);
   const [formazioni, setFormazioni] = useState<FormazioneForm[]>([]);
   const [foto, setFoto] = useState<AllegatoHr | null>(null);
   const [isLoading, setIsLoading] = useState(schedaId !== null);
@@ -180,7 +193,8 @@ export function HrSchedaPage() {
     setFigli(
       scheda.figli.map((f) => ({ uid: uid(), cognomeNome: f.cognomeNome, dataNascita: soloData(f.dataNascita) ?? '' }))
     );
-    setFormazioni(scheda.formazioni.map((f) => ({ uid: uid(), id: f.id, nome: f.nome, foto: f.foto })));
+    setDocumenti(daElenco(scheda.documenti));
+    setFormazioni(daElenco(scheda.formazioni));
   };
 
   useEffect(() => {
@@ -226,9 +240,8 @@ export function HrSchedaPage() {
       figli: figli
         .filter((f) => f.cognomeNome.trim())
         .map((f) => ({ cognomeNome: f.cognomeNome, dataNascita: f.dataNascita || null })),
-      formazioni: formazioni
-        .filter((f) => f.nome.trim())
-        .map((f) => ({ id: f.id, nome: f.nome, allegatiIds: f.foto.map((a) => a.id) })),
+      documenti: versoElenco(documenti),
+      formazioni: versoElenco(formazioni),
     };
 
     setIsSaving(true);
@@ -270,8 +283,6 @@ export function HrSchedaPage() {
   const aggiornaLpp = (u: string, modifica: Partial<LppForm>) =>
     setLpp((prev) => prev.map((r) => (r.uid === u ? { ...r, ...modifica } : r)));
 
-  const aggiornaFormazione = (u: string, modifica: Partial<FormazioneForm>) =>
-    setFormazioni((prev) => prev.map((f) => (f.uid === u ? { ...f, ...modifica } : f)));
 
   if (isLoading) {
     return (
@@ -643,50 +654,25 @@ export function HrSchedaPage() {
           </div>
         </section>
 
-        <section className="card">
-          <h3 className="font-medium text-gray-900 mb-4">Formazioni</h3>
-          {formazioni.length === 0 && <p className="text-sm text-gray-500">Nessuna formazione inserita</p>}
-          <div className="space-y-4">
-            {formazioni.map((formazione, i) => (
-              <div key={formazione.uid} className="rounded-lg border border-gray-200 p-4 space-y-3">
-                <div className="flex gap-3 items-end">
-                  <div className="flex-1">
-                    <label className="label">Formazione {i + 1}</label>
-                    <input
-                      className="input"
-                      value={formazione.nome}
-                      onChange={(e) => aggiornaFormazione(formazione.uid, { nome: e.target.value })}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="text-red-600 hover:text-red-700 text-sm pb-2"
-                    onClick={() => setFormazioni((prev) => prev.filter((f) => f.uid !== formazione.uid))}
-                  >
-                    Rimuovi
-                  </button>
-                </div>
-                <AllegatiUploader
-                  value={formazione.foto}
-                  onChange={(foto) => aggiornaFormazione(formazione.uid, { foto })}
-                  carica={hrApi.uploadFoto}
-                  rimuovi={null}
-                  apri={apriFoto}
-                  etichetta="Foto del tesserino"
-                  aiuto="Immagini o PDF, fino a 4 file. Si salvano insieme alla scheda."
-                  maxFile={4}
-                />
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="btn-secondary mt-3"
-            onClick={() => setFormazioni((prev) => [...prev, { uid: uid(), nome: '', foto: [] }])}
-          >
-            + Aggiungi formazione
-          </button>
-        </section>
+        <ElencoConFoto
+          titolo="Documenti personali"
+          voce="Documento"
+          vuoto="Nessun documento inserito"
+          aggiungi="+ Aggiungi documento"
+          etichettaFoto="Foto del documento"
+          voci={documenti}
+          onChange={setDocumenti}
+        />
+
+        <ElencoConFoto
+          titolo="Formazioni"
+          voce="Formazione"
+          vuoto="Nessuna formazione inserita"
+          aggiungi="+ Aggiungi formazione"
+          etichettaFoto="Foto del tesserino"
+          voci={formazioni}
+          onChange={setFormazioni}
+        />
 
         <section className="card">
           <h3 className="font-medium text-gray-900 mb-4">Contatto di emergenza</h3>
@@ -712,7 +698,7 @@ export function HrSchedaPage() {
         <div className="space-y-4">
           <p className="text-sm text-gray-700">
             Eliminare definitivamente la scheda di <strong>{campi.cognomeNome}</strong>? Verranno
-            cancellati anche figli, formazioni e foto. L'operazione non si può annullare.
+            cancellati anche figli, documenti, formazioni e foto. L'operazione non si può annullare.
           </p>
           <p className="text-xs text-gray-500">
             Se il dipendente ha solo lasciato l'azienda, inserisci la data di cessazione: la scheda
@@ -734,5 +720,76 @@ export function HrSchedaPage() {
         </div>
       </Modal>
     </ResponsabileLayout>
+  );
+}
+
+/** Sezione di voci con nome e foto: documenti personali e formazioni. */
+function ElencoConFoto({
+  titolo,
+  voce,
+  vuoto,
+  aggiungi,
+  etichettaFoto,
+  voci,
+  onChange,
+}: {
+  titolo: string;
+  voce: string;
+  vuoto: string;
+  aggiungi: string;
+  etichettaFoto: string;
+  voci: FormazioneForm[];
+  // Il setter di useState: le foto arrivano dopo l'upload, e l'aggiornamento
+  // va fatto sullo stato di quel momento
+  onChange: React.Dispatch<React.SetStateAction<FormazioneForm[]>>;
+}) {
+  const aggiorna = (u: string, modifica: Partial<FormazioneForm>) =>
+    onChange((prev) => prev.map((v) => (v.uid === u ? { ...v, ...modifica } : v)));
+
+  return (
+    <section className="card">
+      <h3 className="font-medium text-gray-900 mb-4">{titolo}</h3>
+      {voci.length === 0 && <p className="text-sm text-gray-500">{vuoto}</p>}
+      <div className="space-y-4">
+        {voci.map((riga, i) => (
+          <div key={riga.uid} className="rounded-lg border border-gray-200 p-4 space-y-3">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1">
+                <label className="label">{voce} {i + 1}</label>
+                <input
+                  className="input"
+                  value={riga.nome}
+                  onChange={(e) => aggiorna(riga.uid, { nome: e.target.value })}
+                />
+              </div>
+              <button
+                type="button"
+                className="text-red-600 hover:text-red-700 text-sm pb-2"
+                onClick={() => onChange((prev) => prev.filter((v) => v.uid !== riga.uid))}
+              >
+                Rimuovi
+              </button>
+            </div>
+            <AllegatiUploader
+              value={riga.foto}
+              onChange={(foto) => aggiorna(riga.uid, { foto })}
+              carica={hrApi.uploadFoto}
+              rimuovi={null}
+              apri={apriFoto}
+              etichetta={etichettaFoto}
+              aiuto="Immagini o PDF, fino a 4 file. Si salvano insieme alla scheda."
+              maxFile={4}
+            />
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="btn-secondary mt-3"
+        onClick={() => onChange((prev) => [...prev, { uid: uid(), nome: '', foto: [] }])}
+      >
+        {aggiungi}
+      </button>
+    </section>
   );
 }

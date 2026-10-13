@@ -341,17 +341,20 @@ export interface SchedaHr {
   gradiOccupazione: GradoOccupazioneHr[];
   lpp: LppHr[];
   figli: FiglioHr[];
+  // Stessa forma delle formazioni: nome e foto
+  documenti: FormazioneHr[];
   formazioni: FormazioneHr[];
 }
 
 export type SchedaHrInput = Omit<
   SchedaHr,
-  'id' | 'foto' | 'statiCivili' | 'gradiOccupazione' | 'lpp' | 'figli' | 'formazioni'
+  'id' | 'foto' | 'statiCivili' | 'gradiOccupazione' | 'lpp' | 'figli' | 'documenti' | 'formazioni'
 > & {
   statiCivili: { stato: StatoCivile; dal: string | null }[];
   gradiOccupazione: { grado: string; dal: string | null }[];
   lpp: Omit<LppHr, 'id'>[];
   figli: { cognomeNome: string; dataNascita: string | null }[];
+  documenti: { id?: number; nome: string; allegatiIds: number[] }[];
   formazioni: { id?: number; nome: string; allegatiIds: number[] }[];
 };
 
