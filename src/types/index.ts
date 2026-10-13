@@ -280,6 +280,16 @@ export interface GradoOccupazioneHr {
   dal: string | null;
 }
 
+export interface LppHr {
+  id?: number;
+  // "10%": testo, come arriva dalla tendina
+  percentuale: string | null;
+  // Testo libero
+  importo: string | null;
+  // YYYY-MM-DD nel form; dal server arriva come ISO completo
+  dal: string | null;
+}
+
 export interface FiglioHr {
   id?: number;
   cognomeNome: string;
@@ -329,16 +339,18 @@ export interface SchedaHr {
   foto: AllegatoHr | null;
   statiCivili: StatoCivileHr[];
   gradiOccupazione: GradoOccupazioneHr[];
+  lpp: LppHr[];
   figli: FiglioHr[];
   formazioni: FormazioneHr[];
 }
 
 export type SchedaHrInput = Omit<
   SchedaHr,
-  'id' | 'foto' | 'statiCivili' | 'gradiOccupazione' | 'figli' | 'formazioni'
+  'id' | 'foto' | 'statiCivili' | 'gradiOccupazione' | 'lpp' | 'figli' | 'formazioni'
 > & {
   statiCivili: { stato: StatoCivile; dal: string | null }[];
   gradiOccupazione: { grado: string; dal: string | null }[];
+  lpp: Omit<LppHr, 'id'>[];
   figli: { cognomeNome: string; dataNascita: string | null }[];
   formazioni: { id?: number; nome: string; allegatiIds: number[] }[];
 };

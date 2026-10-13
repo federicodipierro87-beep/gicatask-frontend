@@ -7,7 +7,7 @@ import { Modal } from '../../components/Modal';
 import { hrApi } from '../../api/client';
 import type { AllegatoHr, SchedaHr, SchedaHrInput, StatoCivile } from '../../types';
 
-type CampiScheda = Omit<SchedaHrInput, 'statiCivili' | 'gradiOccupazione' | 'figli' | 'formazioni'>;
+type CampiScheda = Omit<SchedaHrInput, 'statiCivili' | 'gradiOccupazione' | 'lpp' | 'figli' | 'formazioni'>;
 type CampoTesto = {
   [K in keyof CampiScheda]: CampiScheda[K] extends string | null ? K : never;
 }[keyof CampiScheda];
@@ -31,6 +31,14 @@ interface GradoOccupazioneForm {
   uid: string;
   // '' finche' non si sceglie: la riga vuota non si salva
   grado: string;
+  dal: string;
+}
+
+// Tutti e tre facoltativi: la riga si salva se almeno uno e' compilato
+interface LppForm {
+  uid: string;
+  percentuale: string;
+  importo: string;
   dal: string;
 }
 
@@ -83,6 +91,8 @@ const VUOTA: CampiScheda = {
 
 const GRADI_OCCUPAZIONE = ['10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'];
 
+const PERCENTUALI_LPP = Array.from({ length: 11 }, (_, i) => `${i * 10}%`);
+
 const CAMPI_DATA: CampoTesto[] = [
   'dataNascita',
   'scadenzaPermesso',
@@ -96,6 +106,7 @@ const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 const nuovoStatoCivile = (): StatoCivileForm => ({ uid: uid(), stato: '', dal: '' });
 const nuovoGrado = (): GradoOccupazioneForm => ({ uid: uid(), grado: '', dal: '' });
+const nuovaLpp = (): LppForm => ({ uid: uid(), percentuale: '', importo: '', dal: '' });
 
 /** Il server rimanda le date come ISO completo: l'input date vuole YYYY-MM-DD. */
 const soloData = (valore: string | null) => (valore ? valore.slice(0, 10) : null);
@@ -133,6 +144,7 @@ export function HrSchedaPage() {
   // Sempre almeno una riga, come il campo singolo che sostituisce
   const [statiCivili, setStatiCivili] = useState<StatoCivileForm[]>(() => [nuovoStatoCivile()]);
   const [gradi, setGradi] = useState<GradoOccupazioneForm[]>(() => [nuovoGrado()]);
+  const [lpp, setLpp] = useState<LppForm[]>(() => [nuovaLpp()]);
   const [figli, setFigli] = useState<FiglioForm[]>([]);
   const [formazioni, setFormazioni] = useState<FormazioneForm[]>([]);
   const [foto, setFoto] = useState<AllegatoHr | null>(null);
@@ -154,6 +166,16 @@ export function HrSchedaPage() {
       scheda.gradiOccupazione.length > 0
         ? scheda.gradiOccupazione.map((g) => ({ uid: uid(), grado: g.grado, dal: soloData(g.dal) ?? '' }))
         : [nuovoGrado()]
+    );
+    setLpp(
+      scheda.lpp.length > 0
+        ? scheda.lpp.map((r) => ({
+            uid: uid(),
+            percentuale: r.percentuale ?? '',
+            importo: r.importo ?? '',
+            dal: soloData(r.dal) ?? '',
+          }))
+        : [nuovaLpp()]
     );
     setFigli(
       scheda.figli.map((f) => ({ uid: uid(), cognomeNome: f.cognomeNome, dataNascita: soloData(f.dataNascita) ?? '' }))
@@ -198,6 +220,9 @@ export function HrSchedaPage() {
       fotoId: foto?.id ?? null,
       statiCivili: statiCivili.flatMap((s) => (s.stato ? [{ stato: s.stato, dal: s.dal || null }] : [])),
       gradiOccupazione: gradi.flatMap((g) => (g.grado ? [{ grado: g.grado, dal: g.dal || null }] : [])),
+      lpp: lpp
+        .filter((r) => r.percentuale || r.importo.trim() || r.dal)
+        .map((r) => ({ percentuale: r.percentuale || null, importo: r.importo.trim() || null, dal: r.dal || null })),
       figli: figli
         .filter((f) => f.cognomeNome.trim())
         .map((f) => ({ cognomeNome: f.cognomeNome, dataNascita: f.dataNascita || null })),
@@ -241,6 +266,9 @@ export function HrSchedaPage() {
 
   const aggiornaGrado = (u: string, modifica: Partial<GradoOccupazioneForm>) =>
     setGradi((prev) => prev.map((g) => (g.uid === u ? { ...g, ...modifica } : g)));
+
+  const aggiornaLpp = (u: string, modifica: Partial<LppForm>) =>
+    setLpp((prev) => prev.map((r) => (r.uid === u ? { ...r, ...modifica } : r)));
 
   const aggiornaFormazione = (u: string, modifica: Partial<FormazioneForm>) =>
     setFormazioni((prev) => prev.map((f) => (f.uid === u ? { ...f, ...modifica } : f)));
@@ -519,6 +547,68 @@ export function HrSchedaPage() {
               title="Aggiungi grado di occupazione"
               aria-label="Aggiungi grado di occupazione"
               onClick={() => setGradi((prev) => [...prev, nuovoGrado()])}
+            >
+              +
+            </button>
+          </div>
+
+          {/* LPP: anche qui piu' righe quando cambia nel tempo */}
+          <div className="space-y-3 my-4">
+            {lpp.map((riga) => (
+              <div key={riga.uid} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor={`lppPercentuale-${riga.uid}`} className="label">LPP</label>
+                  <select
+                    id={`lppPercentuale-${riga.uid}`}
+                    className="select"
+                    value={riga.percentuale}
+                    onChange={(e) => aggiornaLpp(riga.uid, { percentuale: e.target.value })}
+                  >
+                    <option value="">—</option>
+                    {PERCENTUALI_LPP.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor={`lppImporto-${riga.uid}`} className="label">Importo</label>
+                  <input
+                    id={`lppImporto-${riga.uid}`}
+                    type="text"
+                    className="input"
+                    value={riga.importo}
+                    onChange={(e) => aggiornaLpp(riga.uid, { importo: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label htmlFor={`lppDal-${riga.uid}`} className="label">Dal</label>
+                  <div className="flex gap-2">
+                    <input
+                      id={`lppDal-${riga.uid}`}
+                      type="date"
+                      className="input"
+                      value={riga.dal}
+                      onChange={(e) => aggiornaLpp(riga.uid, { dal: e.target.value })}
+                    />
+                    {lpp.length > 1 && (
+                      <button
+                        type="button"
+                        className="text-red-600 hover:text-red-700 text-sm whitespace-nowrap"
+                        onClick={() => setLpp((prev) => prev.filter((r) => r.uid !== riga.uid))}
+                      >
+                        Rimuovi
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn-secondary"
+              title="Aggiungi riga LPP"
+              aria-label="Aggiungi riga LPP"
+              onClick={() => setLpp((prev) => [...prev, nuovaLpp()])}
             >
               +
             </button>
