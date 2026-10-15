@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { Modal } from '../../components/Modal';
-import { DateTimeInput } from '../../components/DateTimeInput';
+import { CampoData } from '../../components/CampoData';
 import { MultiSelect } from '../../components/MultiSelect';
 import { attivitaApi, clientiApi, cantieriApi, utentiApi } from '../../api/client';
 import { nomeUtente } from '../../utils/nomeUtente';
@@ -268,26 +268,8 @@ function ReportAttivita() {
           />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          <div>
-            <label htmlFor="startDate" className="label">Dal</label>
-            <DateTimeInput
-              type="date"
-              id="startDate"
-              className="input"
-              value={startDate ?? ''}
-              onChange={setStartDate}
-            />
-          </div>
-          <div>
-            <label htmlFor="endDate" className="label">Al</label>
-            <DateTimeInput
-              type="date"
-              id="endDate"
-              className="input"
-              value={endDate ?? ''}
-              onChange={setEndDate}
-            />
-          </div>
+          <CampoData id="startDate" label="Dal" value={startDate ?? ''} onChange={setStartDate} />
+          <CampoData id="endDate" label="Al" value={endDate ?? ''} onChange={setEndDate} />
           <div>
             <span className="label">Cliente</span>
             <MultiSelect
