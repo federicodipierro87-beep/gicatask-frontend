@@ -41,8 +41,9 @@ interface GradoOccupazioneForm {
 // Tutti e tre facoltativi: la riga si salva se almeno uno e' compilato
 interface LppForm {
   uid: string;
-  percentuale: string;
+  // Importo al 100%
   importo: string;
+  importo50: string;
   dal: string;
 }
 
@@ -95,8 +96,6 @@ const VUOTA: CampiScheda = {
 
 const GRADI_OCCUPAZIONE = ['10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', '100%'];
 
-const PERCENTUALI_LPP = Array.from({ length: 11 }, (_, i) => `${i * 10}%`);
-
 const CAMPI_DATA: CampoTesto[] = [
   'dataNascita',
   'scadenzaPermesso',
@@ -110,7 +109,7 @@ const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 const nuovoStatoCivile = (): StatoCivileForm => ({ uid: uid(), stato: '', dal: '' });
 const nuovoGrado = (): GradoOccupazioneForm => ({ uid: uid(), grado: '', dal: '' });
-const nuovaLpp = (): LppForm => ({ uid: uid(), percentuale: '', importo: '', dal: '' });
+const nuovaLpp = (): LppForm => ({ uid: uid(), importo: '', importo50: '', dal: '' });
 
 /** Il server rimanda le date come ISO completo: l'input date vuole YYYY-MM-DD. */
 const soloData = (valore: string | null) => (valore ? valore.slice(0, 10) : null);
@@ -184,8 +183,8 @@ export function HrSchedaPage() {
       scheda.lpp.length > 0
         ? scheda.lpp.map((r) => ({
             uid: uid(),
-            percentuale: r.percentuale ?? '',
             importo: r.importo ?? '',
+            importo50: r.importo50 ?? '',
             dal: soloData(r.dal) ?? '',
           }))
         : [nuovaLpp()]
@@ -235,8 +234,8 @@ export function HrSchedaPage() {
       statiCivili: statiCivili.flatMap((s) => (s.stato ? [{ stato: s.stato, dal: s.dal || null }] : [])),
       gradiOccupazione: gradi.flatMap((g) => (g.grado ? [{ grado: g.grado, dal: g.dal || null }] : [])),
       lpp: lpp
-        .filter((r) => r.percentuale || r.importo.trim() || r.dal)
-        .map((r) => ({ percentuale: r.percentuale || null, importo: r.importo.trim() || null, dal: r.dal || null })),
+        .filter((r) => r.importo.trim() || r.importo50.trim() || r.dal)
+        .map((r) => ({ importo: r.importo.trim() || null, importo50: r.importo50.trim() || null, dal: r.dal || null })),
       figli: figli
         .filter((f) => f.cognomeNome.trim())
         .map((f) => ({ cognomeNome: f.cognomeNome, dataNascita: f.dataNascita || null })),
@@ -565,30 +564,27 @@ export function HrSchedaPage() {
 
           {/* LPP: anche qui piu' righe quando cambia nel tempo */}
           <div className="space-y-3 my-4">
+            <p className="text-sm font-medium text-gray-900">LPP</p>
             {lpp.map((riga) => (
               <div key={riga.uid} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor={`lppPercentuale-${riga.uid}`} className="label">LPP</label>
-                  <select
-                    id={`lppPercentuale-${riga.uid}`}
-                    className="select"
-                    value={riga.percentuale}
-                    onChange={(e) => aggiornaLpp(riga.uid, { percentuale: e.target.value })}
-                  >
-                    <option value="">—</option>
-                    {PERCENTUALI_LPP.map((p) => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor={`lppImporto-${riga.uid}`} className="label">Importo</label>
+                  <label htmlFor={`lppImporto-${riga.uid}`} className="label">Importo 100%</label>
                   <input
                     id={`lppImporto-${riga.uid}`}
                     type="text"
                     className="input"
                     value={riga.importo}
                     onChange={(e) => aggiornaLpp(riga.uid, { importo: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label htmlFor={`lppImporto50-${riga.uid}`} className="label">Importo 50%</label>
+                  <input
+                    id={`lppImporto50-${riga.uid}`}
+                    type="text"
+                    className="input"
+                    value={riga.importo50}
+                    onChange={(e) => aggiornaLpp(riga.uid, { importo50: e.target.value })}
                   />
                 </div>
                 <div>

@@ -282,10 +282,10 @@ export interface GradoOccupazioneHr {
 
 export interface LppHr {
   id?: number;
-  // "10%": testo, come arriva dalla tendina
-  percentuale: string | null;
-  // Testo libero
+  // Importo al 100%, testo libero
   importo: string | null;
+  // Importo al 50%, testo libero
+  importo50: string | null;
   // YYYY-MM-DD nel form; dal server arriva come ISO completo
   dal: string | null;
 }
