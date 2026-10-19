@@ -272,6 +272,14 @@ export interface StatoCivileHr {
   dal: string | null;
 }
 
+export interface SalarioHr {
+  id?: number;
+  // Testo libero: "28.50/h"
+  salario: string;
+  // YYYY-MM-DD nel form; dal server arriva come ISO completo
+  dal: string | null;
+}
+
 export interface GradoOccupazioneHr {
   id?: number;
   // "80%": testo, come arriva dalla tendina
@@ -329,7 +337,6 @@ export interface SchedaHr {
   madreCognomeNome: string | null;
   dataAssunzione: string | null;
   tipoSalario: string | null;
-  salario: string | null;
   iban: string | null;
   email: string | null;
   emergenzaNome: string | null;
@@ -338,6 +345,7 @@ export interface SchedaHr {
   fotoId: number | null;
   foto: AllegatoHr | null;
   statiCivili: StatoCivileHr[];
+  salari: SalarioHr[];
   gradiOccupazione: GradoOccupazioneHr[];
   lpp: LppHr[];
   figli: FiglioHr[];
@@ -348,9 +356,10 @@ export interface SchedaHr {
 
 export type SchedaHrInput = Omit<
   SchedaHr,
-  'id' | 'foto' | 'statiCivili' | 'gradiOccupazione' | 'lpp' | 'figli' | 'documenti' | 'formazioni'
+  'id' | 'foto' | 'statiCivili' | 'salari' | 'gradiOccupazione' | 'lpp' | 'figli' | 'documenti' | 'formazioni'
 > & {
   statiCivili: { stato: StatoCivile; dal: string | null }[];
+  salari: { salario: string; dal: string | null }[];
   gradiOccupazione: { grado: string; dal: string | null }[];
   lpp: Omit<LppHr, 'id'>[];
   figli: { cognomeNome: string; dataNascita: string | null }[];

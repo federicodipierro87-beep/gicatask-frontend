@@ -9,7 +9,7 @@ import type { AllegatoHr, SchedaHr, SchedaHrInput, StatoCivile } from '../../typ
 
 type CampiScheda = Omit<
   SchedaHrInput,
-  'statiCivili' | 'gradiOccupazione' | 'lpp' | 'figli' | 'documenti' | 'formazioni'
+  'statiCivili' | 'salari' | 'gradiOccupazione' | 'lpp' | 'figli' | 'documenti' | 'formazioni'
 >;
 type CampoTesto = {
   [K in keyof CampiScheda]: CampiScheda[K] extends string | null ? K : never;
@@ -28,6 +28,13 @@ interface StatoCivileForm {
   uid: string;
   // '' finche' non si sceglie: la riga vuota non si salva
   stato: StatoCivile | '';
+  dal: string;
+}
+
+// La riga senza salario non si salva
+interface SalarioForm {
+  uid: string;
+  salario: string;
   dal: string;
 }
 
@@ -85,7 +92,6 @@ const VUOTA: CampiScheda = {
   madreCognomeNome: null,
   dataAssunzione: null,
   tipoSalario: null,
-  salario: null,
   iban: null,
   email: null,
   emergenzaNome: null,
@@ -108,6 +114,7 @@ const CAMPI_DATA: CampoTesto[] = [
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 const nuovoStatoCivile = (): StatoCivileForm => ({ uid: uid(), stato: '', dal: '' });
+const nuovoSalario = (): SalarioForm => ({ uid: uid(), salario: '', dal: '' });
 const nuovoGrado = (): GradoOccupazioneForm => ({ uid: uid(), grado: '', dal: '' });
 const nuovaLpp = (): LppForm => ({ uid: uid(), importo: '', importo50: '', dal: '' });
 
@@ -154,6 +161,7 @@ export function HrSchedaPage() {
   const [campi, setCampi] = useState<CampiScheda>(VUOTA);
   // Sempre almeno una riga, come il campo singolo che sostituisce
   const [statiCivili, setStatiCivili] = useState<StatoCivileForm[]>(() => [nuovoStatoCivile()]);
+  const [salari, setSalari] = useState<SalarioForm[]>(() => [nuovoSalario()]);
   const [gradi, setGradi] = useState<GradoOccupazioneForm[]>(() => [nuovoGrado()]);
   const [lpp, setLpp] = useState<LppForm[]>(() => [nuovaLpp()]);
   const [figli, setFigli] = useState<FiglioForm[]>([]);
@@ -173,6 +181,11 @@ export function HrSchedaPage() {
       scheda.statiCivili.length > 0
         ? scheda.statiCivili.map((s) => ({ uid: uid(), stato: s.stato, dal: soloData(s.dal) ?? '' }))
         : [nuovoStatoCivile()]
+    );
+    setSalari(
+      scheda.salari.length > 0
+        ? scheda.salari.map((r) => ({ uid: uid(), salario: r.salario, dal: soloData(r.dal) ?? '' }))
+        : [nuovoSalario()]
     );
     setGradi(
       scheda.gradiOccupazione.length > 0
@@ -232,6 +245,9 @@ export function HrSchedaPage() {
       ...campi,
       fotoId: foto?.id ?? null,
       statiCivili: statiCivili.flatMap((s) => (s.stato ? [{ stato: s.stato, dal: s.dal || null }] : [])),
+      salari: salari
+        .filter((r) => r.salario.trim())
+        .map((r) => ({ salario: r.salario.trim(), dal: r.dal || null })),
       gradiOccupazione: gradi.flatMap((g) => (g.grado ? [{ grado: g.grado, dal: g.dal || null }] : [])),
       lpp: lpp
         .filter((r) => r.importo.trim() || r.importo50.trim() || r.dal)
@@ -275,6 +291,9 @@ export function HrSchedaPage() {
 
   const aggiornaStatoCivile = (u: string, modifica: Partial<StatoCivileForm>) =>
     setStatiCivili((prev) => prev.map((s) => (s.uid === u ? { ...s, ...modifica } : s)));
+
+  const aggiornaSalario = (u: string, modifica: Partial<SalarioForm>) =>
+    setSalari((prev) => prev.map((r) => (r.uid === u ? { ...r, ...modifica } : r)));
 
   const aggiornaGrado = (u: string, modifica: Partial<GradoOccupazioneForm>) =>
     setGradi((prev) => prev.map((g) => (g.uid === u ? { ...g, ...modifica } : g)));
@@ -502,8 +521,54 @@ export function HrSchedaPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {testo('dataAssunzione', 'Data di assunzione', 'date')}
             {testo('tipoSalario', 'Tipo di salario')}
-            {testo('salario', 'Salario')}
-            {testo('iban', 'Numero IBAN')}
+          </div>
+
+          {/* Piu' righe quando il salario cambia nel tempo */}
+          <div className="space-y-3 my-4">
+            {salari.map((riga) => (
+              <div key={riga.uid} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor={`salario-${riga.uid}`} className="label">Salario</label>
+                  <input
+                    id={`salario-${riga.uid}`}
+                    type="text"
+                    className="input"
+                    value={riga.salario}
+                    onChange={(e) => aggiornaSalario(riga.uid, { salario: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label htmlFor={`salarioDal-${riga.uid}`} className="label">Dal</label>
+                  <div className="flex gap-2">
+                    <input
+                      id={`salarioDal-${riga.uid}`}
+                      type="date"
+                      className="input"
+                      value={riga.dal}
+                      onChange={(e) => aggiornaSalario(riga.uid, { dal: e.target.value })}
+                    />
+                    {salari.length > 1 && (
+                      <button
+                        type="button"
+                        className="text-red-600 hover:text-red-700 text-sm whitespace-nowrap"
+                        onClick={() => setSalari((prev) => prev.filter((r) => r.uid !== riga.uid))}
+                      >
+                        Rimuovi
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn-secondary"
+              title="Aggiungi salario"
+              aria-label="Aggiungi salario"
+              onClick={() => setSalari((prev) => [...prev, nuovoSalario()])}
+            >
+              +
+            </button>
           </div>
 
           {/* Piu' righe quando la percentuale cambia nel tempo */}
@@ -622,6 +687,7 @@ export function HrSchedaPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {testo('iban', 'Numero IBAN')}
             <div>
               <label htmlFor="dataCessazione" className="label">Data di cessazione</label>
               <div className="flex gap-2">
