@@ -10,6 +10,7 @@ import type {
   DreamNoleggio,
   DreamNoleggioInput,
   DreamVeicolo,
+  DurataNoleggio,
   DreamCliente,
   GicaNoleggio,
   GicaNoleggioInput,
@@ -79,7 +80,7 @@ export const authApi = {
   login: (utenteId: number, password?: string) =>
     apiClient.post<{
       token: string;
-      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean };
+      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean };
     }>('/auth/login', { utenteId, password }),
 
   logout: () =>
@@ -87,7 +88,7 @@ export const authApi = {
 
   getMe: () =>
     apiClient.get<{
-      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean };
+      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean };
     }>('/auth/me'),
 };
 
@@ -332,6 +333,7 @@ export const utentiApi = {
       cognome?: string;
       ruolo?: string;
       abilitatoBollettini?: boolean;
+      abilitatoBollettini2?: boolean;
       percentualeLavoro?: number;
     }
   ) => apiClient.put(`/utenti/${id}`, data),
@@ -377,6 +379,8 @@ export interface BollettinoFilters {
   endDate?: string;
   // Assente: tutti i bollettini
   fatturato?: boolean;
+  // Assente: entrambi i modelli (archivio)
+  modello?: 1 | 2;
 }
 
 // voceId nullo per le righe scritte a mano e non salvate in anagrafica:
@@ -442,6 +446,12 @@ export interface CreateBollettinoInput {
   // Solo gli id: i file sono gia' stati caricati mentre l'operatore compilava,
   // cosi' un upload che fallisce fallisce prima delle firme
   allegatiIds?: number[];
+  // Sezione "Bollettini 2": senza, il bollettino e' classico
+  modello?: 1 | 2;
+  riferimentoCantiere?: string;
+  mezziTesto?: string;
+  trasportiTesto?: string;
+  noleggi?: { veicoloId: number; durata: DurataNoleggio }[];
 }
 
 function bollettinoParams(filters?: BollettinoFilters): string {
@@ -452,6 +462,7 @@ function bollettinoParams(filters?: BollettinoFilters): string {
   if (filters?.startDate) params.append('startDate', filters.startDate);
   if (filters?.endDate) params.append('endDate', filters.endDate);
   if (filters?.fatturato !== undefined) params.append('fatturato', String(filters.fatturato));
+  if (filters?.modello) params.append('modello', String(filters.modello));
   return params.toString() ? `?${params.toString()}` : '';
 }
 

@@ -10,19 +10,24 @@ export function DipendenteLayout({ children }: Props) {
   const location = useLocation();
 
   // "Le Mie Attività" resta in fondo: isActive usa startsWith e /dipendente è
-  // prefisso di /dipendente/bollettini, per questo ha exact
+  // prefisso di /dipendente/bollettini, per questo ha exact.
+  // "Bollettini 2" ha un flag suo, indipendente da quello dei bollettini
   const navItems = [
     { path: '/dipendente/nuova', label: 'Nuova Attività' },
     { path: '/dipendente/assenze', label: 'Assenze' },
     ...(user?.abilitatoBollettini
       ? [{ path: '/dipendente/bollettini', label: 'Bollettini' }]
       : []),
+    ...(user?.abilitatoBollettini2
+      ? [{ path: '/dipendente/bollettini-2', label: 'Bollettini 2' }]
+      : []),
     { path: '/dipendente', label: 'Le Mie Attività', exact: true },
   ];
 
   const isActive = (path: string, exact = false) => {
     if (exact) return location.pathname === path;
-    return location.pathname.startsWith(path);
+    // Per segmenti: /dipendente/bollettini-2 non deve accendere "Bollettini"
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
   return (

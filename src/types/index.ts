@@ -6,6 +6,8 @@ export interface User {
   cognome: string;
   ruolo: Ruolo;
   abilitatoBollettini: boolean;
+  // Sezione "Bollettini 2", indipendente dal flag dei bollettini classici
+  abilitatoBollettini2: boolean;
 }
 
 export interface UserListItem {
@@ -187,6 +189,15 @@ export interface RigaBollettino {
   quantita: number;
 }
 
+export type DurataNoleggio = 'MEZZA_GIORNATA' | 'GIORNATA_INTERA';
+
+/** Noleggio di un veicolo nel bollettino modello 2. Nome copiato alla firma. */
+export interface NoleggioBollettino {
+  veicoloId: number | null;
+  descrizione: string;
+  durata: DurataNoleggio;
+}
+
 /** Veicolo dell'anagrafica Gica Noleggi, selezionabile come mezzo. */
 export interface VeicoloBollettino {
   id: number;
@@ -228,6 +239,13 @@ export interface Bollettino {
   oraInizioPomeriggio?: string | null;
   oraFinePomeriggio?: string | null;
   materialiTesto?: string | null;
+  // 1 = classico, 2 = sezione "Bollettini 2"
+  modello?: number;
+  // Solo modello 2
+  riferimentoCantiere?: string | null;
+  mezziTesto?: string | null;
+  trasportiTesto?: string | null;
+  noleggi?: NoleggioBollettino[];
   clienteNome: string;
   cantiereNome: string | null;
   firmaOperatoreNome: string;

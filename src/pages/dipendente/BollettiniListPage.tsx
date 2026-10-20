@@ -16,7 +16,12 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export function BollettiniListPage() {
+interface Props {
+  // 2 = sezione "Bollettini 2": stessa pagina, elenco e link del modello 2
+  modello?: 1 | 2;
+}
+
+export function BollettiniListPage({ modello = 1 }: Props) {
   const [bollettini, setBollettini] = useState<Bollettino[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +36,7 @@ export function BollettiniListPage() {
 
     (async () => {
       try {
-        const response = await bollettiniApi.getAll({ startDate, endDate });
+        const response = await bollettiniApi.getAll({ startDate, endDate, modello });
         if (cancelled) return;
         setBollettini(Array.isArray(response.data) ? response.data : []);
         setError(null);
@@ -45,7 +50,7 @@ export function BollettiniListPage() {
     return () => {
       cancelled = true;
     };
-  }, [startDate, endDate]);
+  }, [startDate, endDate, modello]);
 
   const handleDownload = async (bollettino: Bollettino) => {
     setDownloadId(bollettino.id);
@@ -63,10 +68,15 @@ export function BollettiniListPage() {
     <DipendenteLayout>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">I Miei Bollettini</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {modello === 2 ? 'I Miei Bollettini 2' : 'I Miei Bollettini'}
+          </h2>
           <p className="text-sm text-gray-600 mt-1">{bollettini.length} bollettini nel mese</p>
         </div>
-        <Link to="/dipendente/bollettini/nuovo" className="btn-primary text-center">
+        <Link
+          to={modello === 2 ? '/dipendente/bollettini-2/nuovo' : '/dipendente/bollettini/nuovo'}
+          className="btn-primary text-center"
+        >
           + Nuovo bollettino
         </Link>
       </div>
@@ -94,6 +104,11 @@ export function BollettiniListPage() {
             <div key={bollettino.id} className="card">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="min-w-0">
+                  {bollettino.riferimentoCantiere && (
+                    <p className="text-xs font-medium text-primary-700 uppercase tracking-wide">
+                      Rif. cantiere: {bollettino.riferimentoCantiere}
+                    </p>
+                  )}
                   <p className="font-medium text-gray-900">
                     {formatDate(bollettino.dataRiferimento)} —{' '}
                     {bollettino.cantiereNome ?? bollettino.clienteNome}

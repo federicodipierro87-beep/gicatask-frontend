@@ -129,6 +129,24 @@ function AppRoutes() {
         }
       />
 
+      {/* Sezione "Bollettini 2": stesse pagine, modello 2, flag a parte */}
+      <Route
+        path="/dipendente/bollettini-2"
+        element={
+          <ProtectedRoute requireBollettini2>
+            <BollettiniListPage modello={2} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dipendente/bollettini-2/nuovo"
+        element={
+          <ProtectedRoute requireBollettini2>
+            <BollettinoFormPage modello={2} />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Responsabile routes */}
       <Route
         path="/responsabile"

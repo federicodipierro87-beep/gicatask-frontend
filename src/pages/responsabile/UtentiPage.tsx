@@ -21,6 +21,7 @@ interface Utente {
   ruolo: 'DIPENDENTE' | 'RESPONSABILE';
   attivo: boolean;
   abilitatoBollettini: boolean;
+  abilitatoBollettini2: boolean;
   /** Percentuale base: vale nei mesi prima della prima variazione. */
   percentualeLavoro: number;
   percentualiLavoro: VariazionePercentuale[];
@@ -59,6 +60,7 @@ export function UtentiPage() {
   const [formRuolo, setFormRuolo] = useState<'DIPENDENTE' | 'RESPONSABILE'>('DIPENDENTE');
   const [formPassword, setFormPassword] = useState('');
   const [formAbilitatoBollettini, setFormAbilitatoBollettini] = useState(false);
+  const [formAbilitatoBollettini2, setFormAbilitatoBollettini2] = useState(false);
   const [formPercentuale, setFormPercentuale] = useState('100');
   const [newPassword, setNewPassword] = useState('');
 
@@ -93,6 +95,7 @@ export function UtentiPage() {
     setFormRuolo('DIPENDENTE');
     setFormPassword('');
     setFormAbilitatoBollettini(false);
+    setFormAbilitatoBollettini2(false);
     setFormPercentuale('100');
     setError(null);
     setIsModalOpen(true);
@@ -105,6 +108,7 @@ export function UtentiPage() {
     setFormRuolo(utente.ruolo);
     setFormPassword('');
     setFormAbilitatoBollettini(utente.abilitatoBollettini);
+    setFormAbilitatoBollettini2(utente.abilitatoBollettini2 ?? false);
     setFormPercentuale(String(utente.percentualeLavoro));
     setNuovaDecorrenza(currentMonth());
     setNuovaPercentuale('');
@@ -175,6 +179,7 @@ export function UtentiPage() {
           cognome: formCognome.trim(),
           ruolo: formRuolo,
           abilitatoBollettini: formAbilitatoBollettini,
+          abilitatoBollettini2: formAbilitatoBollettini2,
           percentualeLavoro: percentuale,
         });
 
@@ -494,6 +499,23 @@ export function UtentiPage() {
                 </label>
                 <p className="text-sm text-gray-500 mt-1">
                   Mostra la sezione Bollettini. Vale anche per i responsabili.
+                </p>
+              </div>
+            )}
+            {editingUtente && (
+              <div>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={formAbilitatoBollettini2}
+                    onChange={(e) => setFormAbilitatoBollettini2(e.target.checked)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  Abilita Bollettini 2
+                </label>
+                <p className="text-sm text-gray-500 mt-1">
+                  Mostra la sezione Bollettini 2 nell'area dipendente: riferimento del cantiere,
+                  mezzi e trasporti a testo libero, noleggi.
                 </p>
               </div>
             )}

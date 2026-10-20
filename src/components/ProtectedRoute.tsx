@@ -7,9 +7,16 @@ interface ProtectedRouteProps {
   requiredRole?: Ruolo;
   /** Riservato a chi ha il flag bollettini, responsabile compreso. */
   requireBollettini?: boolean;
+  /** Riservato a chi ha il flag della sezione "Bollettini 2". */
+  requireBollettini2?: boolean;
 }
 
-export function ProtectedRoute({ children, requiredRole, requireBollettini }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+  requiredRole,
+  requireBollettini,
+  requireBollettini2,
+}: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
@@ -32,7 +39,10 @@ export function ProtectedRoute({ children, requiredRole, requireBollettini }: Pr
 
   // Questo è solo il menu: l'accesso vero è deciso dalla guardia server, che
   // rilegge il flag dal database a ogni richiesta
-  if (requireBollettini && !user?.abilitatoBollettini) {
+  if (
+    (requireBollettini && !user?.abilitatoBollettini) ||
+    (requireBollettini2 && !user?.abilitatoBollettini2)
+  ) {
     // Rimandare un responsabile all'area dipendente lo sbalzerebbe fuori
     // dalla sezione in cui stava lavorando
     const redirectPath = user?.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente/nuova';

@@ -521,6 +521,19 @@ export function BollettiniArchivioPage() {
                       />
                     </td>
                     <td className="py-3 px-2 text-right whitespace-nowrap">
+                      {/* Bollettino della sezione "Bollettini 2" */}
+                      {bollettino.modello === 2 && (
+                        <span
+                          className="mr-1.5 px-1.5 py-0.5 rounded bg-primary-50 text-primary-700 text-xs font-medium"
+                          title={
+                            bollettino.riferimentoCantiere
+                              ? `Bollettini 2 · Rif. cantiere: ${bollettino.riferimentoCantiere}`
+                              : 'Bollettini 2'
+                          }
+                        >
+                          B2
+                        </span>
+                      )}
                       {numeroBollettino(bollettino)}
                     </td>
                     <td className="py-3 px-2 text-center">

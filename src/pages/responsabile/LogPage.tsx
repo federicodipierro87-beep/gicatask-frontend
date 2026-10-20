@@ -41,6 +41,7 @@ const CAMPI: Record<string, string> = {
   veicoloId: 'Veicolo',
   cognomeNome: 'Cognome e nome',
   abilitatoBollettini: 'Abilitato bollettini',
+  abilitatoBollettini2: 'Abilitato bollettini 2',
   percentualeLavoro: 'Percentuale di lavoro',
 };
 

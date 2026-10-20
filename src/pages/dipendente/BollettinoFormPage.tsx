@@ -7,6 +7,10 @@ import { BancaDatiSelector, type VoceScelta } from '../../components/BancaDatiSe
 import { MultiSelect } from '../../components/MultiSelect';
 import { DateTimeInput } from '../../components/DateTimeInput';
 import {
+  NoleggiSelector,
+  type RigaNoleggio,
+} from '../../components/NoleggiSelector';
+import {
   SquadreSelector,
   nuovaRigaSquadra,
   operaiRiga,
@@ -51,9 +55,17 @@ function messaggioAvviso(esito: EsitoEmailBollettino): string {
   }
 }
 
-export function BollettinoFormPage() {
+interface Props {
+  // 2 = sezione "Bollettini 2": riferimento del cantiere in testa, mezzi e
+  // trasporti a testo libero dentro le attivita', noleggi dei veicoli
+  modello?: 1 | 2;
+}
+
+export function BollettinoFormPage({ modello = 1 }: Props) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const modello2 = modello === 2;
+  const elenco = modello2 ? '/dipendente/bollettini-2' : '/dipendente/bollettini';
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -78,6 +90,11 @@ export function BollettinoFormPage() {
   const [mezzi, setMezzi] = useState<VoceScelta[]>([]);
   const [materiali, setMateriali] = useState('');
   const [trasporti, setTrasporti] = useState<VoceScelta[]>([]);
+  // Solo modello 2
+  const [riferimentoCantiere, setRiferimentoCantiere] = useState('');
+  const [mezziTesto, setMezziTesto] = useState('');
+  const [trasportiTesto, setTrasportiTesto] = useState('');
+  const [noleggi, setNoleggi] = useState<RigaNoleggio[]>([]);
 
   const [email, setEmail] = useState('');
   // Gia' caricati sul server: qui restano i soli metadati, e nella POST solo
@@ -92,14 +109,16 @@ export function BollettinoFormPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Il modello 2 non usa la banca dati trasporti, che e' riservata al
+        // flag dei bollettini classici: chiederla darebbe un 403
         const [clientiRes, veicoliRes, trasportiRes] = await Promise.all([
           clientiApi.getAll(),
           bollettiniApi.getVeicoli(),
-          vociBollettinoApi.getAll('trasporti'),
+          modello2 ? null : vociBollettinoApi.getAll('trasporti'),
         ]);
         setClienti(clientiRes.data);
         setVeicoli(veicoliRes.data);
-        setTrasportiDisponibili(trasportiRes.data);
+        setTrasportiDisponibili(trasportiRes?.data ?? []);
       } catch {
         setError('Errore nel caricamento dei dati');
       } finally {
@@ -175,6 +194,7 @@ export function BollettinoFormPage() {
     (cantieri.length === 0 || cantieriIds.length > 0) &&
     attivita.trim().length > 0 &&
     squadre.every((r) => problemaRiga(r) === null) &&
+    noleggi.every((n) => n.veicoloId !== null) &&
     firmaOperatoreNome.trim().length > 0 &&
     firmaCommittenteNome.trim().length > 0 &&
     Boolean(firmaOperatoreImg) &&
@@ -199,9 +219,20 @@ export function BollettinoFormPage() {
         squadre: squadre.map((r) => ({ numeroOperai: operaiRiga(r), ...fascePerApi(r) })),
         dataRiferimento,
         attivita: attivita.trim(),
-        mezzi: mezzi.map(({ id, quantita }) => ({ veicoloId: id, quantita })),
+        mezzi: modello2 ? [] : mezzi.map(({ id, quantita }) => ({ veicoloId: id, quantita })),
         materialiTesto: materiali.trim(),
-        trasporti: toRighe(trasporti),
+        trasporti: modello2 ? [] : toRighe(trasporti),
+        ...(modello2
+          ? {
+              modello: 2 as const,
+              riferimentoCantiere: riferimentoCantiere.trim(),
+              mezziTesto: mezziTesto.trim(),
+              trasportiTesto: trasportiTesto.trim(),
+              noleggi: noleggi.flatMap(({ veicoloId, durata }) =>
+                veicoloId !== null ? [{ veicoloId, durata }] : []
+              ),
+            }
+          : {}),
         firmaOperatoreNome: firmaOperatoreNome.trim(),
         firmaOperatoreImg,
         firmaCommittenteNome: firmaCommittenteNome.trim(),
@@ -218,7 +249,7 @@ export function BollettinoFormPage() {
         return; // niente navigate: l'avviso va letto
       }
 
-      navigate('/dipendente/bollettini');
+      navigate(elenco);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Errore durante il salvataggio');
     } finally {
@@ -239,7 +270,9 @@ export function BollettinoFormPage() {
   return (
     <DipendenteLayout>
       <div className="card max-w-2xl mx-auto">
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">Nuovo Bollettino</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">
+          {modello2 ? 'Nuovo Bollettino 2' : 'Nuovo Bollettino'}
+        </h2>
         <p className="text-sm text-gray-600 mb-6">
           Una volta firmato il bollettino non è più modificabile.
         </p>
@@ -250,7 +283,7 @@ export function BollettinoFormPage() {
             <p>{avvisoMail}</p>
             <button
               type="button"
-              onClick={() => navigate('/dipendente/bollettini')}
+              onClick={() => navigate(elenco)}
               className="btn-primary mt-3"
             >
               Torna ai bollettini
@@ -265,6 +298,23 @@ export function BollettinoFormPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Modello 2: in testa a tutto, come nel PDF */}
+          {modello2 && (
+            <div>
+              <label htmlFor="riferimentoCantiere" className="label">Riferimento cantiere</label>
+              <input
+                type="text"
+                id="riferimentoCantiere"
+                className="input"
+                value={riferimentoCantiere}
+                onChange={(e) => setRiferimentoCantiere(e.target.value)}
+                maxLength={200}
+                placeholder="Es. commessa, indirizzo o nome del cantiere"
+                disabled={isSaving}
+              />
+            </div>
+          )}
+
           <div>
             <label htmlFor="data" className="label">Data</label>
             <DateTimeInput
@@ -307,17 +357,59 @@ export function BollettinoFormPage() {
             </div>
           )}
 
-          <div>
-            <label htmlFor="attivita" className="label">Attività svolte</label>
-            <textarea
-              id="attivita"
-              className="input min-h-[8rem]"
-              value={attivita}
-              onChange={(e) => setAttivita(e.target.value)}
-              maxLength={5000}
-              placeholder="Descrivi i lavori eseguiti nella giornata"
-            />
-          </div>
+          {modello2 ? (
+            // Mezzi e trasporti a testo libero, dentro le attivita' svolte
+            <div className="border border-gray-200 rounded-lg p-3 space-y-3">
+              <h3 className="font-medium text-gray-900">Attività svolte</h3>
+              <div>
+                <label htmlFor="attivita" className="label">Lavori eseguiti</label>
+                <textarea
+                  id="attivita"
+                  className="input min-h-[8rem]"
+                  value={attivita}
+                  onChange={(e) => setAttivita(e.target.value)}
+                  maxLength={5000}
+                  placeholder="Descrivi i lavori eseguiti nella giornata"
+                />
+              </div>
+              <div>
+                <label htmlFor="mezziTesto" className="label">Mezzi</label>
+                <textarea
+                  id="mezziTesto"
+                  className="input min-h-[5rem]"
+                  value={mezziTesto}
+                  onChange={(e) => setMezziTesto(e.target.value)}
+                  maxLength={5000}
+                  placeholder="Descrivi i mezzi utilizzati"
+                  disabled={isSaving}
+                />
+              </div>
+              <div>
+                <label htmlFor="trasportiTesto" className="label">Trasporti</label>
+                <textarea
+                  id="trasportiTesto"
+                  className="input min-h-[5rem]"
+                  value={trasportiTesto}
+                  onChange={(e) => setTrasportiTesto(e.target.value)}
+                  maxLength={5000}
+                  placeholder="Descrivi i trasporti effettuati"
+                  disabled={isSaving}
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label htmlFor="attivita" className="label">Attività svolte</label>
+              <textarea
+                id="attivita"
+                className="input min-h-[8rem]"
+                value={attivita}
+                onChange={(e) => setAttivita(e.target.value)}
+                maxLength={5000}
+                placeholder="Descrivi i lavori eseguiti nella giornata"
+              />
+            </div>
+          )}
 
           <SquadreSelector
             value={squadre}
@@ -327,14 +419,16 @@ export function BollettinoFormPage() {
 
           {/* I mezzi si aggiungono solo dalla Banca dati veicoli, condivisa
               con i noleggi Gica e Dream: niente onCrea */}
-          <BancaDatiSelector
-            titolo="Mezzi"
-            labelQuantita="Valore"
-            voci={veicoli}
-            value={mezzi}
-            onChange={setMezzi}
-            disabled={isSaving}
-          />
+          {!modello2 && (
+            <BancaDatiSelector
+              titolo="Mezzi"
+              labelQuantita="Valore"
+              voci={veicoli}
+              value={mezzi}
+              onChange={setMezzi}
+              disabled={isSaving}
+            />
+          )}
 
           <div>
             <label htmlFor="materiali" className="label">Materiali</label>
@@ -349,15 +443,24 @@ export function BollettinoFormPage() {
             />
           </div>
 
-          <BancaDatiSelector
-            titolo="Trasporti"
-            labelQuantita="Viaggi"
-            voci={trasportiDisponibili}
-            value={trasporti}
-            onChange={setTrasporti}
-            onCrea={creaVoce('trasporti', setTrasportiDisponibili)}
-            disabled={isSaving}
-          />
+          {modello2 ? (
+            <NoleggiSelector
+              veicoli={veicoli}
+              value={noleggi}
+              onChange={setNoleggi}
+              disabled={isSaving}
+            />
+          ) : (
+            <BancaDatiSelector
+              titolo="Trasporti"
+              labelQuantita="Viaggi"
+              voci={trasportiDisponibili}
+              value={trasporti}
+              onChange={setTrasporti}
+              onCrea={creaVoce('trasporti', setTrasportiDisponibili)}
+              disabled={isSaving}
+            />
+          )}
 
           <div>
             <label htmlFor="email" className="label">
@@ -440,7 +543,7 @@ export function BollettinoFormPage() {
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={() => navigate('/dipendente/bollettini')}
+              onClick={() => navigate(elenco)}
               className="btn-secondary"
               disabled={isSaving}
             >
