@@ -1,6 +1,9 @@
 import axios, { AxiosError } from 'axios';
 import type {
   AllegatoBollettino,
+  AllegatoNoleggio,
+  AnagraficheNoleggio,
+  Noleggio,
   AllegatoHr,
   ApiError,
   CampoHr,
@@ -80,7 +83,7 @@ export const authApi = {
   login: (utenteId: number, password?: string) =>
     apiClient.post<{
       token: string;
-      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean };
+      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean; abilitatoNoleggi?: boolean };
     }>('/auth/login', { utenteId, password }),
 
   logout: () =>
@@ -88,7 +91,7 @@ export const authApi = {
 
   getMe: () =>
     apiClient.get<{
-      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean };
+      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean; abilitatoNoleggi?: boolean };
     }>('/auth/me'),
 };
 
@@ -98,10 +101,11 @@ export const clientiApi = {
     apiClient.get(`/clienti${includeInactive ? '?includeInactive=true' : ''}`),
   getById: (id: number) =>
     apiClient.get(`/clienti/${id}`),
-  create: (nome: string) =>
-    apiClient.post('/clienti', { nome }),
-  update: (id: number, nome: string) =>
-    apiClient.put(`/clienti/${id}`, { nome }),
+  // `emailFatturazione`: indirizzo della sezione Noleggi; vuoto lo toglie
+  create: (nome: string, emailFatturazione?: string) =>
+    apiClient.post('/clienti', { nome, emailFatturazione }),
+  update: (id: number, nome: string, emailFatturazione?: string) =>
+    apiClient.put(`/clienti/${id}`, { nome, emailFatturazione }),
   delete: (id: number) =>
     apiClient.delete(`/clienti/${id}`),
   activate: (id: number) =>
@@ -334,6 +338,7 @@ export const utentiApi = {
       ruolo?: string;
       abilitatoBollettini?: boolean;
       abilitatoBollettini2?: boolean;
+      abilitatoNoleggi?: boolean;
       percentualeLavoro?: number;
     }
   ) => apiClient.put(`/utenti/${id}`, data),
@@ -685,4 +690,62 @@ export const logApi = {
     }),
   getFiltri: () =>
     apiClient.get<{ utenti: { id: number; nome: string }[]; aree: string[] }>('/log/filtri'),
+};
+
+// Noleggi API
+export interface CreateNoleggioInput {
+  data: string;
+  cantiereNome?: string;
+  salvaCantiere?: boolean;
+  clienteNome: string;
+  salvaCliente?: boolean;
+  veicoloNome: string;
+  salvaVeicolo?: boolean;
+  giorni: number;
+  pieno: boolean;
+  carburante?: 'DIESEL' | 'BENZINA';
+  danni: boolean;
+  danniNote?: string;
+  emailFatturazione?: string;
+  aggiornaEmailCliente?: boolean;
+  firmaNome: string;
+  firmaImg: string;
+  scontrinoIds: number[];
+  danniIds: number[];
+  // "Salva e invia"
+  invia: boolean;
+}
+
+export const noleggiApi = {
+  getAnagrafiche: () =>
+    apiClient.get<AnagraficheNoleggio>('/noleggi/anagrafiche'),
+  getAll: (filters?: { utenteId?: number; startDate?: string; endDate?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.utenteId) params.append('utenteId', String(filters.utenteId));
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+    const query = params.toString();
+    return apiClient.get<Noleggio[]>(`/noleggi${query ? `?${query}` : ''}`);
+  },
+  // `email` e' presente solo con "Salva e invia"
+  create: (data: CreateNoleggioInput) =>
+    apiClient.post<{ id: number; email?: EsitoEmailBollettino }>('/noleggi', data),
+  // Risponde 200 anche quando l'invio fallisce: l'esito sta nel corpo
+  inviaMail: (id: number, email?: string) =>
+    apiClient.post<EsitoEmailBollettino>(`/noleggi/${id}/invia-mail`, email ? { email } : {}),
+  delete: (id: number) =>
+    apiClient.delete(`/noleggi/${id}`),
+  downloadPdf: (id: number) =>
+    downloadFile(`/noleggi/${id}/pdf`, `noleggio-${id}.pdf`),
+  uploadAllegato: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    // Content-Type tolto: il browser mette da solo il boundary del multipart
+    return apiClient.post<AllegatoNoleggio>('/noleggi/allegati', form, {
+      headers: { 'Content-Type': undefined },
+    });
+  },
+  deleteAllegato: (id: number) => apiClient.delete(`/noleggi/allegati/${id}`),
+  downloadAllegato: (id: number, nomeFile: string) =>
+    downloadFile(`/noleggi/allegati/${id}/file`, nomeFile),
 };

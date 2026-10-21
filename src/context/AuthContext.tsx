@@ -43,6 +43,7 @@ function toUser(raw: {
   ruolo: string;
   abilitatoBollettini: boolean;
   abilitatoBollettini2?: boolean;
+  abilitatoNoleggi?: boolean;
 }): User {
   return {
     id: raw.id,
@@ -52,6 +53,7 @@ function toUser(raw: {
     abilitatoBollettini: raw.abilitatoBollettini,
     // Assente da un backend precedente al flag
     abilitatoBollettini2: raw.abilitatoBollettini2 ?? false,
+    abilitatoNoleggi: raw.abilitatoNoleggi ?? false,
   };
 }
 

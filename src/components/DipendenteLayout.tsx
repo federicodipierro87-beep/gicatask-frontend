@@ -21,6 +21,9 @@ export function DipendenteLayout({ children }: Props) {
     ...(user?.abilitatoBollettini2
       ? [{ path: '/dipendente/bollettini-2', label: 'Bollettini Nuovi' }]
       : []),
+    ...(user?.abilitatoNoleggi
+      ? [{ path: '/dipendente/noleggi', label: 'Noleggi' }]
+      : []),
     { path: '/dipendente', label: 'Le Mie Attività', exact: true },
   ];
 

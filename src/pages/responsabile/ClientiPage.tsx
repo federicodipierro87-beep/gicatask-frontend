@@ -7,6 +7,7 @@ import { clientiApi } from '../../api/client';
 interface Cliente {
   id: number;
   nome: string;
+  emailFatturazione?: string | null;
   attivo: boolean;
 }
 
@@ -17,6 +18,7 @@ export function ClientiPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [formNome, setFormNome] = useState('');
+  const [formEmail, setFormEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -38,6 +40,7 @@ export function ClientiPage() {
   const openCreateModal = () => {
     setEditingCliente(null);
     setFormNome('');
+    setFormEmail('');
     setError(null);
     setIsModalOpen(true);
   };
@@ -45,6 +48,7 @@ export function ClientiPage() {
   const openEditModal = (cliente: Cliente) => {
     setEditingCliente(cliente);
     setFormNome(cliente.nome);
+    setFormEmail(cliente.emailFatturazione ?? '');
     setError(null);
     setIsModalOpen(true);
   };
@@ -65,9 +69,9 @@ export function ClientiPage() {
 
     try {
       if (editingCliente) {
-        await clientiApi.update(editingCliente.id, formNome.trim());
+        await clientiApi.update(editingCliente.id, formNome.trim(), formEmail.trim());
       } else {
-        await clientiApi.create(formNome.trim());
+        await clientiApi.create(formNome.trim(), formEmail.trim());
       }
       closeModal();
       fetchClienti();
@@ -200,6 +204,25 @@ export function ClientiPage() {
               placeholder="Es. Azienda SpA"
               autoFocus
             />
+          </div>
+          <div className="mb-4">
+            <label htmlFor="emailFatturazione" className="label">
+              E-mail fatturazione <span className="text-gray-400 font-normal">(facoltativa)</span>
+            </label>
+            <input
+              type="email"
+              id="emailFatturazione"
+              className="input"
+              inputMode="email"
+              autoCapitalize="none"
+              maxLength={254}
+              value={formEmail}
+              onChange={(e) => setFormEmail(e.target.value)}
+              placeholder="fatture@azienda.ch"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Proposta nei verbali della sezione Noleggi per l'invio alla fatturazione.
+            </p>
           </div>
           <div className="flex justify-end gap-3">
             <button type="button" onClick={closeModal} className="btn-secondary">

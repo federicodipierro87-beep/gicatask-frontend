@@ -53,6 +53,10 @@ export function ResponsabileLayout({ children }: Props) {
 
   // Il flag vale anche per il responsabile: senza, la sezione non compare
   const vedeBollettini = user?.abilitatoBollettini ?? false;
+  // L'archivio dei verbali di noleggio, col suo flag
+  const navPrincipali = user?.abilitatoNoleggi
+    ? [...mainNavItems, { path: '/responsabile/noleggi', label: 'Noleggi' }]
+    : mainNavItems;
 
   const isActive = (path: string, exact = false) => {
     if (exact) return location.pathname === path;
@@ -168,7 +172,7 @@ export function ResponsabileLayout({ children }: Props) {
           {/* Navigation tabs */}
           <div className="flex items-end gap-1">
             <nav className="flex gap-1 -mb-px overflow-x-auto min-w-0">
-              {mainNavItems.map((item) => (
+              {navPrincipali.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}

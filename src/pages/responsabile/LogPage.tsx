@@ -42,6 +42,8 @@ const CAMPI: Record<string, string> = {
   cognomeNome: 'Cognome e nome',
   abilitatoBollettini: 'Abilitato bollettini',
   abilitatoBollettini2: 'Abilitato bollettini nuovi',
+  abilitatoNoleggi: 'Abilitato noleggi',
+  emailFatturazione: 'E-mail fatturazione',
   percentualeLavoro: 'Percentuale di lavoro',
 };
 

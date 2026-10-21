@@ -22,6 +22,7 @@ interface Utente {
   attivo: boolean;
   abilitatoBollettini: boolean;
   abilitatoBollettini2: boolean;
+  abilitatoNoleggi: boolean;
   /** Percentuale base: vale nei mesi prima della prima variazione. */
   percentualeLavoro: number;
   percentualiLavoro: VariazionePercentuale[];
@@ -61,6 +62,7 @@ export function UtentiPage() {
   const [formPassword, setFormPassword] = useState('');
   const [formAbilitatoBollettini, setFormAbilitatoBollettini] = useState(false);
   const [formAbilitatoBollettini2, setFormAbilitatoBollettini2] = useState(false);
+  const [formAbilitatoNoleggi, setFormAbilitatoNoleggi] = useState(false);
   const [formPercentuale, setFormPercentuale] = useState('100');
   const [newPassword, setNewPassword] = useState('');
 
@@ -96,6 +98,7 @@ export function UtentiPage() {
     setFormPassword('');
     setFormAbilitatoBollettini(false);
     setFormAbilitatoBollettini2(false);
+    setFormAbilitatoNoleggi(false);
     setFormPercentuale('100');
     setError(null);
     setIsModalOpen(true);
@@ -109,6 +112,7 @@ export function UtentiPage() {
     setFormPassword('');
     setFormAbilitatoBollettini(utente.abilitatoBollettini);
     setFormAbilitatoBollettini2(utente.abilitatoBollettini2 ?? false);
+    setFormAbilitatoNoleggi(utente.abilitatoNoleggi ?? false);
     setFormPercentuale(String(utente.percentualeLavoro));
     setNuovaDecorrenza(currentMonth());
     setNuovaPercentuale('');
@@ -180,6 +184,7 @@ export function UtentiPage() {
           ruolo: formRuolo,
           abilitatoBollettini: formAbilitatoBollettini,
           abilitatoBollettini2: formAbilitatoBollettini2,
+          abilitatoNoleggi: formAbilitatoNoleggi,
           percentualeLavoro: percentuale,
         });
 
@@ -516,6 +521,23 @@ export function UtentiPage() {
                 <p className="text-sm text-gray-500 mt-1">
                   Mostra la sezione Bollettini Nuovi nell'area dipendente: riferimento del cantiere,
                   mezzi e trasporti a testo libero, noleggi.
+                </p>
+              </div>
+            )}
+            {editingUtente && (
+              <div>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={formAbilitatoNoleggi}
+                    onChange={(e) => setFormAbilitatoNoleggi(e.target.checked)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  Abilita Noleggi
+                </label>
+                <p className="text-sm text-gray-500 mt-1">
+                  Mostra la sezione Noleggi nell'area dipendente (verbali con firma, foto e invio
+                  per la fatturazione) e, a un responsabile, l'archivio dei noleggi.
                 </p>
               </div>
             )}

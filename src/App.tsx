@@ -22,6 +22,9 @@ import { TipiAssenzaPage } from './pages/responsabile/TipiAssenzaPage';
 import { BollettiniListPage } from './pages/dipendente/BollettiniListPage';
 import { BollettinoFormPage } from './pages/dipendente/BollettinoFormPage';
 import { BollettiniArchivioPage } from './pages/responsabile/BollettiniArchivioPage';
+import { NoleggiListPage } from './pages/dipendente/NoleggiListPage';
+import { NoleggioFormPage } from './pages/dipendente/NoleggioFormPage';
+import { NoleggiArchivioPage } from './pages/responsabile/NoleggiArchivioPage';
 import { VociBollettinoPage } from './pages/responsabile/VociBollettinoPage';
 import { CalendarioEventiPage } from './pages/responsabile/CalendarioEventiPage';
 import { OreDovutePage } from './pages/responsabile/OreDovutePage';
@@ -143,6 +146,24 @@ function AppRoutes() {
         element={
           <ProtectedRoute requireBollettini2>
             <BollettinoFormPage modello={2} />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Sezione "Noleggi": verbali firmati con foto e invio per la fatturazione */}
+      <Route
+        path="/dipendente/noleggi"
+        element={
+          <ProtectedRoute requireNoleggi>
+            <NoleggiListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dipendente/noleggi/nuovo"
+        element={
+          <ProtectedRoute requireNoleggi>
+            <NoleggioFormPage />
           </ProtectedRoute>
         }
       />
@@ -331,6 +352,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE" requireBollettini>
             <BollettiniArchivioPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/noleggi"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE" requireNoleggi>
+            <NoleggiArchivioPage />
           </ProtectedRoute>
         }
       />

@@ -8,6 +8,8 @@ export interface User {
   abilitatoBollettini: boolean;
   // Sezione "Bollettini Nuovi", indipendente dal flag dei bollettini classici
   abilitatoBollettini2: boolean;
+  // Sezione "Noleggi"
+  abilitatoNoleggi: boolean;
 }
 
 export interface UserListItem {
@@ -33,6 +35,8 @@ export interface ApiError {
 export interface Cliente {
   id: number;
   nome: string;
+  // Indirizzo a cui la sezione Noleggi invia il verbale
+  emailFatturazione?: string | null;
   attivo: boolean;
 }
 
@@ -430,4 +434,50 @@ export interface LogOperazione {
     parametri?: Record<string, unknown>;
   } | null;
   ip: string | null;
+}
+
+// Sezione Noleggi
+
+export type Carburante = 'DIESEL' | 'BENZINA';
+export type TipoFotoNoleggio = 'SCONTRINO' | 'DANNI';
+
+export interface AllegatoNoleggio extends AllegatoBollettino {
+  tipo?: TipoFotoNoleggio | null;
+}
+
+/** Verbale di noleggio. La firma non arriva: serve solo al PDF. */
+export interface Noleggio {
+  id: number;
+  utenteId: number;
+  data: string;
+  cantiereId: number | null;
+  cantiereNome: string | null;
+  clienteId: number | null;
+  clienteNome: string;
+  veicoloId: number | null;
+  veicoloNome: string;
+  giorni: number;
+  pieno: boolean;
+  carburante: Carburante | null;
+  danni: boolean;
+  danniNote: string | null;
+  emailFatturazione: string | null;
+  firmaNome: string;
+  emailStato: string | null;
+  emailInviataAt: string | null;
+  emailErrore: string | null;
+  createdAt: string;
+  utente: { id: number; nome: string; cognome: string };
+  allegati: AllegatoNoleggio[];
+}
+
+/** Suggerimenti del form: voci attive delle anagrafiche. */
+export interface AnagraficheNoleggio {
+  clienti: {
+    id: number;
+    nome: string;
+    emailFatturazione: string | null;
+    cantieri: { id: number; nome: string }[];
+  }[];
+  veicoli: { id: number; nome: string }[];
 }
