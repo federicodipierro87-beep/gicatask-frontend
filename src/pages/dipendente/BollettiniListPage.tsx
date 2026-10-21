@@ -17,7 +17,7 @@ function formatDate(dateStr: string): string {
 }
 
 interface Props {
-  // 2 = sezione "Bollettini 2": stessa pagina, elenco e link del modello 2
+  // 2 = sezione "Bollettini Nuovi": stessa pagina, elenco e link del modello 2
   modello?: 1 | 2;
 }
 
@@ -69,7 +69,7 @@ export function BollettiniListPage({ modello = 1 }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-900">
-            {modello === 2 ? 'I Miei Bollettini 2' : 'I Miei Bollettini'}
+            {modello === 2 ? 'I Miei Bollettini Nuovi' : 'I Miei Bollettini'}
           </h2>
           <p className="text-sm text-gray-600 mt-1">{bollettini.length} bollettini nel mese</p>
         </div>

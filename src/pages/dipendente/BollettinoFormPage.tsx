@@ -56,7 +56,7 @@ function messaggioAvviso(esito: EsitoEmailBollettino): string {
 }
 
 interface Props {
-  // 2 = sezione "Bollettini 2": riferimento del cantiere in testa, mezzi e
+  // 2 = sezione "Bollettini Nuovi": riferimento del cantiere in testa, mezzi e
   // trasporti a testo libero dentro le attivita', noleggi dei veicoli
   modello?: 1 | 2;
 }
@@ -271,7 +271,7 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
     <DipendenteLayout>
       <div className="card max-w-2xl mx-auto">
         <h2 className="text-xl font-semibold text-gray-900 mb-1">
-          {modello2 ? 'Nuovo Bollettino 2' : 'Nuovo Bollettino'}
+          {modello2 ? 'Nuovo Bollettino (Bollettini Nuovi)' : 'Nuovo Bollettino'}
         </h2>
         <p className="text-sm text-gray-600 mb-6">
           Una volta firmato il bollettino non è più modificabile.

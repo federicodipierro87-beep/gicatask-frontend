@@ -446,7 +446,7 @@ export interface CreateBollettinoInput {
   // Solo gli id: i file sono gia' stati caricati mentre l'operatore compilava,
   // cosi' un upload che fallisce fallisce prima delle firme
   allegatiIds?: number[];
-  // Sezione "Bollettini 2": senza, il bollettino e' classico
+  // Sezione "Bollettini Nuovi": senza, il bollettino e' classico
   modello?: 1 | 2;
   riferimentoCantiere?: string;
   mezziTesto?: string;
@@ -513,16 +513,17 @@ export const bollettiniApi = {
   // `numero` e' il numero da documento ("numero-anno"), per il nome del file
   downloadPdf: (id: number, numero: string) =>
     downloadFile(`/bollettini/${id}/pdf`, `bollettino-${numero}.pdf`),
-  downloadCumulativo: (cantiereId: number, startDate?: string, endDate?: string) =>
+  // `modello`: 1 Bollettini, 2 Bollettini Nuovi; senza, entrambi
+  downloadCumulativo: (cantiereId: number, startDate?: string, endDate?: string, modello?: 1 | 2) =>
     downloadFile(
-      `/bollettini/cantiere/${cantiereId}/pdf${bollettinoParams({ startDate, endDate })}`,
-      `bollettini-cantiere-${cantiereId}.pdf`
+      `/bollettini/cantiere/${cantiereId}/pdf${bollettinoParams({ startDate, endDate, modello })}`,
+      `${modello === 2 ? 'bollettini-nuovi' : 'bollettini'}-cantiere-${cantiereId}.pdf`
     ),
   // Cumulativo di tutto il cliente, cantieri compresi
-  downloadCumulativoCliente: (clienteId: number, startDate?: string, endDate?: string) =>
+  downloadCumulativoCliente: (clienteId: number, startDate?: string, endDate?: string, modello?: 1 | 2) =>
     downloadFile(
-      `/bollettini/cliente/${clienteId}/pdf${bollettinoParams({ startDate, endDate })}`,
-      `bollettini-cliente-${clienteId}.pdf`
+      `/bollettini/cliente/${clienteId}/pdf${bollettinoParams({ startDate, endDate, modello })}`,
+      `${modello === 2 ? 'bollettini-nuovi' : 'bollettini'}-cliente-${clienteId}.pdf`
     ),
   uploadAllegato: (file: File) => {
     const form = new FormData();

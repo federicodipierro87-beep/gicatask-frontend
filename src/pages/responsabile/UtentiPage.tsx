@@ -511,10 +511,10 @@ export function UtentiPage() {
                     onChange={(e) => setFormAbilitatoBollettini2(e.target.checked)}
                     className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
-                  Abilita Bollettini 2
+                  Abilita Bollettini Nuovi
                 </label>
                 <p className="text-sm text-gray-500 mt-1">
-                  Mostra la sezione Bollettini 2 nell'area dipendente: riferimento del cantiere,
+                  Mostra la sezione Bollettini Nuovi nell'area dipendente: riferimento del cantiere,
                   mezzi e trasporti a testo libero, noleggi.
                 </p>
               </div>

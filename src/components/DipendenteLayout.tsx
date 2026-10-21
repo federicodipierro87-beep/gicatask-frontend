@@ -11,7 +11,7 @@ export function DipendenteLayout({ children }: Props) {
 
   // "Le Mie Attività" resta in fondo: isActive usa startsWith e /dipendente è
   // prefisso di /dipendente/bollettini, per questo ha exact.
-  // "Bollettini 2" ha un flag suo, indipendente da quello dei bollettini
+  // "Bollettini Nuovi" ha un flag suo, indipendente da quello dei bollettini
   const navItems = [
     { path: '/dipendente/nuova', label: 'Nuova Attività' },
     { path: '/dipendente/assenze', label: 'Assenze' },
@@ -19,7 +19,7 @@ export function DipendenteLayout({ children }: Props) {
       ? [{ path: '/dipendente/bollettini', label: 'Bollettini' }]
       : []),
     ...(user?.abilitatoBollettini2
-      ? [{ path: '/dipendente/bollettini-2', label: 'Bollettini 2' }]
+      ? [{ path: '/dipendente/bollettini-2', label: 'Bollettini Nuovi' }]
       : []),
     { path: '/dipendente', label: 'Le Mie Attività', exact: true },
   ];

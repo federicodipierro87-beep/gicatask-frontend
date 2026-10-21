@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
   requiredRole?: Ruolo;
   /** Riservato a chi ha il flag bollettini, responsabile compreso. */
   requireBollettini?: boolean;
-  /** Riservato a chi ha il flag della sezione "Bollettini 2". */
+  /** Riservato a chi ha il flag della sezione "Bollettini Nuovi". */
   requireBollettini2?: boolean;
 }
 

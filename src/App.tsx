@@ -129,7 +129,7 @@ function AppRoutes() {
         }
       />
 
-      {/* Sezione "Bollettini 2": stesse pagine, modello 2, flag a parte */}
+      {/* Sezione "Bollettini Nuovi": stesse pagine, modello 2, flag a parte */}
       <Route
         path="/dipendente/bollettini-2"
         element={

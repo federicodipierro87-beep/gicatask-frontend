@@ -6,7 +6,7 @@ export interface User {
   cognome: string;
   ruolo: Ruolo;
   abilitatoBollettini: boolean;
-  // Sezione "Bollettini 2", indipendente dal flag dei bollettini classici
+  // Sezione "Bollettini Nuovi", indipendente dal flag dei bollettini classici
   abilitatoBollettini2: boolean;
 }
 
@@ -239,7 +239,7 @@ export interface Bollettino {
   oraInizioPomeriggio?: string | null;
   oraFinePomeriggio?: string | null;
   materialiTesto?: string | null;
-  // 1 = classico, 2 = sezione "Bollettini 2"
+  // 1 = classico, 2 = sezione "Bollettini Nuovi"
   modello?: number;
   // Solo modello 2
   riferimentoCantiere?: string | null;

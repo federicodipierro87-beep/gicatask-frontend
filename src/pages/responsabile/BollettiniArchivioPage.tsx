@@ -137,6 +137,10 @@ export function BollettiniArchivioPage() {
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [cantiereId, setCantiereId] = useState<number | null>(null);
   const [utenteId, setUtenteId] = useState<number | null>(null);
+  // Bollettini (modello 1) o Bollettini Nuovi (modello 2). Filtra l'elenco qui,
+  // senza ricaricare, ed e' obbligatorio per il cumulativo: i due tipi non
+  // finiscono mai nello stesso report
+  const [tipo, setTipo] = useState<1 | 2 | null>(null);
 
   const [downloadId, setDownloadId] = useState<number | null>(null);
   const [isDownloadingCumulativo, setIsDownloadingCumulativo] = useState(false);
@@ -223,7 +227,8 @@ export function BollettiniArchivioPage() {
     };
   }, [clienteId, cantiereId, utenteId, startDate, endDate, fatturati, refreshToken]);
 
-  const totaleOreUomo = bollettini.reduce((sum, b) => sum + oreComplessive(b), 0);
+  const visibili = tipo ? bollettini.filter((b) => (b.modello ?? 1) === tipo) : bollettini;
+  const totaleOreUomo = visibili.reduce((sum, b) => sum + oreComplessive(b), 0);
 
   const handleDownload = async (bollettino: Bollettino) => {
     setDownloadId(bollettino.id);
@@ -249,14 +254,14 @@ export function BollettiniArchivioPage() {
   // Col cantiere selezionato il cumulativo resta quello di cantiere; col solo
   // cliente comprende tutto, cantieri e bollettini senza cantiere
   const handleDownloadCumulativo = async () => {
-    if (!clienteId && !cantiereId) return;
+    if ((!clienteId && !cantiereId) || !tipo) return;
 
     setIsDownloadingCumulativo(true);
     try {
       if (cantiereId) {
-        await bollettiniApi.downloadCumulativo(cantiereId, startDate, endDate);
+        await bollettiniApi.downloadCumulativo(cantiereId, startDate, endDate, tipo);
       } else {
-        await bollettiniApi.downloadCumulativoCliente(clienteId!, startDate, endDate);
+        await bollettiniApi.downloadCumulativoCliente(clienteId!, startDate, endDate, tipo);
       }
       setError(null);
     } catch {
@@ -363,7 +368,7 @@ export function BollettiniArchivioPage() {
           {fatturati ? 'Bollettini fatturati' : 'Bollettini attivi'}
         </h2>
         <p className="text-sm text-gray-600 mt-1">
-          {bollettini.length} bollettini — {totaleOreUomo.toLocaleString('it-IT')} ore totali
+          {visibili.length} bollettini — {totaleOreUomo.toLocaleString('it-IT')} ore totali
         </p>
       </div>
 
@@ -382,7 +387,7 @@ export function BollettiniArchivioPage() {
           className="mb-4"
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           <div>
             <label htmlFor="startDate" className="label">Dal</label>
             <DateTimeInput
@@ -448,20 +453,44 @@ export function BollettiniArchivioPage() {
               ))}
             </select>
           </div>
+          <div>
+            <label htmlFor="tipo" className="label">Tipo</label>
+            <select
+              id="tipo"
+              className="input"
+              value={tipo ?? ''}
+              onChange={(e) => setTipo(e.target.value === '2' ? 2 : e.target.value === '1' ? 1 : null)}
+            >
+              <option value="">Tutti</option>
+              <option value="1">Bollettini</option>
+              <option value="2">Bollettini Nuovi</option>
+            </select>
+          </div>
         </div>
 
-        <div className="mt-4 flex flex-col sm:flex-row sm:justify-end gap-3">
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+          {(clienteId || cantiereId) && !tipo && (
+            <p className="text-sm text-gray-500">
+              Per il cumulativo scegli il tipo: Bollettini o Bollettini Nuovi.
+            </p>
+          )}
           <button
             onClick={handleDownloadCumulativo}
-            disabled={(!clienteId && !cantiereId) || isDownloadingCumulativo}
+            disabled={(!clienteId && !cantiereId) || !tipo || isDownloadingCumulativo}
             className="btn-primary"
-            title={clienteId || cantiereId ? undefined : 'Seleziona un cliente o un cantiere'}
+            title={
+              !clienteId && !cantiereId
+                ? 'Seleziona un cliente o un cantiere'
+                : !tipo
+                  ? 'Scegli se esportare Bollettini o Bollettini Nuovi'
+                  : undefined
+            }
           >
             {isDownloadingCumulativo
               ? 'Generazione...'
-              : cantiereId
-                ? 'Scarica cumulativo cantiere'
-                : 'Scarica cumulativo cliente'}
+              : `Scarica cumulativo ${cantiereId ? 'cantiere' : 'cliente'}${
+                  tipo === 2 ? ' (Bollettini Nuovi)' : tipo === 1 ? ' (Bollettini)' : ''
+                }`}
           </button>
         </div>
       </div>
@@ -471,7 +500,7 @@ export function BollettiniArchivioPage() {
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
-        ) : bollettini.length === 0 ? (
+        ) : visibili.length === 0 ? (
           <p className="text-center text-gray-500 py-8">Nessun bollettino trovato</p>
         ) : (
           <div className="overflow-x-auto">
@@ -491,7 +520,7 @@ export function BollettiniArchivioPage() {
                 </tr>
               </thead>
               <tbody>
-                {bollettini.map((bollettino) => (
+                {visibili.map((bollettino) => (
                   <tr key={bollettino.id} className="border-b hover:bg-gray-50">
                     <td className="py-3 px-2 whitespace-nowrap">
                       {formatDate(bollettino.dataRiferimento)}
@@ -521,17 +550,17 @@ export function BollettiniArchivioPage() {
                       />
                     </td>
                     <td className="py-3 px-2 text-right whitespace-nowrap">
-                      {/* Bollettino della sezione "Bollettini 2" */}
+                      {/* Bollettino della sezione "Bollettini Nuovi" */}
                       {bollettino.modello === 2 && (
                         <span
                           className="mr-1.5 px-1.5 py-0.5 rounded bg-primary-50 text-primary-700 text-xs font-medium"
                           title={
                             bollettino.riferimentoCantiere
-                              ? `Bollettini 2 · Rif. cantiere: ${bollettino.riferimentoCantiere}`
-                              : 'Bollettini 2'
+                              ? `Bollettini Nuovi · Rif. cantiere: ${bollettino.riferimentoCantiere}`
+                              : 'Bollettini Nuovi'
                           }
                         >
-                          B2
+                          Nuovo
                         </span>
                       )}
                       {numeroBollettino(bollettino)}
