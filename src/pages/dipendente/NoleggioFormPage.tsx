@@ -22,6 +22,16 @@ const OPZIONI_GIORNI = [
   })),
 ];
 
+/**
+ * Giorni fra uscita e ingresso, contando entrambi: uscita e rientro lo stesso
+ * giorno valgono 1. Null se le date mancano o sono invertite.
+ */
+function giorniTra(uscita: string, ingresso: string): number | null {
+  if (!uscita || !ingresso) return null;
+  const giorni = Math.round((Date.parse(ingresso) - Date.parse(uscita)) / 86_400_000) + 1;
+  return Number.isNaN(giorni) || giorni < 1 ? null : giorni;
+}
+
 /** Confronto come lo fa il server: maiuscole e spazi doppi non contano. */
 function chiave(valore: string): string {
   return valore.replace(/\s+/g, ' ').trim().toLowerCase();
@@ -82,7 +92,9 @@ export function NoleggioFormPage() {
 
   const [anagrafiche, setAnagrafiche] = useState<AnagraficheNoleggio>({ clienti: [], veicoli: [] });
 
-  const [data, setData] = useState(new Date().toISOString().split('T')[0] || '');
+  const oggi = new Date().toISOString().split('T')[0] || '';
+  const [data, setData] = useState(oggi);
+  const [dataIngresso, setDataIngresso] = useState(oggi);
   const [cantiere, setCantiere] = useState('');
   const [salvaCantiere, setSalvaCantiere] = useState(false);
   const [cliente, setCliente] = useState('');
@@ -155,6 +167,26 @@ export function NoleggioFormPage() {
     }
   };
 
+  // Le date propongono i giorni di noleggio, che restano modificabili. Sullo
+  // stesso giorno la mezza giornata scelta non viene toccata
+  const aggiornaGiorni = (uscita: string, ingresso: string) => {
+    const calcolati = giorniTra(uscita, ingresso);
+    if (calcolati === null) return;
+    setGiorni((attuali) => (calcolati === 1 && attuali === 0.5 ? 0.5 : Math.min(calcolati, 90)));
+  };
+
+  const handleDataUscita = (valore: string) => {
+    setData(valore);
+    aggiornaGiorni(valore, dataIngresso);
+  };
+
+  const handleDataIngresso = (valore: string) => {
+    setDataIngresso(valore);
+    aggiornaGiorni(data, valore);
+  };
+
+  const dateInvertite = Boolean(data && dataIngresso && dataIngresso < data);
+
   const emailPulita = email.trim();
   const emailValida = EMAIL_RE.test(emailPulita);
   const emailNonValida = emailPulita.length > 0 && !emailValida;
@@ -168,6 +200,8 @@ export function NoleggioFormPage() {
     cliente.trim().length > 0 &&
     veicolo.trim().length > 0 &&
     Boolean(data) &&
+    Boolean(dataIngresso) &&
+    !dateInvertite &&
     (!pieno || carburante !== null) &&
     firmaNome.trim().length > 0 &&
     Boolean(firmaImg) &&
@@ -185,6 +219,7 @@ export function NoleggioFormPage() {
     try {
       const { data: risposta } = await noleggiApi.create({
         data,
+        dataIngresso,
         cantiereNome: cantiere.trim() || undefined,
         salvaCantiere: salvaCantiere && !cantiereTrovato && clienteInAnagrafica,
         clienteNome: cliente.trim(),
@@ -264,6 +299,24 @@ export function NoleggioFormPage() {
         {/* noValidate: la validazione nativa del campo e-mail bloccherebbe il
             submit con un fumetto di sistema; i controlli sono qui sotto */}
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
+          <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CampoData id="dataUscita" label="Data uscita" value={data} onChange={handleDataUscita} required />
+              <CampoData
+                id="dataIngresso"
+                label="Data ingresso"
+                value={dataIngresso}
+                onChange={handleDataIngresso}
+                required
+              />
+            </div>
+            {dateInvertite && (
+              <p className="text-sm text-red-600 mt-1">
+                La data di ingresso non può essere prima della data di uscita.
+              </p>
+            )}
+          </div>
+
           <div>
             <label htmlFor="cantiere" className="label">Cantiere</label>
             <input
@@ -359,7 +412,6 @@ export function NoleggioFormPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <CampoData id="data" label="Data" value={data} onChange={setData} required />
             <div>
               <label htmlFor="giorni" className="label">Giorni di noleggio</label>
               <select

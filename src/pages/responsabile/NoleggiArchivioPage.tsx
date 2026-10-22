@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { Modal } from '../../components/Modal';
 import { CampoData } from '../../components/CampoData';
-import { InviaNoleggioModal, StatoMailNoleggio, formatGiorni } from '../../components/InvioNoleggio';
+import {
+  InviaNoleggioModal,
+  StatoMailNoleggio,
+  formatGiorni,
+  formatPeriodo,
+} from '../../components/InvioNoleggio';
 import { noleggiApi, utentiApi } from '../../api/client';
 import {
   MonthNavigator,
@@ -216,7 +221,7 @@ export function NoleggiArchivioPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-gray-50">
-                  <th className="text-left py-3 px-2 font-medium text-gray-600">Data</th>
+                  <th className="text-left py-3 px-2 font-medium text-gray-600">Uscita – Ingresso</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Dipendente</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cantiere</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Cliente</th>
@@ -232,7 +237,7 @@ export function NoleggiArchivioPage() {
               <tbody>
                 {noleggi.map((noleggio) => (
                   <tr key={noleggio.id} className="border-b hover:bg-gray-50 align-top">
-                    <td className="py-3 px-2 whitespace-nowrap">{formatDate(noleggio.data)}</td>
+                    <td className="py-3 px-2">{formatPeriodo(noleggio)}</td>
                     <td className="py-3 px-2">{nomeUtente(noleggio.utente)}</td>
                     <td className="py-3 px-2">{noleggio.cantiereNome ?? '—'}</td>
                     <td className="py-3 px-2">{noleggio.clienteNome}</td>

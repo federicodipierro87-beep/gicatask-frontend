@@ -28,6 +28,7 @@ const azione = (a: AzioneLog) => AZIONI.find((x) => x.valore === a) ?? AZIONI[AZ
 /** Nomi leggibili dei campi più comuni; gli altri si ricavano dal camelCase. */
 const CAMPI: Record<string, string> = {
   dataRiferimento: 'Data',
+  dataIngresso: 'Data ingresso',
   oraInizioMattino: 'Inizio mattino',
   oraFineMattino: 'Fine mattino',
   oraInizioPomeriggio: 'Inizio pomeriggio',

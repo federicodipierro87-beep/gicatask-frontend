@@ -471,7 +471,10 @@ export interface AllegatoNoleggio extends AllegatoBollettino {
 export interface Noleggio {
   id: number;
   utenteId: number;
+  /** Data di uscita del veicolo. */
   data: string;
+  /** Data di rientro; null nei verbali precedenti al 22/10/2026. */
+  dataIngresso: string | null;
   cantiereId: number | null;
   cantiereNome: string | null;
   clienteId: number | null;

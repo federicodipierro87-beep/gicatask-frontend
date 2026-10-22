@@ -698,7 +698,9 @@ export const logApi = {
 
 // Noleggi API
 export interface CreateNoleggioInput {
+  /** Data di uscita del veicolo. */
   data: string;
+  dataIngresso: string;
   cantiereNome?: string;
   salvaCantiere?: boolean;
   clienteNome: string;

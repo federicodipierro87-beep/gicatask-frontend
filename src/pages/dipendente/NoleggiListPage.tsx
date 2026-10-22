@@ -2,19 +2,15 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { MonthNavigator, currentMonth, monthRange } from '../../components/MonthNavigator';
-import { InviaNoleggioModal, StatoMailNoleggio, formatGiorni } from '../../components/InvioNoleggio';
+import {
+  InviaNoleggioModal,
+  StatoMailNoleggio,
+  formatGiorni,
+  formatPeriodo,
+} from '../../components/InvioNoleggio';
 import { useAuth } from '../../context/AuthContext';
 import { noleggiApi } from '../../api/client';
 import type { Noleggio } from '../../types';
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('it-IT', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-}
 
 export function NoleggiListPage() {
   const { user } = useAuth();
@@ -106,7 +102,7 @@ export function NoleggiListPage() {
                     </p>
                   )}
                   <p className="font-medium text-gray-900">
-                    {formatDate(noleggio.data)} — {noleggio.veicoloNome}
+                    {formatPeriodo(noleggio)} — {noleggio.veicoloNome}
                   </p>
                   <p className="text-sm text-gray-600">
                     {noleggio.clienteNome} · {formatGiorni(noleggio.giorni)}

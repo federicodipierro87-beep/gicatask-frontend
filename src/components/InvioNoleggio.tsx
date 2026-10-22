@@ -8,6 +8,22 @@ export function formatGiorni(giorni: number): string {
   return giorni === 1 ? '1 giorno' : `${giorni} giorni`;
 }
 
+function formatData(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('it-IT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+/** Uscita e ingresso del veicolo; la sola uscita nei verbali senza ingresso. */
+export function formatPeriodo(noleggio: Pick<Noleggio, 'data' | 'dataIngresso'>): string {
+  const uscita = formatData(noleggio.data);
+  if (!noleggio.dataIngresso) return uscita;
+  const ingresso = formatData(noleggio.dataIngresso);
+  return ingresso === uscita ? uscita : `${uscita} – ${ingresso}`;
+}
+
 /** Stato della mail di fatturazione: "Da inviare" quando non e' mai partita. */
 export function StatoMailNoleggio({ noleggio }: { noleggio: Noleggio }) {
   const { emailStato, emailFatturazione, emailInviataAt, emailErrore } = noleggio;

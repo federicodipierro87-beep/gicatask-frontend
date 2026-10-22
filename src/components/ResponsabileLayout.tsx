@@ -170,13 +170,15 @@ export function ResponsabileLayout({ children }: Props) {
           </div>
 
           {/* Navigation tabs */}
+          {/* Su telefono le voci vanno a capo invece di scorrere di lato:
+              lo scorrimento non si vedeva e le ultime voci restavano nascoste */}
           <div className="flex items-end gap-1">
-            <nav className="flex gap-1 -mb-px overflow-x-auto min-w-0">
+            <nav className="flex flex-wrap gap-1 pb-3 min-w-0 sm:flex-nowrap sm:pb-0 sm:-mb-px sm:overflow-x-auto">
               {navPrincipali.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap ${
+                  className={`px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-medium rounded-lg sm:rounded-b-none transition-colors whitespace-nowrap ${
                     isActive(item.path, item.exact)
                       ? 'bg-white text-primary-700'
                       : 'text-primary-100 hover:text-white hover:bg-primary-600'

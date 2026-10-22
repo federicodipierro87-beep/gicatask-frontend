@@ -62,12 +62,14 @@ export function DipendenteLayout({ children }: Props) {
               </button>
             </div>
           </div>
-          <nav className="flex gap-1 -mb-px">
+          {/* Su telefono le voci vanno a capo: in una riga sola le ultime
+              finivano fuori dallo schermo e non si potevano toccare */}
+          <nav className="flex flex-wrap gap-1 pb-3 sm:flex-nowrap sm:pb-0 sm:-mb-px">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-medium rounded-lg sm:rounded-b-none whitespace-nowrap transition-colors ${
                   isActive(item.path, item.exact)
                     ? 'bg-primary-600 text-white'
                     : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
