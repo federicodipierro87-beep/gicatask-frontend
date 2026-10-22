@@ -10,6 +10,8 @@ export interface User {
   abilitatoBollettini2: boolean;
   // Sezione "Noleggi"
   abilitatoNoleggi: boolean;
+  // Modulo "Nuova Attività 2": magazzino o cantiere al posto del cliente
+  abilitatoAttivita2: boolean;
 }
 
 export interface UserListItem {
@@ -60,6 +62,25 @@ export interface TipoAssenza {
   attivo: boolean;
 }
 
+/** Il luogo delle attività di "Nuova Attività 2", che non hanno cliente. */
+export type LuogoAttivita = 'MAGAZZINO' | 'CANTIERE';
+
+export const NOMI_LUOGO: Record<LuogoAttivita, string> = {
+  MAGAZZINO: 'Magazzino',
+  CANTIERE: 'Cantiere',
+};
+
+/**
+ * Cosa mostrare nella colonna "Cliente": il cliente oppure, per le attività
+ * di "Nuova Attività 2", il luogo.
+ */
+export function nomeClienteAttivita(att: {
+  cliente?: { nome: string } | null;
+  luogo?: LuogoAttivita | null;
+}): string {
+  return att.cliente?.nome ?? (att.luogo ? NOMI_LUOGO[att.luogo] : '');
+}
+
 export interface Attivita {
   id: number;
   utenteId: number;
@@ -71,6 +92,7 @@ export interface Attivita {
   cantiereId?: number | null;
   tipoAttivitaId?: number | null;
   assenzaId?: number | null;
+  luogo?: LuogoAttivita | null;
   note?: string;
   createdById: number;
   createdAt: string;

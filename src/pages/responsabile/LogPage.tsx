@@ -43,6 +43,8 @@ const CAMPI: Record<string, string> = {
   abilitatoBollettini: 'Abilitato bollettini',
   abilitatoBollettini2: 'Abilitato bollettini nuovi',
   abilitatoNoleggi: 'Abilitato noleggi',
+  abilitatoAttivita2: 'Abilitato Nuova Attività 2',
+  luogo: 'Luogo',
   emailFatturazione: 'E-mail fatturazione',
   percentualeLavoro: 'Percentuale di lavoro',
 };

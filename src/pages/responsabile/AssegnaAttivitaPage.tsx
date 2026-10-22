@@ -6,6 +6,8 @@ import { Modal } from '../../components/Modal';
 import { clientiApi, cantieriApi, tipiAttivitaApi, tipiAssenzaApi, attivitaApi, utentiApi } from '../../api/client';
 import { isAssenzaNegativa } from '../../utils/durata';
 import { nomeUtente } from '../../utils/nomeUtente';
+import { NOMI_LUOGO } from '../../types';
+import type { LuogoAttivita } from '../../types';
 
 interface Cliente {
   id: number;
@@ -68,9 +70,14 @@ export function AssegnaAttivitaPage() {
   const [tipoAttivitaId, setTipoAttivitaId] = useState<number | null>(null);
   const [assenzaId, setAssenzaId] = useState<number | null>(null);
   const [note, setNote] = useState('');
+  // Solo in modifica di un'attività di "Nuova Attività 2": magazzino o
+  // cantiere al posto di cliente, cantiere e tipo
+  const [luogo, setLuogo] = useState<LuogoAttivita | null>(null);
+  const [eraLuogo, setEraLuogo] = useState(false);
 
   // With an absence selected, cliente, cantiere and time slots are optional
   const isAssenza = assenzaId !== null;
+  const isLuogo = !isAssenza && luogo !== null;
 
   // Il Recupero ore sottrae le ore invece di aggiungerle
   const assenzaNegativa = isAssenzaNegativa(
@@ -116,6 +123,8 @@ export function AssegnaAttivitaPage() {
           setTipoAttivitaId(att.tipoAttivitaId);
           setAssenzaId(att.assenzaId);
           setNote(att.note || '');
+          setLuogo(att.luogo ?? null);
+          setEraLuogo(Boolean(att.luogo));
 
           if (att.clienteId) {
             const cantieriRes = await cantieriApi.getByCliente(att.clienteId);
@@ -299,6 +308,7 @@ export function AssegnaAttivitaPage() {
     setTipoAttivitaId(null);
     setAssenzaId(null);
     setNote('');
+    setLuogo(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -313,12 +323,12 @@ export function AssegnaAttivitaPage() {
     const hasPomeriggio = oraInizioPomeriggio && oraFinePomeriggio;
 
     if (!isAssenza) {
-      if (!clienteId) {
+      if (!isLuogo && !clienteId) {
         setError('Compila tutti i campi obbligatori');
         return;
       }
 
-      if (cantieri.length > 0 && !cantiereId) {
+      if (!isLuogo && cantieri.length > 0 && !cantiereId) {
         setError('Seleziona un cantiere');
         return;
       }
@@ -357,10 +367,11 @@ export function AssegnaAttivitaPage() {
       oraFineMattino: orario(oraFineMattino),
       oraInizioPomeriggio: orario(oraInizioPomeriggio),
       oraFinePomeriggio: orario(oraFinePomeriggio),
-      clienteId: clienteId ?? null,
-      cantiereId: cantiereId ?? null,
-      tipoAttivitaId: tipoAttivitaId ?? null,
+      clienteId: isLuogo ? null : clienteId ?? null,
+      cantiereId: isLuogo ? null : cantiereId ?? null,
+      tipoAttivitaId: isLuogo ? null : tipoAttivitaId ?? null,
       assenzaId: assenzaId ?? null,
+      luogo: isLuogo ? luogo : null,
       note: note.trim() || (isEditing ? '' : undefined),
     };
 
@@ -522,6 +533,29 @@ export function AssegnaAttivitaPage() {
             </div>
           )}
 
+          {/* Luogo, per le attività di "Nuova Attività 2" */}
+          {eraLuogo && (
+            <div>
+              <label htmlFor="luogo" className="label">Luogo</label>
+              <select
+                id="luogo"
+                className="select"
+                value={luogo ?? ''}
+                onChange={(e) => setLuogo((e.target.value || null) as LuogoAttivita | null)}
+              >
+                {(Object.keys(NOMI_LUOGO) as LuogoAttivita[]).map((l) => (
+                  <option key={l} value={l}>{NOMI_LUOGO[l]}</option>
+                ))}
+                <option value="">Un cliente (attività normale)</option>
+              </select>
+              <p className="text-sm text-gray-500 mt-1">
+                Attività registrata con Nuova Attività 2: senza cliente, con la sola scelta fra
+                magazzino e cantiere.
+              </p>
+            </div>
+          )}
+
+          {!isLuogo && (<>
           {/* Cliente */}
           <div>
             <label htmlFor="cliente" className="label">Cliente</label>
@@ -586,6 +620,7 @@ export function AssegnaAttivitaPage() {
               </option>
             </select>
           </div>
+          </>)}
 
           {/* Assenza */}
           <div>
@@ -644,7 +679,7 @@ export function AssegnaAttivitaPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSaving || !utenteId || (!isAssenza && (!clienteId || (cantieri.length > 0 && !cantiereId) || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))))}
+              disabled={isSaving || !utenteId || (!isAssenza && ((!isLuogo && (!clienteId || (cantieri.length > 0 && !cantiereId))) || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))))}
             >
               {isSaving ? 'Salvataggio...' : isEditing ? 'Salva modifiche' : 'Assegna attivita'}
             </button>

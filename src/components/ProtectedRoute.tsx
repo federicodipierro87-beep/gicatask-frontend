@@ -11,6 +11,8 @@ interface ProtectedRouteProps {
   requireBollettini2?: boolean;
   /** Riservato a chi ha il flag della sezione "Noleggi". */
   requireNoleggi?: boolean;
+  /** Riservato a chi ha il flag del modulo "Nuova Attività 2". */
+  requireAttivita2?: boolean;
 }
 
 export function ProtectedRoute({
@@ -19,6 +21,7 @@ export function ProtectedRoute({
   requireBollettini,
   requireBollettini2,
   requireNoleggi,
+  requireAttivita2,
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
 
@@ -45,7 +48,8 @@ export function ProtectedRoute({
   if (
     (requireBollettini && !user?.abilitatoBollettini) ||
     (requireBollettini2 && !user?.abilitatoBollettini2) ||
-    (requireNoleggi && !user?.abilitatoNoleggi)
+    (requireNoleggi && !user?.abilitatoNoleggi) ||
+    (requireAttivita2 && !user?.abilitatoAttivita2)
   ) {
     // Rimandare un responsabile all'area dipendente lo sbalzerebbe fuori
     // dalla sezione in cui stava lavorando

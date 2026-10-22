@@ -70,6 +70,12 @@ export function AttivitaFormPage() {
             return;
           }
 
+          // Come pure un'attività di "Nuova Attività 2", che non ha cliente
+          if (att.luogo) {
+            navigate(`/dipendente/modifica-2/${id}`, { replace: true });
+            return;
+          }
+
           setDataRiferimento(att.dataRiferimento.split('T')[0]);
           setOraInizioMattino(att.oraInizioMattino || '');
           setOraFineMattino(att.oraFineMattino || '');

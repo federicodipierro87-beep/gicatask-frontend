@@ -6,6 +6,7 @@ import type {
   Noleggio,
   AllegatoHr,
   ApiError,
+  LuogoAttivita,
   CampoHr,
   Bollettino,
   CalendarioEvento,
@@ -83,7 +84,7 @@ export const authApi = {
   login: (utenteId: number, password?: string) =>
     apiClient.post<{
       token: string;
-      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean; abilitatoNoleggi?: boolean };
+      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean; abilitatoNoleggi?: boolean; abilitatoAttivita2?: boolean };
     }>('/auth/login', { utenteId, password }),
 
   logout: () =>
@@ -91,7 +92,7 @@ export const authApi = {
 
   getMe: () =>
     apiClient.get<{
-      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean; abilitatoNoleggi?: boolean };
+      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean; abilitatoNoleggi?: boolean; abilitatoAttivita2?: boolean };
     }>('/auth/me'),
 };
 
@@ -217,6 +218,7 @@ export const attivitaApi = {
     cantiereId?: number | null;
     tipoAttivitaId?: number | null;
     assenzaId?: number | null;
+    luogo?: LuogoAttivita | null;
     note?: string;
   }) => apiClient.post('/attivita', data),
   update: (id: number, data: {
@@ -230,6 +232,7 @@ export const attivitaApi = {
     cantiereId?: number | null;
     tipoAttivitaId?: number | null;
     assenzaId?: number | null;
+    luogo?: LuogoAttivita | null;
     note?: string;
   }) => apiClient.put(`/attivita/${id}`, data),
   delete: (id: number) =>
@@ -339,6 +342,7 @@ export const utentiApi = {
       abilitatoBollettini?: boolean;
       abilitatoBollettini2?: boolean;
       abilitatoNoleggi?: boolean;
+      abilitatoAttivita2?: boolean;
       percentualeLavoro?: number;
     }
   ) => apiClient.put(`/utenti/${id}`, data),

@@ -14,6 +14,9 @@ export function DipendenteLayout({ children }: Props) {
   // "Bollettini Nuovi" ha un flag suo, indipendente da quello dei bollettini
   const navItems = [
     { path: '/dipendente/nuova', label: 'Nuova Attività' },
+    ...(user?.abilitatoAttivita2
+      ? [{ path: '/dipendente/nuova-2', label: 'Nuova Attività 2' }]
+      : []),
     { path: '/dipendente/assenze', label: 'Assenze' },
     ...(user?.abilitatoBollettini
       ? [{ path: '/dipendente/bollettini', label: 'Bollettini' }]

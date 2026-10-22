@@ -23,6 +23,7 @@ interface Utente {
   abilitatoBollettini: boolean;
   abilitatoBollettini2: boolean;
   abilitatoNoleggi: boolean;
+  abilitatoAttivita2: boolean;
   /** Percentuale base: vale nei mesi prima della prima variazione. */
   percentualeLavoro: number;
   percentualiLavoro: VariazionePercentuale[];
@@ -63,6 +64,7 @@ export function UtentiPage() {
   const [formAbilitatoBollettini, setFormAbilitatoBollettini] = useState(false);
   const [formAbilitatoBollettini2, setFormAbilitatoBollettini2] = useState(false);
   const [formAbilitatoNoleggi, setFormAbilitatoNoleggi] = useState(false);
+  const [formAbilitatoAttivita2, setFormAbilitatoAttivita2] = useState(false);
   const [formPercentuale, setFormPercentuale] = useState('100');
   const [newPassword, setNewPassword] = useState('');
 
@@ -99,6 +101,7 @@ export function UtentiPage() {
     setFormAbilitatoBollettini(false);
     setFormAbilitatoBollettini2(false);
     setFormAbilitatoNoleggi(false);
+    setFormAbilitatoAttivita2(false);
     setFormPercentuale('100');
     setError(null);
     setIsModalOpen(true);
@@ -113,6 +116,7 @@ export function UtentiPage() {
     setFormAbilitatoBollettini(utente.abilitatoBollettini);
     setFormAbilitatoBollettini2(utente.abilitatoBollettini2 ?? false);
     setFormAbilitatoNoleggi(utente.abilitatoNoleggi ?? false);
+    setFormAbilitatoAttivita2(utente.abilitatoAttivita2 ?? false);
     setFormPercentuale(String(utente.percentualeLavoro));
     setNuovaDecorrenza(currentMonth());
     setNuovaPercentuale('');
@@ -185,6 +189,7 @@ export function UtentiPage() {
           abilitatoBollettini: formAbilitatoBollettini,
           abilitatoBollettini2: formAbilitatoBollettini2,
           abilitatoNoleggi: formAbilitatoNoleggi,
+          abilitatoAttivita2: formAbilitatoAttivita2,
           percentualeLavoro: percentuale,
         });
 
@@ -538,6 +543,23 @@ export function UtentiPage() {
                 <p className="text-sm text-gray-500 mt-1">
                   Mostra la sezione Noleggi nell'area dipendente (verbali con firma, foto e invio
                   per la fatturazione) e, a un responsabile, l'archivio dei noleggi.
+                </p>
+              </div>
+            )}
+            {editingUtente && (
+              <div>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={formAbilitatoAttivita2}
+                    onChange={(e) => setFormAbilitatoAttivita2(e.target.checked)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  Abilita Nuova Attività 2
+                </label>
+                <p className="text-sm text-gray-500 mt-1">
+                  Mostra il modulo Nuova Attività 2 nell'area dipendente: magazzino o cantiere al
+                  posto del cliente, orario di mattino e pomeriggio, descrizione.
                 </p>
               </div>
             )}

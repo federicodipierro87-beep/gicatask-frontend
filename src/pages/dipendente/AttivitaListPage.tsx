@@ -5,6 +5,15 @@ import { Modal } from '../../components/Modal';
 import { attivitaApi } from '../../api/client';
 import { MonthNavigator, currentMonth, monthRange } from '../../components/MonthNavigator';
 import { formatDuration } from '../../utils/durata';
+import { NOMI_LUOGO, nomeClienteAttivita } from '../../types';
+import type { LuogoAttivita } from '../../types';
+
+/** Il form giusto per modificare un'attività: assenza, Nuova Attività 2 o quella col cliente. */
+function linkModifica(att: { id: number; assenza: unknown; luogo?: LuogoAttivita | null }): string {
+  if (att.assenza) return `/dipendente/assenze/modifica/${att.id}`;
+  if (att.luogo) return `/dipendente/modifica-2/${att.id}`;
+  return `/dipendente/modifica/${att.id}`;
+}
 
 interface Attivita {
   id: number;
@@ -19,6 +28,7 @@ interface Attivita {
   cantiere: { id: number; nome: string } | null;
   tipoAttivita: { id: number; nome: string } | null;
   assenza: { id: number; nome: string } | null;
+  luogo?: LuogoAttivita | null;
 }
 
 function formatTimeSlot(start?: string, end?: string): string | null {
@@ -257,6 +267,7 @@ export function AttivitaListPage() {
                           <span className="font-medium text-primary-600">{att.assenza.nome}</span>
                         ) : (
                           <>
+                            {att.luogo && <span className="font-medium">{NOMI_LUOGO[att.luogo]}</span>}
                             {att.cliente && <span className="font-medium">{att.cliente.nome}</span>}
                             {att.cantiere && (
                               <>
@@ -282,7 +293,7 @@ export function AttivitaListPage() {
 
                     <div className="flex gap-2 sm:flex-shrink-0">
                       <Link
-                        to={att.assenza ? `/dipendente/assenze/modifica/${att.id}` : `/dipendente/modifica/${att.id}`}
+                        to={linkModifica(att)}
                         onClick={(e) => e.stopPropagation()}
                         className="text-sm text-primary-600 hover:text-primary-700"
                       >
@@ -362,8 +373,10 @@ export function AttivitaListPage() {
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Cliente</p>
-                <p className="font-medium text-gray-900">{selectedAttivita.cliente?.nome ?? ''}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                  {selectedAttivita.luogo ? 'Luogo' : 'Cliente'}
+                </p>
+                <p className="font-medium text-gray-900">{nomeClienteAttivita(selectedAttivita)}</p>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg">
@@ -395,7 +408,7 @@ export function AttivitaListPage() {
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Link
-                to={selectedAttivita.assenza ? `/dipendente/assenze/modifica/${selectedAttivita.id}` : `/dipendente/modifica/${selectedAttivita.id}`}
+                to={linkModifica(selectedAttivita)}
                 className="btn-primary"
                 onClick={() => setSelectedAttivita(null)}
               >

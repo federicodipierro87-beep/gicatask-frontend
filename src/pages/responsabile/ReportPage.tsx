@@ -14,6 +14,8 @@ import {
 } from '../../components/MonthNavigator';
 import type { MonthKey } from '../../components/MonthNavigator';
 import { formatDuration } from '../../utils/durata';
+import { nomeClienteAttivita } from '../../types';
+import type { LuogoAttivita } from '../../types';
 import { SaldiOreReport } from './SaldiOreReport';
 import { Pagination, usePagination } from '../../components/Pagination';
 
@@ -32,6 +34,7 @@ interface Attivita {
   cantiere: { id: number; nome: string } | null;
   tipoAttivita: { id: number; nome: string } | null;
   assenza: { id: number; nome: string } | null;
+  luogo?: LuogoAttivita | null;
   utente: { id: number; nome: string; cognome: string };
 }
 
@@ -238,7 +241,7 @@ function ReportAttivita() {
 
   // Group by client for summary
   const byClient = attivita.reduce((acc, att) => {
-    const key = att.cliente?.nome ?? 'Assenze';
+    const key = nomeClienteAttivita(att) || 'Assenze';
     if (!acc[key]) acc[key] = { count: 0, minutes: 0 };
     acc[key].count++;
     acc[key].minutes += att.durataMinuti;
@@ -483,7 +486,7 @@ function ReportAttivita() {
                     </td>
                     <td className="py-3 px-2">{formatDate(att.dataRiferimento)}</td>
                     <td className="py-3 px-2">{nomeUtente(att.utente)}</td>
-                    <td className="py-3 px-2 font-medium">{att.cliente?.nome ?? ''}</td>
+                    <td className="py-3 px-2 font-medium">{nomeClienteAttivita(att)}</td>
                     <td className="py-3 px-2">{att.cantiere?.nome ?? ''}</td>
                     <td className="py-3 px-2 text-primary-600 max-w-[150px] truncate">{att.tipoAttivita?.nome ?? ''}</td>
                     <td className="py-3 px-2 text-primary-600">{att.assenza?.nome ?? ''}</td>
@@ -543,8 +546,10 @@ function ReportAttivita() {
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Cliente</p>
-                <p className="font-medium text-gray-900">{selectedAttivita.cliente?.nome ?? ''}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                  {selectedAttivita.luogo ? 'Luogo' : 'Cliente'}
+                </p>
+                <p className="font-medium text-gray-900">{nomeClienteAttivita(selectedAttivita)}</p>
               </div>
 
               <div className="bg-gray-50 p-3 rounded-lg">

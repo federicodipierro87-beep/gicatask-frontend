@@ -6,6 +6,7 @@ import { InactivityWarning } from './components/InactivityWarning';
 import { LoginPage } from './pages/Login';
 import { AttivitaListPage } from './pages/dipendente/AttivitaListPage';
 import { AttivitaFormPage } from './pages/dipendente/AttivitaFormPage';
+import { Attivita2FormPage } from './pages/dipendente/Attivita2FormPage';
 import { AssenzaFormPage } from './pages/dipendente/AssenzaFormPage';
 import { ResponsabileDashboard } from './pages/ResponsabileDashboard';
 import { ClientiPage } from './pages/responsabile/ClientiPage';
@@ -95,6 +96,23 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AttivitaFormPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* "Nuova Attività 2": magazzino o cantiere al posto del cliente */}
+      <Route
+        path="/dipendente/nuova-2"
+        element={
+          <ProtectedRoute requireAttivita2>
+            <Attivita2FormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dipendente/modifica-2/:id"
+        element={
+          <ProtectedRoute>
+            <Attivita2FormPage />
           </ProtectedRoute>
         }
       />
