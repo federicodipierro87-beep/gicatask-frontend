@@ -7,10 +7,6 @@ import { BancaDatiSelector, type VoceScelta } from '../../components/BancaDatiSe
 import { MultiSelect } from '../../components/MultiSelect';
 import { DateTimeInput } from '../../components/DateTimeInput';
 import {
-  NoleggiSelector,
-  type RigaNoleggio,
-} from '../../components/NoleggiSelector';
-import {
   SquadreSelector,
   nuovaRigaSquadra,
   operaiRiga,
@@ -39,6 +35,11 @@ import { fascePerApi } from '../../utils/oreBollettino';
 // finisce nel campo `to` dell'API, dove una virgola varrebbe piu' destinatari.
 const EMAIL_RE = /^[^\s@,;<>]+@[^\s@,;<>.]+(\.[^\s@,;<>.]+)+$/;
 
+/** Confronto come lo fa il server: maiuscole e spazi doppi non contano. */
+function chiave(valore: string): string {
+  return valore.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
 /**
  * Testo dell'avviso quando il bollettino e' salvato ma la mail non e' partita.
  * Il tono non e' quello di un errore: il documento c'e' e le firme sono al
@@ -56,8 +57,9 @@ function messaggioAvviso(esito: EsitoEmailBollettino): string {
 }
 
 interface Props {
-  // 2 = sezione "Bollettini Nuovi": riferimento del cantiere in testa, mezzi e
-  // trasporti a testo libero dentro le attivita', noleggi dei veicoli
+  // 2 = sezione "Bollettini Nuovi": riferimento del cantiere in testa, cliente
+  // scritto o scelto, operai con la categoria, mezzi e trasporti a testo
+  // libero dentro le attivita'
   modello?: 1 | 2;
 }
 
@@ -84,6 +86,9 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
     new Date().toISOString().split('T')[0] || ''
   );
   const [clienteId, setClienteId] = useState<number | null>(null);
+  // Solo modello 2: il cliente si scrive; se e' in anagrafica `clienteId` lo
+  // segue, altrimenti il server lo aggiunge al salvataggio
+  const [clienteTesto, setClienteTesto] = useState('');
   const [cantieriIds, setCantieriIds] = useState<number[]>([]);
   const [squadre, setSquadre] = useState<RigaSquadra[]>(() => [nuovaRigaSquadra()]);
   const [attivita, setAttivita] = useState('');
@@ -94,7 +99,6 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
   const [riferimentoCantiere, setRiferimentoCantiere] = useState('');
   const [mezziTesto, setMezziTesto] = useState('');
   const [trasportiTesto, setTrasportiTesto] = useState('');
-  const [noleggi, setNoleggi] = useState<RigaNoleggio[]>([]);
 
   const [email, setEmail] = useState('');
   // Gia' caricati sul server: qui restano i soli metadati, e nella POST solo
@@ -113,11 +117,12 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
         // flag dei bollettini classici: chiederla darebbe un 403
         const [clientiRes, veicoliRes, trasportiRes] = await Promise.all([
           clientiApi.getAll(),
-          bollettiniApi.getVeicoli(),
+          // I veicoli servono ai soli mezzi del modello 1
+          modello2 ? null : bollettiniApi.getVeicoli(),
           modello2 ? null : vociBollettinoApi.getAll('trasporti'),
         ]);
         setClienti(clientiRes.data);
-        setVeicoli(veicoliRes.data);
+        setVeicoli(veicoliRes?.data ?? []);
         setTrasportiDisponibili(trasportiRes?.data ?? []);
       } catch {
         setError('Errore nel caricamento dei dati');
@@ -181,6 +186,14 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
     return voce;
   };
 
+  const handleClienteTesto = (valore: string) => {
+    setClienteTesto(valore);
+    const trovato = clienti.find((c) => chiave(c.nome) === chiave(valore));
+    setClienteId(trovato?.id ?? null);
+  };
+
+  const clienteNuovo = modello2 && clienteTesto.trim().length > 0 && clienteId === null;
+
   const toRighe = (righe: VoceScelta[]) =>
     righe.map(({ id, nome, quantita }) => ({ voceId: id, descrizione: nome, quantita }));
 
@@ -189,12 +202,11 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
   // `emailNonValida` **non** entra in puoSalvare: spegnere il pulsante per un
   // campo facoltativo sarebbe peggio del problema che risolve.
   const puoSalvare =
-    Boolean(clienteId) &&
+    (Boolean(clienteId) || clienteNuovo) &&
     // Il cantiere e' obbligatorio solo quando il cliente ne ha
     (cantieri.length === 0 || cantieriIds.length > 0) &&
     attivita.trim().length > 0 &&
-    squadre.every((r) => problemaRiga(r) === null) &&
-    noleggi.every((n) => n.veicoloId !== null) &&
+    squadre.every((r) => problemaRiga(r, modello2) === null) &&
     firmaOperatoreNome.trim().length > 0 &&
     firmaCommittenteNome.trim().length > 0 &&
     Boolean(firmaOperatoreImg) &&
@@ -203,7 +215,7 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!clienteId || !firmaOperatoreImg || !firmaCommittenteImg) {
+    if ((!clienteId && !clienteNuovo) || !firmaOperatoreImg || !firmaCommittenteImg) {
       setError('Compila tutti i campi obbligatori e apponi entrambe le firme');
       return;
     }
@@ -213,10 +225,14 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
 
     try {
       const { data } = await bollettiniApi.create({
-        clienteId,
+        ...(clienteId ? { clienteId } : { clienteNome: clienteTesto.trim() }),
         cantieriIds,
         // Le ore le calcola il server dagli orari, se indicati
-        squadre: squadre.map((r) => ({ numeroOperai: operaiRiga(r), ...fascePerApi(r) })),
+        squadre: squadre.map((r) => ({
+          numeroOperai: operaiRiga(r),
+          ...(modello2 && r.categoria ? { categoria: r.categoria } : {}),
+          ...fascePerApi(r),
+        })),
         dataRiferimento,
         attivita: attivita.trim(),
         mezzi: modello2 ? [] : mezzi.map(({ id, quantita }) => ({ veicoloId: id, quantita })),
@@ -228,9 +244,6 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
               riferimentoCantiere: riferimentoCantiere.trim(),
               mezziTesto: mezziTesto.trim(),
               trasportiTesto: trasportiTesto.trim(),
-              noleggi: noleggi.flatMap(({ veicoloId, durata }) =>
-                veicoloId !== null ? [{ veicoloId, durata }] : []
-              ),
             }
           : {}),
         firmaOperatoreNome: firmaOperatoreNome.trim(),
@@ -327,20 +340,48 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
             />
           </div>
 
-          <div>
-            <label htmlFor="cliente" className="label">Cliente</label>
-            <select
-              id="cliente"
-              className="input"
-              value={clienteId ?? ''}
-              onChange={(e) => setClienteId(e.target.value ? parseInt(e.target.value, 10) : null)}
-            >
-              <option value="">Seleziona...</option>
-              {clienti.map((cliente) => (
-                <option key={cliente.id} value={cliente.id}>{cliente.nome}</option>
-              ))}
-            </select>
-          </div>
+          {modello2 ? (
+            <div>
+              <label htmlFor="cliente" className="label">Cliente</label>
+              <input
+                type="text"
+                id="cliente"
+                className="input"
+                list="bollettino-clienti"
+                value={clienteTesto}
+                onChange={(e) => handleClienteTesto(e.target.value)}
+                maxLength={200}
+                placeholder="Scrivi o scegli il cliente"
+                autoComplete="off"
+                disabled={isSaving}
+              />
+              <datalist id="bollettino-clienti">
+                {clienti.map((c) => (
+                  <option key={c.id} value={c.nome} />
+                ))}
+              </datalist>
+              {clienteNuovo && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Nuovo cliente: verrà aggiunto all'anagrafica quando salvi il bollettino.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <label htmlFor="cliente" className="label">Cliente</label>
+              <select
+                id="cliente"
+                className="input"
+                value={clienteId ?? ''}
+                onChange={(e) => setClienteId(e.target.value ? parseInt(e.target.value, 10) : null)}
+              >
+                <option value="">Seleziona...</option>
+                {clienti.map((cliente) => (
+                  <option key={cliente.id} value={cliente.id}>{cliente.nome}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Il box compare solo se il cliente ha cantieri: per la maggior
               parte dei clienti sarebbe una tendina vuota e obbligatoria */}
@@ -415,6 +456,7 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
             value={squadre}
             onChange={setSquadre}
             disabled={isSaving}
+            conCategoria={modello2}
           />
 
           {/* I mezzi si aggiungono solo dalla Banca dati veicoli, condivisa
@@ -443,14 +485,7 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
             />
           </div>
 
-          {modello2 ? (
-            <NoleggiSelector
-              veicoli={veicoli}
-              value={noleggi}
-              onChange={setNoleggi}
-              disabled={isSaving}
-            />
-          ) : (
+          {!modello2 && (
             <BancaDatiSelector
               titolo="Trasporti"
               labelQuantita="Viaggi"

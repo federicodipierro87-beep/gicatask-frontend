@@ -6,12 +6,17 @@ export interface RigaSquadra extends Fasce {
   uid: string;
   /** Testo dell'input, '' finché non si scrive. */
   numeroOperai: string;
+  /** Solo nei Bollettini Nuovi; '' finché non si sceglie. */
+  categoria: CategoriaOperai | '';
 }
+
+export type CategoriaOperai = 'A' | 'B';
 
 let contatoreUid = 0;
 export const nuovaRigaSquadra = (): RigaSquadra => ({
   uid: `squadra-${++contatoreUid}`,
   numeroOperai: '1',
+  categoria: '',
   ...FASCE_VUOTE,
 });
 
@@ -25,8 +30,9 @@ export const oreRigaSquadra = (r: RigaSquadra): number =>
   Math.round(((operaiRiga(r) * minutiFasce(r)) / 60) * 100) / 100;
 
 /** Motivo per cui la riga non si puo' salvare, oppure null. */
-export function problemaRiga(r: RigaSquadra): string | null {
+export function problemaRiga(r: RigaSquadra, conCategoria = false): string | null {
   if (operaiRiga(r) === 0) return 'Indica il numero di operai.';
+  if (conCategoria && !r.categoria) return 'Scegli la categoria A o B.';
   // Gli orari sono facoltativi, ma una fascia iniziata va completata
   if (fasceIncomplete(r)) return 'Completa inizio e fine della fascia.';
   return null;
@@ -38,6 +44,8 @@ interface Props {
   value: RigaSquadra[];
   onChange: (value: RigaSquadra[]) => void;
   disabled?: boolean;
+  // Bollettini Nuovi: ogni riga ha la categoria A o B
+  conCategoria?: boolean;
 }
 
 const formatOre = (ore: number) => ore.toLocaleString('it-IT', { maximumFractionDigits: 2 });
@@ -47,7 +55,7 @@ const formatOre = (ore: number) => ore.toLocaleString('it-IT', { maximumFraction
  * propri orari, facoltativi. Il "+" aggiunge una riga; sotto, il totale delle
  * ore.
  */
-export function SquadreSelector({ value, onChange, disabled = false }: Props) {
+export function SquadreSelector({ value, onChange, disabled = false, conCategoria = false }: Props) {
   const aggiorna = (uid: string, modifica: Partial<RigaSquadra>) => {
     onChange(
       value.map((r) => (r.uid === uid ? { ...r, ...modifica } : r))
@@ -63,7 +71,7 @@ export function SquadreSelector({ value, onChange, disabled = false }: Props) {
 
       <div className="space-y-3">
         {value.map((riga, index) => {
-          const problema = problemaRiga(riga);
+          const problema = problemaRiga(riga, conCategoria);
           return (
             <div key={riga.uid} className="bg-gray-50 rounded-lg p-3">
               <FasceOrarieInput
@@ -74,7 +82,9 @@ export function SquadreSelector({ value, onChange, disabled = false }: Props) {
                 compatto
               />
               <div className="flex items-end gap-2 mt-3">
-                <div className="w-32">
+                {/* Con la categoria accanto le colonne si stringono: da telefono
+                    la riga deve stare su una linea */}
+                <div className={conCategoria ? 'w-24' : 'w-32'}>
                   <label htmlFor={`${riga.uid}-operai`} className="label text-sm">N. operai</label>
                   <input
                     type="number"
@@ -88,6 +98,24 @@ export function SquadreSelector({ value, onChange, disabled = false }: Props) {
                     disabled={disabled}
                   />
                 </div>
+                {conCategoria && (
+                  <div className="w-28">
+                    <label htmlFor={`${riga.uid}-categoria`} className="label text-sm">Categoria</label>
+                    <select
+                      id={`${riga.uid}-categoria`}
+                      className="input"
+                      value={riga.categoria}
+                      onChange={(e) =>
+                        aggiorna(riga.uid, { categoria: e.target.value as CategoriaOperai | '' })
+                      }
+                      disabled={disabled}
+                    >
+                      <option value="">Scegli...</option>
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                    </select>
+                  </div>
+                )}
                 <span className="flex-1 text-sm text-gray-600 pb-2 text-right">
                   {minutiFasce(riga) > 0 ? `${formatOre(oreRigaSquadra(riga))} ore` : ''}
                 </span>

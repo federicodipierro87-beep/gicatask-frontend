@@ -433,7 +433,10 @@ export interface EsitoEmailBollettino {
 // Il cantiere e' facoltativo, il cliente no: lato server il cantiere serve solo
 // quando il cliente ne ha almeno uno attivo.
 export interface CreateBollettinoInput {
-  clienteId: number;
+  // Uno dei due. `clienteNome` solo nei Bollettini Nuovi: il cliente scritto a
+  // mano, che il server aggiunge all'anagrafica se manca
+  clienteId?: number;
+  clienteNome?: string;
   // Tutti dello stesso cliente
   cantieriIds: number[];
   // Fasce della giornata: il form non le chiede piu', gli orari stanno
@@ -441,7 +444,7 @@ export interface CreateBollettinoInput {
   fasce?: FasceBollettinoInput;
   // Operai a gruppi con i propri orari: il server ne calcola le ore e ne
   // ricava numero operai (somma) e totale ore
-  squadre: (FasceBollettinoInput & { numeroOperai: number })[];
+  squadre: (FasceBollettinoInput & { numeroOperai: number; categoria?: 'A' | 'B' })[];
   materialiTesto: string;
   dataRiferimento: string;
   attivita: string;
