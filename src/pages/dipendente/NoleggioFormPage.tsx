@@ -4,6 +4,7 @@ import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { SignaturePad } from '../../components/SignaturePad';
 import { AllegatiUploader } from '../../components/AllegatiUploader';
 import { CampoData } from '../../components/CampoData';
+import { SceltaOpzioni, OPZIONI_SI_NO, OPZIONI_STATO } from '../../components/SceltaOpzioni';
 import { noleggiApi } from '../../api/client';
 import type { EsitoEmailBollettino } from '../../api/client';
 import type { AllegatoNoleggio, AnagraficheNoleggio, Carburante } from '../../types';
@@ -103,11 +104,12 @@ export function NoleggioFormPage() {
   const [salvaVeicolo, setSalvaVeicolo] = useState(false);
   const [giorni, setGiorni] = useState(1);
 
-  const [pieno, setPieno] = useState(false);
+  // null finché non si risponde: Sì o No vanno scelti esplicitamente
+  const [pieno, setPieno] = useState<boolean | null>(null);
   const [carburante, setCarburante] = useState<Carburante | null>(null);
   const [scontrini, setScontrini] = useState<AllegatoNoleggio[]>([]);
 
-  const [danni, setDanni] = useState(false);
+  const [danni, setDanni] = useState<boolean | null>(null);
   const [danniNote, setDanniNote] = useState('');
   const [fotoDanni, setFotoDanni] = useState<AllegatoNoleggio[]>([]);
 
@@ -115,7 +117,9 @@ export function NoleggioFormPage() {
   const [aggiornaEmail, setAggiornaEmail] = useState(false);
 
   const [firmaNome, setFirmaNome] = useState('');
+  const [firmaEmail, setFirmaEmail] = useState('');
   const [firmaImg, setFirmaImg] = useState<string | null>(null);
+  const [fatturato, setFatturato] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -191,6 +195,7 @@ export function NoleggioFormPage() {
   const emailValida = EMAIL_RE.test(emailPulita);
   const emailNonValida = emailPulita.length > 0 && !emailValida;
   // "Aggiorna anagrafica" ha senso solo se l'indirizzo e' nuovo per il cliente
+  const firmaEmailNonValida = firmaEmail.trim().length > 0 && !EMAIL_RE.test(firmaEmail.trim());
   const emailDaAggiornare =
     emailValida &&
     clienteInAnagrafica &&
@@ -202,6 +207,8 @@ export function NoleggioFormPage() {
     Boolean(data) &&
     Boolean(dataIngresso) &&
     !dateInvertite &&
+    pieno !== null &&
+    danni !== null &&
     (!pieno || carburante !== null) &&
     firmaNome.trim().length > 0 &&
     Boolean(firmaImg) &&
@@ -227,14 +234,16 @@ export function NoleggioFormPage() {
         veicoloNome: veicolo.trim(),
         salvaVeicolo: salvaVeicolo && !veicoloTrovato,
         giorni,
-        pieno,
+        pieno: Boolean(pieno),
         ...(pieno && carburante ? { carburante } : {}),
-        danni,
+        danni: Boolean(danni),
         ...(danni && danniNote.trim() ? { danniNote: danniNote.trim() } : {}),
         ...(emailPulita ? { emailFatturazione: emailPulita } : {}),
         aggiornaEmailCliente: aggiornaEmail && emailDaAggiornare,
         firmaNome: firmaNome.trim(),
+        ...(firmaEmail.trim() ? { firmaEmail: firmaEmail.trim() } : {}),
         firmaImg,
+        fatturato,
         scontrinoIds: pieno ? scontrini.map((a) => a.id) : [],
         danniIds: danni ? fotoDanni.map((a) => a.id) : [],
         invia,
@@ -429,16 +438,14 @@ export function NoleggioFormPage() {
           </div>
 
           <div className="border border-gray-200 rounded-lg p-3 space-y-3">
-            <label className="flex items-center gap-2 font-medium text-gray-900">
-              <input
-                type="checkbox"
-                checked={pieno}
-                onChange={(e) => setPieno(e.target.checked)}
-                disabled={bloccato}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              />
-              Ha fatto il pieno
-            </label>
+            <SceltaOpzioni
+              label="Ha fatto il pieno?"
+              name="pieno"
+              opzioni={OPZIONI_SI_NO}
+              value={pieno}
+              onChange={setPieno}
+              disabled={bloccato}
+            />
             {pieno && (
               <>
                 <div className="flex gap-6">
@@ -474,16 +481,14 @@ export function NoleggioFormPage() {
           </div>
 
           <div className="border border-gray-200 rounded-lg p-3 space-y-3">
-            <label className="flex items-center gap-2 font-medium text-gray-900">
-              <input
-                type="checkbox"
-                checked={danni}
-                onChange={(e) => setDanni(e.target.checked)}
-                disabled={bloccato}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              />
-              Ha riportato danni
-            </label>
+            <SceltaOpzioni
+              label="Ha riportato danni?"
+              name="danni"
+              opzioni={OPZIONI_SI_NO}
+              value={danni}
+              onChange={setDanni}
+              disabled={bloccato}
+            />
             {danni && (
               <>
                 <div>
@@ -560,7 +565,26 @@ export function NoleggioFormPage() {
               maxLength={200}
               disabled={bloccato}
             />
-            <div className="mt-2">
+            <label htmlFor="firmaEmail" className="label mt-4">
+              E-mail di chi ha effettuato il noleggio{' '}
+              <span className="text-gray-400 font-normal">(facoltativa)</span>
+            </label>
+            <input
+              type="email"
+              id="firmaEmail"
+              className="input"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              maxLength={254}
+              value={firmaEmail}
+              onChange={(e) => setFirmaEmail(e.target.value)}
+              disabled={bloccato}
+            />
+            {firmaEmailNonValida && (
+              <p className="mt-1 text-xs text-amber-700">L'indirizzo non sembra valido.</p>
+            )}
+            <div className="mt-4">
               <SignaturePad
                 label="Firma"
                 value={firmaImg}
@@ -568,6 +592,17 @@ export function NoleggioFormPage() {
                 disabled={bloccato}
               />
             </div>
+          </div>
+
+          <div className="border-t pt-5">
+            <SceltaOpzioni
+              label="Stato"
+              name="stato"
+              opzioni={OPZIONI_STATO}
+              value={fatturato}
+              onChange={setFatturato}
+              disabled={bloccato}
+            />
           </div>
 
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">

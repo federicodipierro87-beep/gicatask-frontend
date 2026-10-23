@@ -463,6 +463,8 @@ export interface CreateBollettinoInput {
   riferimentoCantiere?: string;
   mezziTesto?: string;
   trasportiTesto?: string;
+  // Bollettini Nuovi: stato scelto in fondo al form
+  fatturato?: boolean;
   noleggi?: { veicoloId: number; durata: DurataNoleggio }[];
 }
 
@@ -718,7 +720,9 @@ export interface CreateNoleggioInput {
   emailFatturazione?: string;
   aggiornaEmailCliente?: boolean;
   firmaNome: string;
+  firmaEmail?: string;
   firmaImg: string;
+  fatturato: boolean;
   scontrinoIds: number[];
   danniIds: number[];
   // "Salva e invia"
@@ -742,6 +746,8 @@ export const noleggiApi = {
   // Risponde 200 anche quando l'invio fallisce: l'esito sta nel corpo
   inviaMail: (id: number, email?: string) =>
     apiClient.post<EsitoEmailBollettino>(`/noleggi/${id}/invia-mail`, email ? { email } : {}),
+  setFatturato: (id: number, fatturato: boolean) =>
+    apiClient.patch(`/noleggi/${id}/fatturato`, { fatturato }),
   delete: (id: number) =>
     apiClient.delete(`/noleggi/${id}`),
   downloadPdf: (id: number) =>

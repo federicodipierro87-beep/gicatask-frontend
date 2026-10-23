@@ -487,7 +487,10 @@ export interface Noleggio {
   danni: boolean;
   danniNote: string | null;
   emailFatturazione: string | null;
+  fatturato: boolean;
+  fatturatoAt: string | null;
   firmaNome: string;
+  firmaEmail: string | null;
   emailStato: string | null;
   emailInviataAt: string | null;
   emailErrore: string | null;

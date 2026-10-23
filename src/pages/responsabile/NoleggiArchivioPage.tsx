@@ -80,6 +80,7 @@ export function NoleggiArchivioPage() {
   const [utenteId, setUtenteId] = useState<number | null>(null);
 
   const [downloadId, setDownloadId] = useState<number | null>(null);
+  const [fatturatoId, setFatturatoId] = useState<number | null>(null);
   const [daInviare, setDaInviare] = useState<Noleggio | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -140,6 +141,32 @@ export function NoleggiArchivioPage() {
       setError('Errore durante il download del PDF');
     } finally {
       setDownloadId(null);
+    }
+  };
+
+  // Aggiornamento ottimistico: la riga cambia subito e torna com'era se il
+  // server rifiuta
+  const handleFatturato = async (noleggio: Noleggio) => {
+    const nuovo = !noleggio.fatturato;
+    const aggiorna = (fatturato: boolean) =>
+      setNoleggi((prev) =>
+        prev.map((n) =>
+          n.id === noleggio.id
+            ? { ...n, fatturato, fatturatoAt: fatturato ? new Date().toISOString() : null }
+            : n
+        )
+      );
+
+    setFatturatoId(noleggio.id);
+    aggiorna(nuovo);
+    try {
+      await noleggiApi.setFatturato(noleggio.id, nuovo);
+      setError(null);
+    } catch {
+      aggiorna(noleggio.fatturato);
+      setError('Errore durante l\'aggiornamento dello stato');
+    } finally {
+      setFatturatoId(null);
     }
   };
 
@@ -231,6 +258,7 @@ export function NoleggiArchivioPage() {
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Danni</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Foto</th>
                   <th className="text-left py-3 px-2 font-medium text-gray-600">Fatturazione</th>
+                  <th className="text-center py-3 px-2 font-medium text-gray-600">Fatturato</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-600">Azioni</th>
                 </tr>
               </thead>
@@ -254,6 +282,21 @@ export function NoleggiArchivioPage() {
                     </td>
                     <td className="py-3 px-2 whitespace-nowrap">
                       <StatoMailNoleggio noleggio={noleggio} />
+                    </td>
+                    <td className="py-3 px-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={noleggio.fatturato}
+                        disabled={fatturatoId === noleggio.id}
+                        onChange={() => handleFatturato(noleggio)}
+                        className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        aria-label={`Fatturato, noleggio ${noleggio.id}`}
+                        title={
+                          noleggio.fatturato && noleggio.fatturatoAt
+                            ? `Fatturato il ${formatDate(noleggio.fatturatoAt)}`
+                            : 'Aperto'
+                        }
+                      />
                     </td>
                     <td className="py-3 px-2 text-right space-x-3 whitespace-nowrap">
                       <button

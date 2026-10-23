@@ -6,6 +6,7 @@ import { AllegatiUploader } from '../../components/AllegatiUploader';
 import { BancaDatiSelector, type VoceScelta } from '../../components/BancaDatiSelector';
 import { MultiSelect } from '../../components/MultiSelect';
 import { CampoSuggerimenti } from '../../components/CampoSuggerimenti';
+import { SceltaOpzioni, OPZIONI_STATO } from '../../components/SceltaOpzioni';
 import { DateTimeInput } from '../../components/DateTimeInput';
 import {
   SquadreSelector,
@@ -100,6 +101,7 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
   const [riferimentoCantiere, setRiferimentoCantiere] = useState('');
   const [mezziTesto, setMezziTesto] = useState('');
   const [trasportiTesto, setTrasportiTesto] = useState('');
+  const [fatturato, setFatturato] = useState(false);
 
   const [email, setEmail] = useState('');
   // Gia' caricati sul server: qui restano i soli metadati, e nella POST solo
@@ -245,6 +247,7 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
               riferimentoCantiere: riferimentoCantiere.trim(),
               mezziTesto: mezziTesto.trim(),
               trasportiTesto: trasportiTesto.trim(),
+              fatturato,
             }
           : {}),
         firmaOperatoreNome: firmaOperatoreNome.trim(),
@@ -567,6 +570,19 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
               </div>
             </div>
           </div>
+
+          {modello2 && (
+            <div className="border-t pt-5">
+              <SceltaOpzioni
+                label="Stato"
+                name="stato"
+                opzioni={OPZIONI_STATO}
+                value={fatturato}
+                onChange={setFatturato}
+                disabled={isSaving || salvato}
+              />
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
             <button
