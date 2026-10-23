@@ -5,6 +5,7 @@ import { SignaturePad } from '../../components/SignaturePad';
 import { AllegatiUploader } from '../../components/AllegatiUploader';
 import { BancaDatiSelector, type VoceScelta } from '../../components/BancaDatiSelector';
 import { MultiSelect } from '../../components/MultiSelect';
+import { CampoSuggerimenti } from '../../components/CampoSuggerimenti';
 import { DateTimeInput } from '../../components/DateTimeInput';
 import {
   SquadreSelector,
@@ -343,23 +344,15 @@ export function BollettinoFormPage({ modello = 1 }: Props) {
           {modello2 ? (
             <div>
               <label htmlFor="cliente" className="label">Cliente</label>
-              <input
-                type="text"
+              <CampoSuggerimenti
                 id="cliente"
-                className="input"
-                list="bollettino-clienti"
                 value={clienteTesto}
-                onChange={(e) => handleClienteTesto(e.target.value)}
+                onChange={handleClienteTesto}
+                opzioni={clienti.map((c) => c.nome)}
                 maxLength={200}
                 placeholder="Scrivi o scegli il cliente"
-                autoComplete="off"
                 disabled={isSaving}
               />
-              <datalist id="bollettino-clienti">
-                {clienti.map((c) => (
-                  <option key={c.id} value={c.nome} />
-                ))}
-              </datalist>
               {clienteNuovo && (
                 <p className="mt-1 text-xs text-gray-500">
                   Nuovo cliente: verrà aggiunto all'anagrafica quando salvi il bollettino.
