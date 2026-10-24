@@ -13,7 +13,9 @@ export function DipendenteLayout({ children }: Props) {
   // prefisso di /dipendente/bollettini, per questo ha exact.
   // "Bollettini Nuovi" ha un flag suo, indipendente da quello dei bollettini
   const navItems = [
-    { path: '/dipendente/nuova', label: 'Nuova Attività' },
+    ...(user?.abilitatoAttivita
+      ? [{ path: '/dipendente/nuova', label: 'Nuova Attività' }]
+      : []),
     ...(user?.abilitatoAttivita2
       ? [{ path: '/dipendente/nuova-2', label: 'Nuova Attività 2' }]
       : []),

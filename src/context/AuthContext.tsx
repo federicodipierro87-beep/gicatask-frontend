@@ -44,6 +44,7 @@ function toUser(raw: {
   abilitatoBollettini: boolean;
   abilitatoBollettini2?: boolean;
   abilitatoNoleggi?: boolean;
+  abilitatoAttivita?: boolean;
   abilitatoAttivita2?: boolean;
 }): User {
   return {
@@ -55,6 +56,8 @@ function toUser(raw: {
     // Assente da un backend precedente al flag
     abilitatoBollettini2: raw.abilitatoBollettini2 ?? false,
     abilitatoNoleggi: raw.abilitatoNoleggi ?? false,
+    // Questo invece nasce acceso: un backend senza il flag non lo nega a nessuno
+    abilitatoAttivita: raw.abilitatoAttivita ?? true,
     abilitatoAttivita2: raw.abilitatoAttivita2 ?? false,
   };
 }

@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { Ruolo } from '../types';
+import { paginaIniziale } from '../utils/paginaIniziale';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,6 +12,8 @@ interface ProtectedRouteProps {
   requireBollettini2?: boolean;
   /** Riservato a chi ha il flag della sezione "Noleggi". */
   requireNoleggi?: boolean;
+  /** Riservato a chi ha il flag del modulo "Nuova Attività". */
+  requireAttivita?: boolean;
   /** Riservato a chi ha il flag del modulo "Nuova Attività 2". */
   requireAttivita2?: boolean;
 }
@@ -21,6 +24,7 @@ export function ProtectedRoute({
   requireBollettini,
   requireBollettini2,
   requireNoleggi,
+  requireAttivita,
   requireAttivita2,
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -39,8 +43,7 @@ export function ProtectedRoute({
 
   if (requiredRole && user?.ruolo !== requiredRole) {
     // Redirect to appropriate dashboard based on role
-    const redirectPath = user?.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente/nuova';
-    return <Navigate to={redirectPath} replace />;
+    return <Navigate to={paginaIniziale(user)} replace />;
   }
 
   // Questo è solo il menu: l'accesso vero è deciso dalla guardia server, che
@@ -49,12 +52,12 @@ export function ProtectedRoute({
     (requireBollettini && !user?.abilitatoBollettini) ||
     (requireBollettini2 && !user?.abilitatoBollettini2) ||
     (requireNoleggi && !user?.abilitatoNoleggi) ||
+    (requireAttivita && !user?.abilitatoAttivita) ||
     (requireAttivita2 && !user?.abilitatoAttivita2)
   ) {
     // Rimandare un responsabile all'area dipendente lo sbalzerebbe fuori
     // dalla sezione in cui stava lavorando
-    const redirectPath = user?.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente/nuova';
-    return <Navigate to={redirectPath} replace />;
+    return <Navigate to={paginaIniziale(user)} replace />;
   }
 
   return <>{children}</>;

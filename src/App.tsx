@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { paginaIniziale } from './utils/paginaIniziale';
 import { InactivityWarning } from './components/InactivityWarning';
 import { LoginPage } from './pages/Login';
 import { AttivitaListPage } from './pages/dipendente/AttivitaListPage';
@@ -61,10 +62,7 @@ function RootRedirect() {
   }
 
   return (
-    <Navigate
-      to={user?.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente/nuova'}
-      replace
-    />
+    <Navigate to={paginaIniziale(user)} replace />
   );
 }
 
@@ -83,10 +81,12 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      {/* La modifica resta aperta a tutti, come per Nuova Attività 2: chi
+          perde il modulo può ancora correggere le attività già inserite */}
       <Route
         path="/dipendente/nuova"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireAttivita>
             <AttivitaFormPage />
           </ProtectedRoute>
         }

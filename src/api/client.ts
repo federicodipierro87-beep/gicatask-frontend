@@ -84,7 +84,7 @@ export const authApi = {
   login: (utenteId: number, password?: string) =>
     apiClient.post<{
       token: string;
-      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean; abilitatoNoleggi?: boolean; abilitatoAttivita2?: boolean };
+      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean; abilitatoNoleggi?: boolean; abilitatoAttivita?: boolean; abilitatoAttivita2?: boolean };
     }>('/auth/login', { utenteId, password }),
 
   logout: () =>
@@ -92,7 +92,7 @@ export const authApi = {
 
   getMe: () =>
     apiClient.get<{
-      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean; abilitatoNoleggi?: boolean; abilitatoAttivita2?: boolean };
+      user: { id: number; nome: string; cognome: string; ruolo: string; abilitatoBollettini: boolean; abilitatoBollettini2?: boolean; abilitatoNoleggi?: boolean; abilitatoAttivita?: boolean; abilitatoAttivita2?: boolean };
     }>('/auth/me'),
 };
 
@@ -342,6 +342,7 @@ export const utentiApi = {
       abilitatoBollettini?: boolean;
       abilitatoBollettini2?: boolean;
       abilitatoNoleggi?: boolean;
+      abilitatoAttivita?: boolean;
       abilitatoAttivita2?: boolean;
       percentualeLavoro?: number;
     }

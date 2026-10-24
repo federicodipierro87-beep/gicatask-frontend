@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api/client';
 import type { UserListItem } from '../types';
 import { nomeUtente } from '../utils/nomeUtente';
+import { paginaIniziale } from '../utils/paginaIniziale';
 import { AxiosError } from 'axios';
 
 export function LoginPage() {
@@ -21,9 +22,7 @@ export function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      navigate(user.ruolo === 'RESPONSABILE' ? '/responsabile' : '/dipendente/nuova', {
-        replace: true,
-      });
+      navigate(paginaIniziale(user), { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 

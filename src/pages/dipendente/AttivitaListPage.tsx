@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
+import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../../components/Modal';
 import { attivitaApi } from '../../api/client';
 import { MonthNavigator, currentMonth, monthRange } from '../../components/MonthNavigator';
@@ -92,6 +93,14 @@ function getActivityRowClasses(status: DateStatus): string {
 }
 
 export function AttivitaListPage() {
+  const { user } = useAuth();
+  // Il pulsante porta al modulo che il dipendente ha: senza nessuno dei due
+  // l'elenco resta consultabile ma non si aggiunge nulla da qui
+  const nuova = user?.abilitatoAttivita
+    ? { path: '/dipendente/nuova', label: 'Nuova Attività' }
+    : user?.abilitatoAttivita2
+      ? { path: '/dipendente/nuova-2', label: 'Nuova Attività 2' }
+      : null;
   const [attivita, setAttivita] = useState<Attivita[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -178,9 +187,11 @@ export function AttivitaListPage() {
             Totale mese: {formatDuration(totalMinutes)} ({attivita.length} attività)
           </p>
         </div>
-        <Link to="/dipendente/nuova" className="btn-primary">
-          + Nuova Attività
-        </Link>
+        {nuova && (
+          <Link to={nuova.path} className="btn-primary">
+            + {nuova.label}
+          </Link>
+        )}
       </div>
 
       <div className="mb-6 rounded-xl border bg-white px-2 py-2 shadow-sm">
@@ -207,8 +218,8 @@ export function AttivitaListPage() {
       ) : attivita.length === 0 ? (
         <div className="card text-center py-8">
           <p className="text-gray-500 mb-4">Nessuna attività registrata in questo mese</p>
-          {mese === currentMonth() ? (
-            <Link to="/dipendente/nuova" className="btn-primary">
+          {mese === currentMonth() && nuova ? (
+            <Link to={nuova.path} className="btn-primary">
               Registra la tua prima attività
             </Link>
           ) : (

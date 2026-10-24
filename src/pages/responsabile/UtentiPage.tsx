@@ -23,6 +23,7 @@ interface Utente {
   abilitatoBollettini: boolean;
   abilitatoBollettini2: boolean;
   abilitatoNoleggi: boolean;
+  abilitatoAttivita: boolean;
   abilitatoAttivita2: boolean;
   /** Percentuale base: vale nei mesi prima della prima variazione. */
   percentualeLavoro: number;
@@ -64,6 +65,7 @@ export function UtentiPage() {
   const [formAbilitatoBollettini, setFormAbilitatoBollettini] = useState(false);
   const [formAbilitatoBollettini2, setFormAbilitatoBollettini2] = useState(false);
   const [formAbilitatoNoleggi, setFormAbilitatoNoleggi] = useState(false);
+  const [formAbilitatoAttivita, setFormAbilitatoAttivita] = useState(true);
   const [formAbilitatoAttivita2, setFormAbilitatoAttivita2] = useState(false);
   const [formPercentuale, setFormPercentuale] = useState('100');
   const [newPassword, setNewPassword] = useState('');
@@ -101,6 +103,7 @@ export function UtentiPage() {
     setFormAbilitatoBollettini(false);
     setFormAbilitatoBollettini2(false);
     setFormAbilitatoNoleggi(false);
+    setFormAbilitatoAttivita(true);
     setFormAbilitatoAttivita2(false);
     setFormPercentuale('100');
     setError(null);
@@ -116,6 +119,7 @@ export function UtentiPage() {
     setFormAbilitatoBollettini(utente.abilitatoBollettini);
     setFormAbilitatoBollettini2(utente.abilitatoBollettini2 ?? false);
     setFormAbilitatoNoleggi(utente.abilitatoNoleggi ?? false);
+    setFormAbilitatoAttivita(utente.abilitatoAttivita ?? true);
     setFormAbilitatoAttivita2(utente.abilitatoAttivita2 ?? false);
     setFormPercentuale(String(utente.percentualeLavoro));
     setNuovaDecorrenza(currentMonth());
@@ -189,6 +193,7 @@ export function UtentiPage() {
           abilitatoBollettini: formAbilitatoBollettini,
           abilitatoBollettini2: formAbilitatoBollettini2,
           abilitatoNoleggi: formAbilitatoNoleggi,
+          abilitatoAttivita: formAbilitatoAttivita,
           abilitatoAttivita2: formAbilitatoAttivita2,
           percentualeLavoro: percentuale,
         });
@@ -543,6 +548,23 @@ export function UtentiPage() {
                 <p className="text-sm text-gray-500 mt-1">
                   Mostra la sezione Noleggi nell'area dipendente (verbali con firma, foto e invio
                   per la fatturazione) e, a un responsabile, l'archivio dei noleggi.
+                </p>
+              </div>
+            )}
+            {editingUtente && (
+              <div>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={formAbilitatoAttivita}
+                    onChange={(e) => setFormAbilitatoAttivita(e.target.checked)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  Abilita Nuova Attività
+                </label>
+                <p className="text-sm text-gray-500 mt-1">
+                  Mostra il modulo Nuova Attività nell'area dipendente: cliente, cantiere e tipo
+                  di attività. Le attività già inserite restano modificabili.
                 </p>
               </div>
             )}

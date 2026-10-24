@@ -10,6 +10,8 @@ export interface User {
   abilitatoBollettini2: boolean;
   // Sezione "Noleggi"
   abilitatoNoleggi: boolean;
+  // Modulo "Nuova Attività" (form col cliente): acceso per default
+  abilitatoAttivita: boolean;
   // Modulo "Nuova Attività 2": magazzino o cantiere al posto del cliente
   abilitatoAttivita2: boolean;
 }
