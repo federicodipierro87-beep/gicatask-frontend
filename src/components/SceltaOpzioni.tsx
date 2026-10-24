@@ -59,9 +59,10 @@ export function SceltaOpzioni<T extends string | boolean>({
   );
 }
 
-export const OPZIONI_SI_NO = [
-  { valore: true, etichetta: 'Sì' },
+// No a sinistra: Sì apre la parte da compilare
+export const OPZIONI_NO_SI = [
   { valore: false, etichetta: 'No' },
+  { valore: true, etichetta: 'Sì' },
 ];
 
 export const OPZIONI_STATO = [

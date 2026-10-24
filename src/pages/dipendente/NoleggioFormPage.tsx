@@ -4,7 +4,7 @@ import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { SignaturePad } from '../../components/SignaturePad';
 import { AllegatiUploader } from '../../components/AllegatiUploader';
 import { CampoData } from '../../components/CampoData';
-import { SceltaOpzioni, OPZIONI_SI_NO, OPZIONI_STATO } from '../../components/SceltaOpzioni';
+import { SceltaOpzioni, OPZIONI_NO_SI, OPZIONI_STATO } from '../../components/SceltaOpzioni';
 import { noleggiApi } from '../../api/client';
 import type { EsitoEmailBollettino } from '../../api/client';
 import type { AllegatoNoleggio, AnagraficheNoleggio, Carburante } from '../../types';
@@ -441,7 +441,7 @@ export function NoleggioFormPage() {
             <SceltaOpzioni
               label="Ha fatto il pieno?"
               name="pieno"
-              opzioni={OPZIONI_SI_NO}
+              opzioni={OPZIONI_NO_SI}
               value={pieno}
               onChange={setPieno}
               disabled={bloccato}
@@ -484,7 +484,7 @@ export function NoleggioFormPage() {
             <SceltaOpzioni
               label="Ha riportato danni?"
               name="danni"
-              opzioni={OPZIONI_SI_NO}
+              opzioni={OPZIONI_NO_SI}
               value={danni}
               onChange={setDanni}
               disabled={bloccato}
