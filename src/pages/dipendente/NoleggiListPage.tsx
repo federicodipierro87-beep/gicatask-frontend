@@ -111,6 +111,7 @@ export function NoleggiListPage() {
                     {noleggio.pieno ? `Pieno ${noleggio.carburante === 'BENZINA' ? 'benzina' : 'diesel'}` : 'Senza pieno'}
                     {' · '}
                     {noleggio.danni ? 'Con danni' : 'Senza danni'}
+                    {noleggio.danniPrecedenti && ' · danni già all\'uscita'}
                     {noleggio.allegati.length > 0 && (
                       <span className="ml-2">📎 {noleggio.allegati.length}</span>
                     )}

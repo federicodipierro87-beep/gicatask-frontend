@@ -46,6 +46,7 @@ function CellaFoto({
 
   const gruppi = [
     { titolo: 'Scontrino', foto: noleggio.allegati.filter((a) => a.tipo === 'SCONTRINO') },
+    { titolo: 'Danni prima', foto: noleggio.allegati.filter((a) => a.tipo === 'DANNI_PRECEDENTI') },
     { titolo: 'Danni', foto: noleggio.allegati.filter((a) => a.tipo === 'DANNI') },
   ];
 
@@ -274,8 +275,23 @@ export function NoleggiArchivioPage() {
                     <td className="py-3 px-2">
                       {noleggio.pieno ? (noleggio.carburante === 'BENZINA' ? 'Benzina' : 'Diesel') : 'No'}
                     </td>
-                    <td className="py-3 px-2" title={noleggio.danniNote ?? undefined}>
+                    <td
+                      className="py-3 px-2"
+                      title={
+                        [
+                          noleggio.danniPrecedentiNote && `Prima dell'uscita: ${noleggio.danniPrecedentiNote}`,
+                          noleggio.danniNote,
+                        ]
+                          .filter(Boolean)
+                          .join('\n') || undefined
+                      }
+                    >
                       {noleggio.danni ? <span className="text-red-600">Sì</span> : 'No'}
+                      {noleggio.danniPrecedenti && (
+                        <span className="block text-xs text-amber-700 whitespace-nowrap">
+                          Già all'uscita
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 px-2">
                       <CellaFoto noleggio={noleggio} onApri={handleApriFoto} />

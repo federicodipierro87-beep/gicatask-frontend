@@ -716,6 +716,8 @@ export interface CreateNoleggioInput {
   giorni: number;
   pieno: boolean;
   carburante?: 'DIESEL' | 'BENZINA';
+  danniPrecedenti: boolean;
+  danniPrecedentiNote?: string;
   danni: boolean;
   danniNote?: string;
   emailFatturazione?: string;
@@ -725,6 +727,7 @@ export interface CreateNoleggioInput {
   firmaImg: string;
   fatturato: boolean;
   scontrinoIds: number[];
+  danniPrecedentiIds: number[];
   danniIds: number[];
   // "Salva e invia"
   invia: boolean;

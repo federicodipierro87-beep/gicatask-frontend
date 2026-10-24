@@ -109,6 +109,10 @@ export function NoleggioFormPage() {
   const [carburante, setCarburante] = useState<Carburante | null>(null);
   const [scontrini, setScontrini] = useState<AllegatoNoleggio[]>([]);
 
+  const [danniPrecedenti, setDanniPrecedenti] = useState<boolean | null>(null);
+  const [danniPrecedentiNote, setDanniPrecedentiNote] = useState('');
+  const [fotoDanniPrecedenti, setFotoDanniPrecedenti] = useState<AllegatoNoleggio[]>([]);
+
   const [danni, setDanni] = useState<boolean | null>(null);
   const [danniNote, setDanniNote] = useState('');
   const [fotoDanni, setFotoDanni] = useState<AllegatoNoleggio[]>([]);
@@ -208,6 +212,7 @@ export function NoleggioFormPage() {
     Boolean(dataIngresso) &&
     !dateInvertite &&
     pieno !== null &&
+    danniPrecedenti !== null &&
     danni !== null &&
     (!pieno || carburante !== null) &&
     firmaNome.trim().length > 0 &&
@@ -236,6 +241,10 @@ export function NoleggioFormPage() {
         giorni,
         pieno: Boolean(pieno),
         ...(pieno && carburante ? { carburante } : {}),
+        danniPrecedenti: Boolean(danniPrecedenti),
+        ...(danniPrecedenti && danniPrecedentiNote.trim()
+          ? { danniPrecedentiNote: danniPrecedentiNote.trim() }
+          : {}),
         danni: Boolean(danni),
         ...(danni && danniNote.trim() ? { danniNote: danniNote.trim() } : {}),
         ...(emailPulita ? { emailFatturazione: emailPulita } : {}),
@@ -245,6 +254,7 @@ export function NoleggioFormPage() {
         firmaImg,
         fatturato,
         scontrinoIds: pieno ? scontrini.map((a) => a.id) : [],
+        danniPrecedentiIds: danniPrecedenti ? fotoDanniPrecedenti.map((a) => a.id) : [],
         danniIds: danni ? fotoDanni.map((a) => a.id) : [],
         invia,
       });
@@ -474,6 +484,44 @@ export function NoleggioFormPage() {
                   etichetta="Foto dello scontrino"
                   aiuto="Immagini o PDF, fino a 5 file. Finiscono nel PDF del verbale e nella mail."
                   maxFile={5}
+                  disabled={bloccato}
+                />
+              </>
+            )}
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-3 space-y-3">
+            <SceltaOpzioni
+              label="Il mezzo aveva già danni prima di uscire?"
+              name="danniPrecedenti"
+              opzioni={OPZIONI_NO_SI}
+              value={danniPrecedenti}
+              onChange={setDanniPrecedenti}
+              disabled={bloccato}
+            />
+            {danniPrecedenti && (
+              <>
+                <div>
+                  <label htmlFor="danniPrecedentiNote" className="label">
+                    Descrizione <span className="text-gray-400 font-normal">(facoltativa)</span>
+                  </label>
+                  <textarea
+                    id="danniPrecedentiNote"
+                    className="input min-h-[5rem]"
+                    value={danniPrecedentiNote}
+                    onChange={(e) => setDanniPrecedentiNote(e.target.value)}
+                    maxLength={5000}
+                    placeholder="Descrivi i danni già presenti all'uscita"
+                    disabled={bloccato}
+                  />
+                </div>
+                <AllegatiUploader
+                  value={fotoDanniPrecedenti}
+                  onChange={setFotoDanniPrecedenti}
+                  carica={noleggiApi.uploadAllegato}
+                  rimuovi={noleggiApi.deleteAllegato}
+                  etichetta="Foto dei danni già presenti"
+                  aiuto="Immagini o PDF, fino a 10 file. Finiscono nel PDF del verbale e nella mail."
                   disabled={bloccato}
                 />
               </>

@@ -463,7 +463,7 @@ export interface LogOperazione {
 // Sezione Noleggi
 
 export type Carburante = 'DIESEL' | 'BENZINA';
-export type TipoFotoNoleggio = 'SCONTRINO' | 'DANNI';
+export type TipoFotoNoleggio = 'SCONTRINO' | 'DANNI_PRECEDENTI' | 'DANNI';
 
 export interface AllegatoNoleggio extends AllegatoBollettino {
   tipo?: TipoFotoNoleggio | null;
@@ -486,6 +486,9 @@ export interface Noleggio {
   giorni: number;
   pieno: boolean;
   carburante: Carburante | null;
+  // Danni già presenti all'uscita; null nei verbali precedenti alla domanda
+  danniPrecedenti: boolean | null;
+  danniPrecedentiNote: string | null;
   danni: boolean;
   danniNote: string | null;
   emailFatturazione: string | null;
