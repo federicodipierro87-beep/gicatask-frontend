@@ -13,7 +13,7 @@ import { noleggiApi } from '../../api/client';
 import type { Noleggio } from '../../types';
 
 export function NoleggiListPage() {
-  const { user } = useAuth();
+  const { user, isResponsabile } = useAuth();
   const [noleggi, setNoleggi] = useState<Noleggio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,7 +117,17 @@ export function NoleggiListPage() {
                     )}
                   </p>
                   <p className="text-sm mt-1">
-                    Fatturazione: <StatoMailNoleggio noleggio={noleggio} />
+                    Stato:{' '}
+                    {noleggio.fatturato ? (
+                      <span className="text-green-700">Fatturato</span>
+                    ) : (
+                      <span className="text-amber-700">Aperto</span>
+                    )}
+                    {noleggio.fatturato && (
+                      <>
+                        {' · '}Fatturazione: <StatoMailNoleggio noleggio={noleggio} />
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className="flex flex-col sm:items-end gap-2">
@@ -128,12 +138,24 @@ export function NoleggiListPage() {
                   >
                     {downloadId === noleggio.id ? 'Download...' : 'Scarica PDF'}
                   </button>
-                  <button
-                    onClick={() => setDaInviare(noleggio)}
-                    className="btn-secondary whitespace-nowrap"
-                  >
-                    {noleggio.emailStato === 'INVIATA' ? 'Reinvia' : 'Invia'}
-                  </button>
+                  {/* Aperto: si modifica e non si invia; fatturato: il contrario,
+                      salvo il responsabile che modifica sempre */}
+                  {(!noleggio.fatturato || isResponsabile) && (
+                    <Link
+                      to={`/dipendente/noleggi/${noleggio.id}/modifica`}
+                      className="btn-secondary whitespace-nowrap text-center"
+                    >
+                      Modifica
+                    </Link>
+                  )}
+                  {noleggio.fatturato && (
+                    <button
+                      onClick={() => setDaInviare(noleggio)}
+                      className="btn-secondary whitespace-nowrap"
+                    >
+                      {noleggio.emailStato === 'INVIATA' ? 'Reinvia' : 'Invia'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

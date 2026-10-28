@@ -185,6 +185,15 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      {/* Finche' e' aperto; il server rifiuta quelli fatturati */}
+      <Route
+        path="/dipendente/noleggi/:id/modifica"
+        element={
+          <ProtectedRoute requireNoleggi>
+            <NoleggioFormPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Responsabile routes */}
       <Route
@@ -378,6 +387,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRole="RESPONSABILE" requireNoleggi>
             <NoleggiArchivioPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/responsabile/noleggi/:id/modifica"
+        element={
+          <ProtectedRoute requiredRole="RESPONSABILE" requireNoleggi>
+            <NoleggioFormPage area="responsabile" />
           </ProtectedRoute>
         }
       />

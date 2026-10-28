@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
+import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { SignaturePad } from '../../components/SignaturePad';
 import { AllegatiUploader } from '../../components/AllegatiUploader';
 import { CampoData } from '../../components/CampoData';
 import { SceltaOpzioni, OPZIONI_NO_SI, OPZIONI_STATO } from '../../components/SceltaOpzioni';
+import { useAuth } from '../../context/AuthContext';
 import { noleggiApi } from '../../api/client';
 import type { EsitoEmailBollettino } from '../../api/client';
-import type { AllegatoNoleggio, AnagraficheNoleggio, Carburante } from '../../types';
+import type { AllegatoNoleggio, AnagraficheNoleggio, Carburante, Noleggio } from '../../types';
 
 // Stessa regola del backend (utils/email.ts)
 const EMAIL_RE = /^[^\s@,;<>]+@[^\s@,;<>.]+(\.[^\s@,;<>.]+)+$/;
-
-const ELENCO = '/dipendente/noleggi';
 
 /** Mezza giornata, poi da 1 a 90 giorni. */
 const OPZIONI_GIORNI = [
@@ -81,8 +81,29 @@ function SalvaInAnagrafica({
   );
 }
 
-export function NoleggioFormPage() {
+/** Solo la data, come la vuole il campo: il server manda la mezzanotte UTC. */
+function soloData(valore: string): string {
+  return valore.split('T')[0] || '';
+}
+
+interface Props {
+  /** Il responsabile modifica dall'archivio, col suo layout. */
+  area?: 'dipendente' | 'responsabile';
+}
+
+/**
+ * Nuovo noleggio, o modifica con `:id` nella rotta. Chi l'ha compilato lo
+ * modifica finche' e' aperto, il responsabile sempre: la stessa regola la
+ * applica il server.
+ */
+export function NoleggioFormPage({ area = 'dipendente' }: Props) {
   const navigate = useNavigate();
+  const { isResponsabile } = useAuth();
+  const { id } = useParams<{ id: string }>();
+  const noleggioId = id ? parseInt(id, 10) : null;
+  const modifica = noleggioId !== null;
+  const elenco = area === 'responsabile' ? '/responsabile/noleggi' : '/dipendente/noleggi';
+  const Layout = area === 'responsabile' ? ResponsabileLayout : DipendenteLayout;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -125,18 +146,69 @@ export function NoleggioFormPage() {
   const [firmaImg, setFirmaImg] = useState<string | null>(null);
   const [fatturato, setFatturato] = useState(false);
 
+  // In modifica: la firma salvata resta finche' non se ne fa una nuova
+  const [firmaSalvata, setFirmaSalvata] = useState<string | null>(null);
+  const [rifirma, setRifirma] = useState(false);
+  // Foto gia' collegate al verbale: toglierle non le cancella subito, il
+  // server le scollega al salvataggio
+  const [fotoSalvate, setFotoSalvate] = useState<Set<number>>(new Set());
+  // Fatturato e aperto da chi non e' responsabile: il server rifiuterebbe
+  const [nonModificabile, setNonModificabile] = useState(false);
+
+  const caricaNoleggio = (n: Noleggio & { firmaImg: string }) => {
+    const foto = (tipo: string) => n.allegati.filter((a) => a.tipo === tipo);
+    setData(soloData(n.data));
+    setDataIngresso(soloData(n.dataIngresso ?? n.data));
+    setCantiere(n.cantiereNome ?? '');
+    setCliente(n.clienteNome);
+    setVeicolo(n.veicoloNome);
+    setGiorni(n.giorni);
+    setPieno(n.pieno);
+    setCarburante(n.carburante);
+    setScontrini(foto('SCONTRINO'));
+    setDanniPrecedenti(n.danniPrecedenti);
+    setDanniPrecedentiNote(n.danniPrecedentiNote ?? '');
+    setFotoDanniPrecedenti(foto('DANNI_PRECEDENTI'));
+    setDanni(n.danni);
+    setDanniNote(n.danniNote ?? '');
+    setFotoDanni(foto('DANNI'));
+    setEmail(n.emailFatturazione ?? '');
+    setFirmaNome(n.firmaNome);
+    setFirmaEmail(n.firmaEmail ?? '');
+    setFirmaSalvata(n.firmaImg);
+    setFatturato(n.fatturato);
+    setFotoSalvate(new Set(n.allegati.map((a) => a.id)));
+    setNonModificabile(n.fatturato && !isResponsabile);
+  };
+
   useEffect(() => {
     (async () => {
       try {
-        const { data: risposta } = await noleggiApi.getAnagrafiche();
+        const [{ data: risposta }, esistente] = await Promise.all([
+          noleggiApi.getAnagrafiche(),
+          noleggioId !== null ? noleggiApi.get(noleggioId) : Promise.resolve(null),
+        ]);
         setAnagrafiche(risposta);
+        if (esistente) caricaNoleggio(esistente.data);
       } catch {
-        setError('Errore nel caricamento delle anagrafiche');
+        setError(modifica ? 'Errore nel caricamento del noleggio' : 'Errore nel caricamento delle anagrafiche');
+        if (modifica) setNonModificabile(true);
       } finally {
         setIsLoading(false);
       }
     })();
-  }, []);
+  }, [noleggioId]);
+
+  const rimuoviFoto = (idFoto: number) =>
+    fotoSalvate.has(idFoto) ? Promise.resolve() : noleggiApi.deleteAllegato(idFoto);
+
+  const apriFoto = async (allegato: AllegatoNoleggio) => {
+    try {
+      await noleggiApi.downloadAllegato(allegato.id, allegato.nomeFile);
+    } catch {
+      setError('Errore durante l\'apertura della foto');
+    }
+  };
 
   const clienteTrovato = anagrafiche.clienti.find((c) => chiave(c.nome) === chiave(cliente)) ?? null;
   // Senza cliente scelto i suggerimenti sono tutti i cantieri, col cliente accanto
@@ -205,6 +277,8 @@ export function NoleggioFormPage() {
     clienteInAnagrafica &&
     chiave(emailPulita) !== chiave(clienteTrovato?.emailFatturazione ?? '');
 
+  const firmaPresente = Boolean(firmaImg) || (Boolean(firmaSalvata) && !rifirma);
+
   const puoSalvare =
     cliente.trim().length > 0 &&
     veicolo.trim().length > 0 &&
@@ -216,11 +290,12 @@ export function NoleggioFormPage() {
     danni !== null &&
     (!pieno || carburante !== null) &&
     firmaNome.trim().length > 0 &&
-    Boolean(firmaImg) &&
-    !salvato;
+    firmaPresente &&
+    !salvato &&
+    !nonModificabile;
 
   const salva = async (invia: boolean) => {
-    if (!puoSalvare || !firmaImg) {
+    if (!puoSalvare) {
       setError('Compila i campi obbligatori e fai firmare chi ha effettuato il noleggio');
       return;
     }
@@ -229,7 +304,7 @@ export function NoleggioFormPage() {
     setError(null);
 
     try {
-      const { data: risposta } = await noleggiApi.create({
+      const dati = {
         data,
         dataIngresso,
         cantiereNome: cantiere.trim() || undefined,
@@ -251,13 +326,16 @@ export function NoleggioFormPage() {
         aggiornaEmailCliente: aggiornaEmail && emailDaAggiornare,
         firmaNome: firmaNome.trim(),
         ...(firmaEmail.trim() ? { firmaEmail: firmaEmail.trim() } : {}),
-        firmaImg,
         fatturato,
         scontrinoIds: pieno ? scontrini.map((a) => a.id) : [],
         danniPrecedentiIds: danniPrecedenti ? fotoDanniPrecedenti.map((a) => a.id) : [],
         danniIds: danni ? fotoDanni.map((a) => a.id) : [],
-        invia,
-      });
+        // Da aperto si salva e basta: l'invio e' solo per i fatturati
+        invia: invia && fatturato,
+      };
+      const { data: risposta } = noleggioId !== null
+        ? await noleggiApi.update(noleggioId, { ...dati, ...(firmaImg ? { firmaImg } : {}) })
+        : await noleggiApi.create({ ...dati, firmaImg: firmaImg ?? '' });
 
       setSalvato(true);
 
@@ -266,7 +344,7 @@ export function NoleggioFormPage() {
         return; // l'avviso va letto
       }
 
-      navigate(ELENCO);
+      navigate(elenco);
     } catch (err: any) {
       setError(err.response?.data?.error || err.response?.data?.message || 'Errore durante il salvataggio');
     } finally {
@@ -281,29 +359,38 @@ export function NoleggioFormPage() {
 
   if (isLoading) {
     return (
-      <DipendenteLayout>
+      <Layout>
         <div className="card flex justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
         </div>
-      </DipendenteLayout>
+      </Layout>
     );
   }
 
-  const bloccato = isSaving || salvato;
+  const bloccato = isSaving || salvato || nonModificabile;
 
   return (
-    <DipendenteLayout>
+    <Layout>
       <div className="card max-w-2xl mx-auto">
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">Nuovo Noleggio</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">
+          {modifica ? 'Modifica noleggio' : 'Nuovo Noleggio'}
+        </h2>
         <p className="text-sm text-gray-600 mb-6">
-          Una volta firmato il verbale non è più modificabile.
+          Finché lo stato è Aperto il noleggio resta modificabile; da Fatturato può modificarlo solo
+          il responsabile.
         </p>
+
+        {nonModificabile && !error && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+            Questo noleggio è fatturato: può modificarlo solo il responsabile.
+          </div>
+        )}
 
         {/* Ambra e non rosso: il verbale e' salvato, non e' un errore */}
         {avvisoMail && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
             <p>{avvisoMail}</p>
-            <button type="button" onClick={() => navigate(ELENCO)} className="btn-primary mt-3">
+            <button type="button" onClick={() => navigate(elenco)} className="btn-primary mt-3">
               Torna ai noleggi
             </button>
           </div>
@@ -480,7 +567,8 @@ export function NoleggioFormPage() {
                   value={scontrini}
                   onChange={setScontrini}
                   carica={noleggiApi.uploadAllegato}
-                  rimuovi={noleggiApi.deleteAllegato}
+                  rimuovi={rimuoviFoto}
+                  apri={apriFoto}
                   etichetta="Foto dello scontrino"
                   aiuto="Immagini o PDF, fino a 5 file. Finiscono nel PDF del verbale e nella mail."
                   maxFile={5}
@@ -519,7 +607,8 @@ export function NoleggioFormPage() {
                   value={fotoDanniPrecedenti}
                   onChange={setFotoDanniPrecedenti}
                   carica={noleggiApi.uploadAllegato}
-                  rimuovi={noleggiApi.deleteAllegato}
+                  rimuovi={rimuoviFoto}
+                  apri={apriFoto}
                   etichetta="Foto dei danni già presenti"
                   aiuto="Immagini o PDF, fino a 10 file. Finiscono nel PDF del verbale e nella mail."
                   disabled={bloccato}
@@ -557,7 +646,8 @@ export function NoleggioFormPage() {
                   value={fotoDanni}
                   onChange={setFotoDanni}
                   carica={noleggiApi.uploadAllegato}
-                  rimuovi={noleggiApi.deleteAllegato}
+                  rimuovi={rimuoviFoto}
+                  apri={apriFoto}
                   etichetta="Foto dei danni"
                   aiuto="Immagini o PDF, fino a 10 file. Finiscono nel PDF del verbale e nella mail."
                   disabled={bloccato}
@@ -583,7 +673,7 @@ export function NoleggioFormPage() {
               disabled={bloccato}
             />
             <p className="mt-1 text-xs text-gray-500">
-              Con "Salva e invia" il verbale in PDF, con le foto, parte a questo indirizzo.
+              Con lo stato Fatturato, "Salva e invia" manda qui il verbale in PDF con le foto.
             </p>
             {emailNonValida && (
               <p className="mt-1 text-xs text-amber-700">L'indirizzo non sembra valido.</p>
@@ -633,12 +723,48 @@ export function NoleggioFormPage() {
               <p className="mt-1 text-xs text-amber-700">L'indirizzo non sembra valido.</p>
             )}
             <div className="mt-4">
-              <SignaturePad
-                label="Firma"
-                value={firmaImg}
-                onChange={setFirmaImg}
-                disabled={bloccato}
-              />
+              {firmaSalvata && !rifirma ? (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="label mb-0">Firma</span>
+                    <button
+                      type="button"
+                      onClick={() => setRifirma(true)}
+                      disabled={bloccato}
+                      className="text-sm text-primary-600 hover:text-primary-700 disabled:text-gray-300"
+                    >
+                      Rifai la firma
+                    </button>
+                  </div>
+                  <img
+                    src={`data:image/png;base64,${firmaSalvata}`}
+                    alt="Firma salvata"
+                    className="w-full h-40 object-contain rounded-lg border border-gray-200 bg-white"
+                  />
+                </div>
+              ) : (
+                <>
+                  <SignaturePad
+                    label="Firma"
+                    value={firmaImg}
+                    onChange={setFirmaImg}
+                    disabled={bloccato}
+                  />
+                  {firmaSalvata && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRifirma(false);
+                        setFirmaImg(null);
+                      }}
+                      disabled={bloccato}
+                      className="mt-1 text-sm text-primary-600 hover:text-primary-700 disabled:text-gray-300"
+                    >
+                      Tieni la firma di prima
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
@@ -651,12 +777,21 @@ export function NoleggioFormPage() {
               onChange={setFatturato}
               disabled={bloccato}
             />
+            {!nonModificabile && (
+              <p className="mt-1 text-xs text-gray-500">
+                {fatturato
+                  ? isResponsabile
+                    ? 'Fatturato: puoi salvarlo o salvarlo e inviarlo.'
+                    : 'Fatturato: puoi salvarlo o salvarlo e inviarlo. Dopo il salvataggio può modificarlo solo il responsabile.'
+                  : 'Aperto: si può solo salvare e resta modificabile. Per inviarlo scegli Fatturato.'}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={() => navigate(ELENCO)}
+              onClick={() => navigate(elenco)}
               className="btn-secondary"
               disabled={isSaving}
             >
@@ -665,18 +800,20 @@ export function NoleggioFormPage() {
             <button type="submit" className="btn-secondary" disabled={isSaving || !puoSalvare}>
               {isSaving ? 'Salvataggio...' : 'Salva'}
             </button>
-            <button
-              type="button"
-              onClick={() => salva(true)}
-              className="btn-primary"
-              disabled={isSaving || !puoSalvare || !emailValida}
-              title={emailValida ? undefined : 'Indica un indirizzo di fatturazione valido'}
-            >
-              {isSaving ? 'Invio...' : 'Salva e invia'}
-            </button>
+            {fatturato && (
+              <button
+                type="button"
+                onClick={() => salva(true)}
+                className="btn-primary"
+                disabled={isSaving || !puoSalvare || !emailValida}
+                title={emailValida ? undefined : 'Indica un indirizzo di fatturazione valido'}
+              >
+                {isSaving ? 'Invio...' : 'Salva e invia'}
+              </button>
+            )}
           </div>
         </form>
       </div>
-    </DipendenteLayout>
+    </Layout>
   );
 }

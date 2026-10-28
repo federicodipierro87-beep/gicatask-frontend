@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { ResponsabileLayout } from '../../components/ResponsabileLayout';
 import { Modal } from '../../components/Modal';
 import { CampoData } from '../../components/CampoData';
@@ -322,9 +323,18 @@ export function NoleggiArchivioPage() {
                       >
                         {downloadId === noleggio.id ? 'Download...' : 'PDF'}
                       </button>
+                      <Link
+                        to={`/responsabile/noleggi/${noleggio.id}/modifica`}
+                        className="text-primary-600 hover:text-primary-700 text-sm"
+                      >
+                        Modifica
+                      </Link>
+                      {/* Come nel form: si invia solo un noleggio fatturato */}
                       <button
                         onClick={() => setDaInviare(noleggio)}
-                        className="text-primary-600 hover:text-primary-700 text-sm"
+                        disabled={!noleggio.fatturato}
+                        className="text-primary-600 hover:text-primary-700 text-sm disabled:text-gray-300 disabled:cursor-not-allowed"
+                        title={noleggio.fatturato ? undefined : 'Aperto: per inviarlo spunta Fatturato'}
                       >
                         {noleggio.emailStato === 'INVIATA' ? 'Reinvia' : 'Invia mail'}
                       </button>

@@ -733,6 +733,9 @@ export interface CreateNoleggioInput {
   invia: boolean;
 }
 
+/** La modifica: la firma si manda solo se e' stata rifatta. */
+export type UpdateNoleggioInput = Omit<CreateNoleggioInput, 'firmaImg'> & { firmaImg?: string };
+
 export const noleggiApi = {
   getAnagrafiche: () =>
     apiClient.get<AnagraficheNoleggio>('/noleggi/anagrafiche'),
@@ -744,9 +747,14 @@ export const noleggiApi = {
     const query = params.toString();
     return apiClient.get<Noleggio[]>(`/noleggi${query ? `?${query}` : ''}`);
   },
+  // Il verbale completo, firma compresa, per il form di modifica
+  get: (id: number) =>
+    apiClient.get<Noleggio & { firmaImg: string }>(`/noleggi/${id}`),
   // `email` e' presente solo con "Salva e invia"
   create: (data: CreateNoleggioInput) =>
     apiClient.post<{ id: number; email?: EsitoEmailBollettino }>('/noleggi', data),
+  update: (id: number, data: UpdateNoleggioInput) =>
+    apiClient.put<{ id: number; email?: EsitoEmailBollettino }>(`/noleggi/${id}`, data),
   // Risponde 200 anche quando l'invio fallisce: l'esito sta nel corpo
   inviaMail: (id: number, email?: string) =>
     apiClient.post<EsitoEmailBollettino>(`/noleggi/${id}/invia-mail`, email ? { email } : {}),
