@@ -5,7 +5,7 @@ import { Modal } from '../components/Modal';
 import { attivitaApi } from '../api/client';
 import { MonthNavigator, currentMonth, monthRange } from '../components/MonthNavigator';
 import { formatDuration } from '../utils/durata';
-import { nomeClienteAttivita } from '../types';
+import { nomeClienteAttivita, etichettaClienteAttivita } from '../types';
 import type { LuogoAttivita } from '../types';
 import { nomeUtente } from '../utils/nomeUtente';
 import { Pagination, usePagination } from '../components/Pagination';
@@ -246,7 +246,7 @@ export function ResponsabileDashboard() {
 
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                  {selectedAttivita.luogo ? 'Luogo' : 'Cliente'}
+                  {etichettaClienteAttivita(selectedAttivita)}
                 </p>
                 <p className="font-medium text-gray-900">{nomeClienteAttivita(selectedAttivita)}</p>
               </div>

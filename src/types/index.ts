@@ -64,7 +64,7 @@ export interface TipoAssenza {
   attivo: boolean;
 }
 
-/** Il luogo delle attività di "Nuova Attività 2", che non hanno cliente. */
+/** Il luogo delle attività di "Nuova Attività 2", che non hanno tipo. */
 export type LuogoAttivita = 'MAGAZZINO' | 'CANTIERE';
 
 export const NOMI_LUOGO: Record<LuogoAttivita, string> = {
@@ -74,13 +74,22 @@ export const NOMI_LUOGO: Record<LuogoAttivita, string> = {
 
 /**
  * Cosa mostrare nella colonna "Cliente": il cliente oppure, per le attività
- * di "Nuova Attività 2", il luogo.
+ * di "Nuova Attività 2" registrate senza cliente, il luogo.
  */
 export function nomeClienteAttivita(att: {
   cliente?: { nome: string } | null;
   luogo?: LuogoAttivita | null;
 }): string {
   return att.cliente?.nome ?? (att.luogo ? NOMI_LUOGO[att.luogo] : '');
+}
+
+/** L'etichetta del valore di `nomeClienteAttivita` nel dettaglio di un'attività. */
+export function etichettaClienteAttivita(att: {
+  cliente?: { nome: string } | null;
+  luogo?: LuogoAttivita | null;
+}): string {
+  if (!att.luogo) return 'Cliente';
+  return att.cliente ? `Cliente (${NOMI_LUOGO[att.luogo]})` : 'Luogo';
 }
 
 export interface Attivita {

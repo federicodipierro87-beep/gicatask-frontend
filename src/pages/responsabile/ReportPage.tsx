@@ -14,7 +14,7 @@ import {
 } from '../../components/MonthNavigator';
 import type { MonthKey } from '../../components/MonthNavigator';
 import { formatDuration } from '../../utils/durata';
-import { nomeClienteAttivita } from '../../types';
+import { nomeClienteAttivita, etichettaClienteAttivita } from '../../types';
 import type { LuogoAttivita } from '../../types';
 import { SaldiOreReport } from './SaldiOreReport';
 import { Pagination, usePagination } from '../../components/Pagination';
@@ -547,7 +547,7 @@ function ReportAttivita() {
 
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                  {selectedAttivita.luogo ? 'Luogo' : 'Cliente'}
+                  {etichettaClienteAttivita(selectedAttivita)}
                 </p>
                 <p className="font-medium text-gray-900">{nomeClienteAttivita(selectedAttivita)}</p>
               </div>
