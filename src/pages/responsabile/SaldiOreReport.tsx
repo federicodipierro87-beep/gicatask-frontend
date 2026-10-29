@@ -150,7 +150,7 @@ export function SaldiOreReport() {
           <h3 className="font-medium text-gray-900">Saldi Ore</h3>
           <p className="text-xs text-gray-500 mt-1">
             {vista === 'mese'
-              ? 'Ore dovute = ore del mese a tempo pieno × percentuale di lavoro. Ore effettuate senza assenze. Il saldo cumulativo parte da gennaio. Clicca un nome per il dettaglio.'
+              ? 'Ore dovute = ore del mese a tempo pieno × percentuale di lavoro. Ore effettuate con le assenze, come nel Report Attività. Il saldo cumulativo parte da gennaio. Clicca un nome per il dettaglio.'
               : vista === 'prospetto'
                 ? 'Differenza di ogni mese (ore effettuate − ore dovute) da gennaio al mese scelto; l\'ultima colonna è il saldo cumulativo.'
                 : 'Un dipendente mese per mese, da gennaio al mese scelto, con la percentuale in vigore in ciascun mese.'}
@@ -310,7 +310,7 @@ export function SaldiOreReport() {
           </div>
 
           {/* Riepilogo del mese scelto, con le righe del Report Attivita':
-              il totale comprende le assenze, il saldo no */}
+              il totale e il saldo comprendono le assenze */}
           {(() => {
             const ultimo = dipendente.mensili?.[dipendente.mensili.length - 1];
             if (!ultimo) return null;

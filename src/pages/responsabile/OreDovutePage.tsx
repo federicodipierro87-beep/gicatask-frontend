@@ -499,7 +499,7 @@ export function OreDovutePage() {
             </div>
 
             {/* Riepilogo del periodo trascorso, come in fondo agli export: il
-                totale comprende le assenze, il saldo no */}
+                totale e il saldo comprendono le assenze */}
             {(() => {
               const ore = riepilogo?.righe.find((r) => r.utenteId === dipendente.utenteId);
               if (!riepilogo || !ore) return null;
