@@ -2,51 +2,25 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { DateTimeInput } from '../../components/DateTimeInput';
-import { CampoSuggerimenti } from '../../components/CampoSuggerimenti';
-import { attivitaApi, clientiApi, cantieriApi } from '../../api/client';
+import { attivitaApi } from '../../api/client';
 import { NOMI_LUOGO } from '../../types';
 import type { LuogoAttivita } from '../../types';
 
 const LUOGHI: LuogoAttivita[] = ['MAGAZZINO', 'CANTIERE'];
 
-interface Voce {
-  id: number;
-  nome: string;
-}
-
 const isOvernight = (start: string, end: string) => Boolean(start && end && end < start);
 
-/** Confronto come lo fa il server: maiuscole e spazi doppi non contano. */
-function chiave(valore: string): string {
-  return valore.replace(/\s+/g, ' ').trim().toLowerCase();
-}
-
 /**
- * Il cliente usato per il lavoro in magazzino: quello che si chiama "Gica" o,
- * in mancanza, il più corto che inizia con "Gica".
- */
-function trovaClienteGica(clienti: Voce[]): Voce | null {
-  const nome = (c: Voce) => c.nome.trim().toLowerCase();
-  return clienti.find((c) => nome(c) === 'gica')
-    ?? clienti
-      .filter((c) => nome(c).startsWith('gica'))
-      .sort((a, b) => a.nome.length - b.nome.length)[0]
-    ?? null;
-}
-
-/**
- * "Nuova Attività 2": come Nuova Attività, ma senza tipo. Si sceglie se si è
- * lavorato in magazzino (cliente Gica, scelto da solo) o in cantiere (cliente,
- * anche scritto a mano se non è in anagrafica, e, se il cliente ne ha,
- * cantiere), poi l'orario di mattino e pomeriggio e
- * una descrizione libera, salvata nelle note.
+ * "Nuova Attività 2": come Nuova Attività, ma senza cliente, cantiere e tipo.
+ * Si sceglie solo se si è lavorato in magazzino o in cantiere, poi l'orario di
+ * mattino e pomeriggio e una descrizione libera, salvata nelle note.
  */
 export function Attivita2FormPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditing = Boolean(id);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(isEditing);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,14 +28,6 @@ export function Attivita2FormPage() {
     new Date().toISOString().split('T')[0] || ''
   );
   const [luogo, setLuogo] = useState<LuogoAttivita | null>(null);
-  const [clienti, setClienti] = useState<Voce[]>([]);
-  const [cantieri, setCantieri] = useState<Voce[]>([]);
-  // Il cliente del cantiere si scrive: se è in anagrafica `clienteId` lo
-  // segue, altrimenti il server lo aggiunge al salvataggio. In magazzino vale
-  // sempre Gica
-  const [clienteTesto, setClienteTesto] = useState('');
-  const [clienteId, setClienteId] = useState<number | null>(null);
-  const [cantiereId, setCantiereId] = useState<number | null>(null);
   const [oraInizioMattino, setOraInizioMattino] = useState('');
   const [oraFineMattino, setOraFineMattino] = useState('');
   const [oraInizioPomeriggio, setOraInizioPomeriggio] = useState('');
@@ -69,11 +35,10 @@ export function Attivita2FormPage() {
   const [descrizione, setDescrizione] = useState('');
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setClienti((await clientiApi.getAll()).data);
-        if (!id) return;
+    if (!id) return;
 
+    const loadAttivita = async () => {
+      try {
         const att = (await attivitaApi.getById(parseInt(id))).data;
 
         // Assenze e attività col cliente hanno il loro form
@@ -88,11 +53,6 @@ export function Attivita2FormPage() {
 
         setDataRiferimento(att.dataRiferimento.split('T')[0]);
         setLuogo(att.luogo);
-        if (att.luogo === 'CANTIERE') {
-          setClienteId(att.clienteId ?? null);
-          setClienteTesto(att.cliente?.nome ?? '');
-          setCantiereId(att.cantiereId ?? null);
-        }
         setOraInizioMattino(att.oraInizioMattino || '');
         setOraFineMattino(att.oraFineMattino || '');
         setOraInizioPomeriggio(att.oraInizioPomeriggio || '');
@@ -105,46 +65,8 @@ export function Attivita2FormPage() {
       }
     };
 
-    loadData();
+    loadAttivita();
   }, [id]);
-
-  // I cantieri del cliente scelto, solo per il lavoro in cantiere
-  useEffect(() => {
-    if (luogo !== 'CANTIERE' || !clienteId) {
-      setCantieri([]);
-      setCantiereId(null);
-      return;
-    }
-
-    const loadCantieri = async () => {
-      setCantieri([]);
-      try {
-        const lista: Voce[] = (await cantieriApi.getByCliente(clienteId)).data;
-        setCantieri(lista);
-        // Con un solo cantiere lo sceglie da solo; un cantiere di un altro
-        // cliente non resta selezionato
-        setCantiereId((prev) =>
-          lista.length === 1 ? lista[0]!.id : lista.some((c) => c.id === prev) ? prev : null
-        );
-      } catch (err) {
-        setError('Errore nel caricamento dei cantieri');
-      }
-    };
-
-    loadCantieri();
-  }, [luogo, clienteId]);
-
-  const handleClienteTesto = (valore: string) => {
-    setClienteTesto(valore);
-    const trovato = clienti.find((c) => chiave(c.nome) === chiave(valore));
-    setClienteId(trovato?.id ?? null);
-  };
-
-  const clienteGica = trovaClienteGica(clienti);
-  const clienteScelto = luogo === 'MAGAZZINO' ? clienteGica?.id ?? null : clienteId;
-  const clienteNuovo = luogo === 'CANTIERE' && clienteTesto.trim().length > 0 && clienteId === null;
-  const manca =
-    luogo === 'CANTIERE' && ((!clienteId && !clienteNuovo) || (cantieri.length > 0 && !cantiereId));
 
   const hasMattino = Boolean(oraInizioMattino && oraFineMattino);
   const hasPomeriggio = Boolean(oraInizioPomeriggio && oraFinePomeriggio);
@@ -154,16 +76,6 @@ export function Attivita2FormPage() {
 
     if (!luogo) {
       setError('Scegli se hai lavorato in magazzino o in cantiere');
-      return;
-    }
-
-    if (luogo === 'CANTIERE' && !clienteId && !clienteNuovo) {
-      setError('Scrivi o scegli il cliente');
-      return;
-    }
-
-    if (luogo === 'CANTIERE' && cantieri.length > 0 && !cantiereId) {
-      setError('Seleziona un cantiere');
       return;
     }
 
@@ -197,9 +109,6 @@ export function Attivita2FormPage() {
         oraInizioPomeriggio: orario(oraInizioPomeriggio),
         oraFinePomeriggio: orario(oraFinePomeriggio),
         luogo,
-        clienteId: clienteNuovo ? null : clienteScelto,
-        ...(clienteNuovo ? { clienteNome: clienteTesto.trim() } : {}),
-        cantiereId: luogo === 'CANTIERE' ? cantiereId : null,
         note: descrizione.trim() || (isEditing ? '' : undefined),
       };
 
@@ -287,58 +196,6 @@ export function Attivita2FormPage() {
               ))}
             </div>
           </fieldset>
-
-          {/* Cliente: Gica in magazzino, da scegliere in cantiere */}
-          {luogo === 'MAGAZZINO' && (
-            <div>
-              <label className="label">Cliente</label>
-              {clienteGica ? (
-                <p className="input bg-gray-50 text-gray-700">{clienteGica.nome}</p>
-              ) : (
-                <p className="text-sm text-amber-700">
-                  Cliente Gica non trovato: l'attività sarà salvata senza cliente.
-                </p>
-              )}
-            </div>
-          )}
-
-          {luogo === 'CANTIERE' && (
-            <div>
-              <label htmlFor="cliente" className="label">Cliente</label>
-              <CampoSuggerimenti
-                id="cliente"
-                value={clienteTesto}
-                onChange={handleClienteTesto}
-                opzioni={clienti.map((c) => c.nome)}
-                maxLength={200}
-                placeholder="Scrivi o scegli il cliente"
-                disabled={isSaving}
-              />
-              {clienteNuovo && (
-                <p className="mt-1 text-xs text-gray-500">
-                  Nuovo cliente: verrà aggiunto all'anagrafica quando salvi l'attività.
-                </p>
-              )}
-            </div>
-          )}
-
-          {luogo === 'CANTIERE' && cantieri.length > 0 && (
-            <div>
-              <label htmlFor="cantiere" className="label">Cantiere</label>
-              <select
-                id="cantiere"
-                className="select"
-                value={cantiereId ?? ''}
-                onChange={(e) => setCantiereId(e.target.value ? parseInt(e.target.value) : null)}
-                required
-              >
-                <option value="">Seleziona cantiere...</option>
-                {cantieri.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nome}</option>
-                ))}
-              </select>
-            </div>
-          )}
 
           {/* Fascia Mattino */}
           <div className="border border-gray-200 rounded-lg p-4">
@@ -436,7 +293,7 @@ export function Attivita2FormPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSaving || !luogo || manca || (!hasMattino && !hasPomeriggio)}
+              disabled={isSaving || !luogo || (!hasMattino && !hasPomeriggio)}
             >
               {isSaving ? 'Salvataggio...' : isEditing ? 'Salva modifiche' : 'Registra attività'}
             </button>

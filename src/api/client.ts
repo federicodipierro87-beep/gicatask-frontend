@@ -215,8 +215,6 @@ export const attivitaApi = {
     oraInizioPomeriggio?: string;
     oraFinePomeriggio?: string;
     clienteId?: number | null;
-    // Cliente scritto a mano, se non è in anagrafica: lo crea il server
-    clienteNome?: string | null;
     cantiereId?: number | null;
     tipoAttivitaId?: number | null;
     assenzaId?: number | null;
@@ -231,8 +229,6 @@ export const attivitaApi = {
     oraInizioPomeriggio?: string;
     oraFinePomeriggio?: string;
     clienteId?: number | null;
-    // Cliente scritto a mano, se non è in anagrafica: lo crea il server
-    clienteNome?: string | null;
     cantiereId?: number | null;
     tipoAttivitaId?: number | null;
     assenzaId?: number | null;

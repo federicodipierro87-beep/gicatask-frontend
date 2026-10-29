@@ -78,9 +78,6 @@ export function AssegnaAttivitaPage() {
   // With an absence selected, cliente, cantiere and time slots are optional
   const isAssenza = assenzaId !== null;
   const isLuogo = !isAssenza && luogo !== null;
-  // Cliente e cantiere servono anche alle attività 2 in cantiere; in
-  // magazzino il cliente (Gica) resta quello salvato, senza cantiere
-  const conCliente = !isLuogo || luogo === 'CANTIERE';
 
   // Il Recupero ore sottrae le ore invece di aggiungerle
   const assenzaNegativa = isAssenzaNegativa(
@@ -326,12 +323,12 @@ export function AssegnaAttivitaPage() {
     const hasPomeriggio = oraInizioPomeriggio && oraFinePomeriggio;
 
     if (!isAssenza) {
-      if (conCliente && !clienteId) {
+      if (!isLuogo && !clienteId) {
         setError('Compila tutti i campi obbligatori');
         return;
       }
 
-      if (conCliente && cantieri.length > 0 && !cantiereId) {
+      if (!isLuogo && cantieri.length > 0 && !cantiereId) {
         setError('Seleziona un cantiere');
         return;
       }
@@ -370,8 +367,8 @@ export function AssegnaAttivitaPage() {
       oraFineMattino: orario(oraFineMattino),
       oraInizioPomeriggio: orario(oraInizioPomeriggio),
       oraFinePomeriggio: orario(oraFinePomeriggio),
-      clienteId: clienteId ?? null,
-      cantiereId: conCliente ? cantiereId ?? null : null,
+      clienteId: isLuogo ? null : clienteId ?? null,
+      cantiereId: isLuogo ? null : cantiereId ?? null,
       tipoAttivitaId: isLuogo ? null : tipoAttivitaId ?? null,
       assenzaId: assenzaId ?? null,
       luogo: isLuogo ? luogo : null,
@@ -552,12 +549,13 @@ export function AssegnaAttivitaPage() {
                 <option value="">Un cliente (attività normale)</option>
               </select>
               <p className="text-sm text-gray-500 mt-1">
-                Attività registrata con Nuova Attività 2: senza tipo; in magazzino il cliente è
-                Gica, senza cantiere.
+                Attività registrata con Nuova Attività 2: senza cliente, con la sola scelta fra
+                magazzino e cantiere.
               </p>
             </div>
           )}
 
+          {!isLuogo && (<>
           {/* Cliente */}
           <div>
             <label htmlFor="cliente" className="label">Cliente</label>
@@ -566,7 +564,7 @@ export function AssegnaAttivitaPage() {
               className="select"
               value={clienteId ?? ''}
               onChange={(e) => handleClienteChange(e.target.value)}
-              required={!isAssenza && conCliente}
+              required={!isAssenza}
             >
               <option value="">Seleziona cliente...</option>
               {clienti.map((c) => (
@@ -579,7 +577,7 @@ export function AssegnaAttivitaPage() {
           </div>
 
           {/* Cantiere */}
-          {conCliente && cantieri.length > 0 && (
+          {cantieri.length > 0 && (
             <div>
               <label htmlFor="cantiere" className="label">Cantiere</label>
               <select
@@ -603,7 +601,6 @@ export function AssegnaAttivitaPage() {
           )}
 
           {/* Tipo Attivita */}
-          {!isLuogo && (
           <div>
             <label htmlFor="tipoAttivita" className="label">
               Tipo Attivita <span className="text-gray-400 font-normal">(opzionale)</span>
@@ -623,7 +620,7 @@ export function AssegnaAttivitaPage() {
               </option>
             </select>
           </div>
-          )}
+          </>)}
 
           {/* Assenza */}
           <div>
@@ -682,7 +679,7 @@ export function AssegnaAttivitaPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isSaving || !utenteId || (!isAssenza && ((conCliente && (!clienteId || (cantieri.length > 0 && !cantiereId))) || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))))}
+              disabled={isSaving || !utenteId || (!isAssenza && ((!isLuogo && (!clienteId || (cantieri.length > 0 && !cantiereId))) || (!(oraInizioMattino && oraFineMattino) && !(oraInizioPomeriggio && oraFinePomeriggio))))}
             >
               {isSaving ? 'Salvataggio...' : isEditing ? 'Salva modifiche' : 'Assegna attivita'}
             </button>

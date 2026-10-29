@@ -6,7 +6,7 @@ import { Modal } from '../../components/Modal';
 import { attivitaApi } from '../../api/client';
 import { MonthNavigator, currentMonth, monthRange } from '../../components/MonthNavigator';
 import { formatDuration } from '../../utils/durata';
-import { NOMI_LUOGO, nomeClienteAttivita, etichettaClienteAttivita } from '../../types';
+import { NOMI_LUOGO, nomeClienteAttivita } from '../../types';
 import type { LuogoAttivita } from '../../types';
 
 /** Il form giusto per modificare un'attività: assenza, Nuova Attività 2 o quella col cliente. */
@@ -279,12 +279,7 @@ export function AttivitaListPage() {
                         ) : (
                           <>
                             {att.luogo && <span className="font-medium">{NOMI_LUOGO[att.luogo]}</span>}
-                            {att.cliente && (
-                              <>
-                                {att.luogo && ' → '}
-                                <span className="font-medium">{att.cliente.nome}</span>
-                              </>
-                            )}
+                            {att.cliente && <span className="font-medium">{att.cliente.nome}</span>}
                             {att.cantiere && (
                               <>
                                 {att.cliente && ' → '}
@@ -390,7 +385,7 @@ export function AttivitaListPage() {
 
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                  {etichettaClienteAttivita(selectedAttivita)}
+                  {selectedAttivita.luogo ? 'Luogo' : 'Cliente'}
                 </p>
                 <p className="font-medium text-gray-900">{nomeClienteAttivita(selectedAttivita)}</p>
               </div>
