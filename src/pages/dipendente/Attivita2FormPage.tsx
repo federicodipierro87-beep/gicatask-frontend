@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DipendenteLayout } from '../../components/DipendenteLayout';
 import { DateTimeInput } from '../../components/DateTimeInput';
+import { CampoSuggerimenti } from '../../components/CampoSuggerimenti';
 import { attivitaApi, clientiApi, cantieriApi } from '../../api/client';
 import { NOMI_LUOGO } from '../../types';
 import type { LuogoAttivita } from '../../types';
@@ -14,6 +15,11 @@ interface Voce {
 }
 
 const isOvernight = (start: string, end: string) => Boolean(start && end && end < start);
+
+/** Confronto come lo fa il server: maiuscole e spazi doppi non contano. */
+function chiave(valore: string): string {
+  return valore.replace(/\s+/g, ' ').trim().toLowerCase();
+}
 
 /**
  * Il cliente usato per il lavoro in magazzino: quello che si chiama "Gica" o,
@@ -30,8 +36,9 @@ function trovaClienteGica(clienti: Voce[]): Voce | null {
 
 /**
  * "Nuova Attività 2": come Nuova Attività, ma senza tipo. Si sceglie se si è
- * lavorato in magazzino (cliente Gica, scelto da solo) o in cantiere (cliente
- * e, se il cliente ne ha, cantiere), poi l'orario di mattino e pomeriggio e
+ * lavorato in magazzino (cliente Gica, scelto da solo) o in cantiere (cliente,
+ * anche scritto a mano se non è in anagrafica, e, se il cliente ne ha,
+ * cantiere), poi l'orario di mattino e pomeriggio e
  * una descrizione libera, salvata nelle note.
  */
 export function Attivita2FormPage() {
@@ -49,7 +56,10 @@ export function Attivita2FormPage() {
   const [luogo, setLuogo] = useState<LuogoAttivita | null>(null);
   const [clienti, setClienti] = useState<Voce[]>([]);
   const [cantieri, setCantieri] = useState<Voce[]>([]);
-  // Il cliente scelto per il cantiere: in magazzino vale sempre Gica
+  // Il cliente del cantiere si scrive: se è in anagrafica `clienteId` lo
+  // segue, altrimenti il server lo aggiunge al salvataggio. In magazzino vale
+  // sempre Gica
+  const [clienteTesto, setClienteTesto] = useState('');
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [cantiereId, setCantiereId] = useState<number | null>(null);
   const [oraInizioMattino, setOraInizioMattino] = useState('');
@@ -80,6 +90,7 @@ export function Attivita2FormPage() {
         setLuogo(att.luogo);
         if (att.luogo === 'CANTIERE') {
           setClienteId(att.clienteId ?? null);
+          setClienteTesto(att.cliente?.nome ?? '');
           setCantiereId(att.cantiereId ?? null);
         }
         setOraInizioMattino(att.oraInizioMattino || '');
@@ -123,9 +134,17 @@ export function Attivita2FormPage() {
     loadCantieri();
   }, [luogo, clienteId]);
 
+  const handleClienteTesto = (valore: string) => {
+    setClienteTesto(valore);
+    const trovato = clienti.find((c) => chiave(c.nome) === chiave(valore));
+    setClienteId(trovato?.id ?? null);
+  };
+
   const clienteGica = trovaClienteGica(clienti);
   const clienteScelto = luogo === 'MAGAZZINO' ? clienteGica?.id ?? null : clienteId;
-  const manca = luogo === 'CANTIERE' && (!clienteId || (cantieri.length > 0 && !cantiereId));
+  const clienteNuovo = luogo === 'CANTIERE' && clienteTesto.trim().length > 0 && clienteId === null;
+  const manca =
+    luogo === 'CANTIERE' && ((!clienteId && !clienteNuovo) || (cantieri.length > 0 && !cantiereId));
 
   const hasMattino = Boolean(oraInizioMattino && oraFineMattino);
   const hasPomeriggio = Boolean(oraInizioPomeriggio && oraFinePomeriggio);
@@ -138,8 +157,8 @@ export function Attivita2FormPage() {
       return;
     }
 
-    if (luogo === 'CANTIERE' && !clienteId) {
-      setError('Seleziona il cliente');
+    if (luogo === 'CANTIERE' && !clienteId && !clienteNuovo) {
+      setError('Scrivi o scegli il cliente');
       return;
     }
 
@@ -178,7 +197,8 @@ export function Attivita2FormPage() {
         oraInizioPomeriggio: orario(oraInizioPomeriggio),
         oraFinePomeriggio: orario(oraFinePomeriggio),
         luogo,
-        clienteId: clienteScelto,
+        clienteId: clienteNuovo ? null : clienteScelto,
+        ...(clienteNuovo ? { clienteNome: clienteTesto.trim() } : {}),
         cantiereId: luogo === 'CANTIERE' ? cantiereId : null,
         note: descrizione.trim() || (isEditing ? '' : undefined),
       };
@@ -285,18 +305,20 @@ export function Attivita2FormPage() {
           {luogo === 'CANTIERE' && (
             <div>
               <label htmlFor="cliente" className="label">Cliente</label>
-              <select
+              <CampoSuggerimenti
                 id="cliente"
-                className="select"
-                value={clienteId ?? ''}
-                onChange={(e) => setClienteId(e.target.value ? parseInt(e.target.value) : null)}
-                required
-              >
-                <option value="">Seleziona cliente...</option>
-                {clienti.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nome}</option>
-                ))}
-              </select>
+                value={clienteTesto}
+                onChange={handleClienteTesto}
+                opzioni={clienti.map((c) => c.nome)}
+                maxLength={200}
+                placeholder="Scrivi o scegli il cliente"
+                disabled={isSaving}
+              />
+              {clienteNuovo && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Nuovo cliente: verrà aggiunto all'anagrafica quando salvi l'attività.
+                </p>
+              )}
             </div>
           )}
 
