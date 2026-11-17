@@ -103,6 +103,58 @@ export function giorniAnno(anno: number): GiornoAnno[] {
   return giorni;
 }
 
+/** Tetto di un periodo di assenza: oltre e' quasi sempre un refuso nell'anno. */
+export const MAX_GIORNI_PERIODO = 366;
+
+export interface PeriodoLavorativo {
+  /** I giorni da lunedi' a venerdi' non festivi, in ordine, come `YYYY-MM-DD`. */
+  lavorativi: string[];
+  /** Quanti sabati e domeniche cadono nel periodo. */
+  weekend: number;
+  /** I festivi infrasettimanali saltati (quelli di sabato/domenica contano nel weekend). */
+  festivi: string[];
+}
+
+/**
+ * Scompone un periodo `dal`-`al` (estremi inclusi) in giorni lavorativi,
+ * saltando sabati, domeniche e festivi ticinesi. `null` se le date non sono
+ * valide, se `al` precede `dal` o se il periodo supera `MAX_GIORNI_PERIODO`.
+ */
+export function periodoLavorativo(dal: string, al: string): PeriodoLavorativo | null {
+  const ISO = /^\d{4}-\d{2}-\d{2}$/;
+  if (!ISO.test(dal) || !ISO.test(al)) return null;
+
+  const inizio = new Date(`${dal}T00:00:00Z`);
+  const fine = new Date(`${al}T00:00:00Z`);
+  if (Number.isNaN(inizio.getTime()) || Number.isNaN(fine.getTime())) return null;
+
+  // Il cap si controlla prima del ciclo: un anno digitato a meta' (0020)
+  // darebbe centinaia di migliaia di giorni
+  const giorni = Math.round((fine.getTime() - inizio.getTime()) / 86_400_000) + 1;
+  if (giorni < 1 || giorni > MAX_GIORNI_PERIODO) return null;
+
+  const festiviPerAnno = new Map<number, Set<string>>();
+  const risultato: PeriodoLavorativo = { lavorativi: [], weekend: 0, festivi: [] };
+
+  for (let i = 0; i < giorni; i++) {
+    const giorno = piuGiorni(inizio, i);
+    const chiave = iso(giorno);
+    const anno = giorno.getUTCFullYear();
+    if (!festiviPerAnno.has(anno)) festiviPerAnno.set(anno, festiviTicino(anno));
+
+    const giornoSettimana = giorno.getUTCDay();
+    if (giornoSettimana === 0 || giornoSettimana === 6) {
+      risultato.weekend++;
+    } else if (festiviPerAnno.get(anno)!.has(chiave)) {
+      risultato.festivi.push(chiave);
+    } else {
+      risultato.lavorativi.push(chiave);
+    }
+  }
+
+  return risultato;
+}
+
 export const NOMI_MESI = [
   'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu',
   'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic',
